@@ -40,7 +40,7 @@ void BANG_init(int *argc, char **argv) {
 }
 
 void BANG_close() {
-	BANG_sig_close();
 	pthread_join(*netthread,NULL);
 	free(netthread);
+	BANG_sig_close();
 }

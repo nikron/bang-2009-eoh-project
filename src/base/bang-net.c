@@ -6,6 +6,7 @@
  * \brief Implementation of the networking behind the BANG project.
  * */
 #include"bang-net.h"
+#include"bang-signals.h"
 #include<stdio.h>
 #include<errno.h>
 #include<netdb.h>
@@ -49,9 +50,7 @@ void* BANG_network_thread(void *port) {
 			perror("Bind failed");
 		}
 		else if (bind(sock,rp->ai_addr,rp->ai_addrlen) == 0) {
-			/**
-			 * TODO: Make this send out a signal before returning.
-			 */
+			BANG_send_signal(BANG_BIND_SUC,NULL);
 			printf("Bind succeeded.\n");
 			fflush(stdout);
 			break;

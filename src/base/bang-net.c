@@ -32,11 +32,7 @@ void* BANG_network_thread(void *port) {
 
 	//check to see if we got available addresses
 	if (getaddrinfo(NULL,(char*)port,&hints,&result) != 0) {
-		perror("Could not get address info");
-
-		/**
-		 * TODO: Make this send out a signal before returning.
-		 */
+		BANG_send_signal(BANG_GADDRINFO_FAIL,NULL);
 		return NULL;
 	}
 
@@ -44,12 +40,8 @@ void* BANG_network_thread(void *port) {
 		sock = socket(rp->ai_family,rp->ai_socktype,rp->ai_protocol);
 
 		if (sock == -1) {
-			/**
-			 * TODO: Make this send out a signal before returning.
-			 */
-			perror("Bind failed");
-		}
-		else if (bind(sock,rp->ai_addr,rp->ai_addrlen) == 0) {
+			BANG_send_signal(BANG_BIND_FAIL,NULL);
+		} else if (bind(sock,rp->ai_addr,rp->ai_addrlen) == 0) {
 			BANG_send_signal(BANG_BIND_SUC,NULL);
 			break;
 		}
@@ -57,21 +49,15 @@ void* BANG_network_thread(void *port) {
 
 	//check to see if we could bind to a socket
 	if (rp == NULL) {
-		perror("Could not bind");
 		freeaddrinfo(result);
-		/**
-		 * TODO: Make this send out a signal before returning.
-		 */
+		BANG_send_signal(BANG_BIND_FAIL,NULL);
 		return NULL;
 	}
 
 	//mark the socket for listening
 	if (listen(sock,MAX_BACKLOG) != 0) {
-		perror("Could not open socket");
 		freeaddrinfo(result);
-		/**
-		 * TODO: Make this send out a signal before returning.
-		 */
+		BANG_send_signal(BANG_LISTEN_FAIL,NULL);
 		return NULL;
 	}
 

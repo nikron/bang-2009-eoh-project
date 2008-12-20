@@ -1,7 +1,7 @@
 #ifndef __CORE_H
 #define __CORE_H
 
-#define DEFAULT_PORT 7878
+#define DEFAULT_PORT "7878"
 
 typedef void BANGSignalHandler(int,void **args);
 

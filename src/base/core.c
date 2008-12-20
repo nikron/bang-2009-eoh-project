@@ -1,15 +1,13 @@
 #include"core.h"
+#include"bang-net.h"
 #include<pthread.h>
 #include<stdlib.h>
 #include<stdio.h>
 #include<string.h>
 
-int port = DEFAULT_PORT;
-pthread_t *netthread;
 
-void* network_thread(void *arg) {
-	return NULL;
-}
+char *port = DEFAULT_PORT;
+pthread_t *netthread;
 
 void BANG_init(int *argc, char **argv) {
 	int i = 0;
@@ -17,7 +15,7 @@ void BANG_init(int *argc, char **argv) {
 		if (!strcmp(argv[i],"--port")) {
 			if (i + 1 < *argc) {
 				printf("Port set to %s.\n",argv[i + 1]);
-				port = atoi(argv[i + 1]);
+				port = argv[i + 1];
 			} else {
 				printf("Invalid port command.");
 				exit(1);
@@ -25,7 +23,7 @@ void BANG_init(int *argc, char **argv) {
 		}
 	}
 	netthread = (pthread_t*) malloc(sizeof(pthread_t));
-	pthread_create(netthread,NULL,network_thread,NULL);
+	pthread_create(netthread,NULL,BANG_network_thread,(void*)port);
 }
 
 void BANG_close() {

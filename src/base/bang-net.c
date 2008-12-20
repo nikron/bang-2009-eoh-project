@@ -51,8 +51,6 @@ void* BANG_network_thread(void *port) {
 		}
 		else if (bind(sock,rp->ai_addr,rp->ai_addrlen) == 0) {
 			BANG_send_signal(BANG_BIND_SUC,NULL);
-			printf("Bind succeeded.\n");
-			fflush(stdout);
 			break;
 		}
 	}
@@ -81,9 +79,7 @@ void* BANG_network_thread(void *port) {
 	int accptsock;
 	while (1) {
 		accptsock = accept(sock,rp->ai_addr,&rp->ai_addrlen);
-		/**
-		 * TODO: Make this send out a signal.
-		 */
+		BANG_send_signal(BANG_CLIENT_CONNECTED,NULL);
 		shutdown(accptsock,SHUT_RDWR);
 	}
 

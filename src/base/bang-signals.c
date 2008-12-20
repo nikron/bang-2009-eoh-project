@@ -1,7 +1,9 @@
 #include"bang-signals.h"
 #include"bang-types.h"
+#include<errno.h>
 #include<pthread.h>
 #include<semaphore.h>
+#include<stdio.h>
 #include<stdlib.h>
 
 struct _signal_node {
@@ -48,7 +50,7 @@ int BANG_install_sighandler(int signal, BANGSignalHandler *handler) {
 	if (signal_handlers[signal] == NULL) {
 		signal_handlers[signal] = (signal_node*) malloc(sizeof(signal_node));
 		signal_handlers[signal]->handler = handler;
-		sem_init(&(signal_handlers[signal])->signal_semaphore,0,0);
+		sem_init(&(signal_handlers[signal])->signal_semaphore,0,1);
 		signal_handlers[signal]->next = NULL;
 		return 0;
 	} else {
@@ -82,6 +84,11 @@ void* thread_send_signal(void *args) {
 }
 
 int BANG_send_signal(int signal, void *args) {
+#ifdef BDEBUG_1
+	fprintf(stderr,"Sending out the signal %d.\n",signal);
+	fprintf(stderr,"The signal_node is %p.\n",signal_handlers[signal]);
+#endif
+
 	signal_node *cur;
 	pthread_t signal_threads;
 	send_signal_args *sigargs;
@@ -93,7 +100,7 @@ int BANG_send_signal(int signal, void *args) {
 		sigargs->sig_id = (signal << (sizeof(int) * 8 / 2)) + i;
 		sigargs->handler_args = args;
 
-		if (!pthread_create(&signal_threads,NULL,&thread_send_signal,(void*)sigargs)) {
+		if (pthread_create(&signal_threads,NULL,&thread_send_signal,(void*)sigargs) != 0) {
 			return -1;
 		} else {
 			pthread_detach(signal_threads);
@@ -109,6 +116,9 @@ void BANG_acknowledge_signal(int signal, int sig_id) {
 	int i = 0, target = sig_id << (sizeof(int) * 8 /2) >> (sizeof(int) * 8 /2);
 	for (; cur != NULL; cur = cur->next) {
 		if (i == target) {
+#ifdef BDEBUG_1
+			fprintf(stderr,"Signal semaphore %d has been posted.\n",target);
+#endif
 			sem_post(&(cur->signal_semaphore));
 			break;
 		}

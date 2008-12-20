@@ -28,8 +28,26 @@
  * to actually do something useful (loading a module will probably generate some signals!).
  */
 #include"../base/core.h"
+#include"../base/bang-signals.h"
+#include"../base/bang-types.h"
+#include<stdio.h>
+#define BDEBUG_1
+
+void bind_suc(int signal, int sig_id, void *args) {
+	fprintf(stderr,"The bind signal has been caught.\n");
+	BANG_acknowledge_signal(signal,sig_id);
+}
+
+void client_con(int signal, int sig_id, void *args) {
+	fprintf(stderr,"A client has connected.\n");
+	BANG_acknowledge_signal(signal,sig_id);
+}
 int main(int argc, char **argv) {
 	BANG_init(&argc,argv);
+	BANG_install_sighandler(BANG_BIND_SUC,&bind_suc);
+	BANG_install_sighandler(BANG_CLIENT_CONNECTED,&client_con);
+	while (1) {
+	}
 	BANG_close();
 	return 0;
 }

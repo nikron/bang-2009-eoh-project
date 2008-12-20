@@ -3,11 +3,12 @@
  * \author Nikhil Bysani
  * \date December 20, 2009
  *
- * \brief Implememnts the main interface to the BANG project.  This is mainly accomplished
- * through use of BANG_init, BANG_close, and BANG_install_sighandler.
+ * \brief This implements the main public high level interface to the BANG project.  This is mainly accomplished
+ * through use of BANG_init and BANG_close.
  */
 #include"core.h"
 #include"bang-net.h"
+#include"bang-signals.h"
 #include<pthread.h>
 #include<stdlib.h>
 #include<stdio.h>
@@ -22,6 +23,7 @@ pthread_t *netthread;
 
 void BANG_init(int *argc, char **argv) {
 	int i = 0;
+	BANG_sig_init();
 	for (i = 0; i < *argc; ++i) {
 		if (!strcmp(argv[i],"--port")) {
 			if (i + 1 < *argc) {
@@ -38,6 +40,7 @@ void BANG_init(int *argc, char **argv) {
 }
 
 void BANG_close() {
+	BANG_sig_close();
 	pthread_join(*netthread,NULL);
 	free(netthread);
 }

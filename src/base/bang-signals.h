@@ -28,6 +28,15 @@ int BANG_install_sighandler(int signal, BANGSignalHandler *handler);
  */
 void BANG_acknowledge_signal(int signal, int sig_id);
 
+
+/**
+ * \param signal The signal number which to send.
+ * \parman args The arguements to the handlers which are called.
+ *
+ * \breif Calls the handlers of signal with args.
+ */
+int BANG_send_signal(int signal, void *args);
+
 /**
  *
  * \brief Initializes the signal porition of the library.

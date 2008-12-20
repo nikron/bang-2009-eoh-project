@@ -1,3 +1,11 @@
+/**
+ * \file core.c
+ * \author Nikhil Bysani
+ * \date December 20, 2009
+ *
+ * \brief Implememnts the main interface to the BANG project.  This is mainly accomplished
+ * through use of BANG_init, BANG_close, and BANG_install_sighandler.
+ */
 #include"core.h"
 #include"bang-net.h"
 #include<pthread.h>
@@ -6,7 +14,10 @@
 #include<string.h>
 
 
+///The port that will be passed to network thread.
 char *port = DEFAULT_PORT;
+
+///The network thread.
 pthread_t *netthread;
 
 void BANG_init(int *argc, char **argv) {

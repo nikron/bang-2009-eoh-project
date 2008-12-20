@@ -1,3 +1,10 @@
+/**
+ * \file bang-net.c
+ * \author Nikhil Bysani
+ * \date December 20, 2009
+ *
+ * \brief Implementation of the networking behind the BANG project.
+ * */
 #include"bang-net.h"
 #include<stdio.h>
 #include<errno.h>
@@ -7,12 +14,12 @@
 #include<sys/socket.h>
 
 void* BANG_network_thread(void *port) {
-	int sock; //our socket
+	int sock; ///The main server socket
 	struct addrinfo hints;
 	struct addrinfo *result, *rp;
 
 	//sets the hints of getaddrinfo so it know what kind of address we want
-	//basic template of code from "main 2 getaddrinfo" section
+	//basic template of code from "man 2 getaddrinfo" section
 	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = AF_UNSPEC;	//don't about ipv4 or ipv6
 	hints.ai_socktype = SOCK_STREAM;//tcp

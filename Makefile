@@ -17,6 +17,13 @@ core.o: bang-net.o $(CORESRC)
 bang-net.o: $(NETWORKSRC)
 	$(CC) -c $(COPTS) $^
 
+.PHONY: doc
+
+doc:
+	cd doc; \
+	doxygen Doxygen;
+
 clean:
 	rm -f $(EXENAME)
 	rm -f *.o
+	rm -Rf doc/dox

@@ -1,6 +1,6 @@
 EXENAME=bang-machine
 CC=gcc
-COPTS=-Wall -Werror -g
+COPTS=-Wall -Werror -g -lpthread
 MAINSRC=src/app/main.c
 CORESRC=src/base/core.c
 

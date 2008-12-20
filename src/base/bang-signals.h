@@ -6,6 +6,20 @@
  * \brief Allows the library to send out signals, and for the applications to
  *	receive signals.
  */
+
+/**
+ * \page BANG Signals
+ *
+ * Bang signals are fairly simple.  When the library needs to report an event,
+ * it will be reported using this signal subsystem.  Events can be anything from
+ * from the network binding, a client connecting, or a module getting loaded.
+ *
+ * Usage is simple, install a BANGSignalHandler to catch a signal defined in
+ * bang-types.h.  Once the handler is done doing its job, it should use
+ * BANG_acknowledge_signal to be able to receive more signals.  If you are
+ * writing a library function, use BANG_send_signal to send out a signal to
+ * all of its handlers.  Be sure to document what its arguments are.
+ */
 #ifndef __BANG_SIGNALS_H
 #define __BANG_SIGNALS_H
 
@@ -31,9 +45,9 @@ void BANG_acknowledge_signal(int signal, int sig_id);
 
 /**
  * \param signal The signal number which to send.
- * \parman args The arguements to the handlers which are called.
+ * \param args The arguements to the handlers which are called.
  *
- * \breif Calls the handlers of signal with args.
+ * \brief Calls the handlers of signal with args.
  */
 int BANG_send_signal(int signal, void *args);
 

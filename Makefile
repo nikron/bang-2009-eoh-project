@@ -7,13 +7,14 @@ EXENAME=bang-machine
 CC=gcc
 COPTS=-Wall -Werror -g `pkg-config --cflags --libs gtk+-2.0` -lpthread
 
-OBJS=bang-com.o bang-net.o bang-signals.o core.o main.o
+OBJS=bang-com.o bang-net.o bang-signals.o bang-module.o core.o main.o
 
 MAINSRC=src/app/main.c
 CORESRC=src/base/core.c
 COMSRC=src/base/bang-com.c
 NETWORKSRC=src/base/bang-net.c
 SIGNALSSRC=src/base/bang-signals.c
+MODULESRC=src/base/bang-module.c
 
 .PHONY: doc
 
@@ -30,6 +31,9 @@ bang-com.o: $(COMSRC)
 	$(CC) -c $(COPTS) $^
 
 bang-signals.o: $(SIGNALSSRC)
+	$(CC) -c $(COPTS) $^
+
+bang-module.o: $(MODULESRC)
 	$(CC) -c $(COPTS) $^
 
 bang-net.o: $(NETWORKSRC)

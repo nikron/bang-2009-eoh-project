@@ -8,14 +8,9 @@
 #include"bang-module.h"
 #include"bang-signals.h"
 #include"bang-types.h"
+#include"bang-types.h"
 #include<dlfcn.h>
 #include<stdlib.h>
-
-typedef struct _BANG_module {
-	char *module_name;
-	int (*module_init)();
-	void (*module_run)();
-} BANG_module;
 
 BANG_module* BANG_load_module(char *path) {
 	void *handle = dlopen(path,RTLD_NOW);
@@ -28,7 +23,7 @@ BANG_module* BANG_load_module(char *path) {
 	BANG_module *module = (BANG_module*) calloc(1,sizeof(BANG_module));
 
 	module->module_name = dlsym(handle,"module_name");
-	if (check_errors = dlerror() != NULL) {
+	if ((check_errors = dlerror()) != NULL) {
 		dlclose(handle);
 		free(module);
 		BANG_send_signal(BANG_MODULE_ERROR,check_errors);
@@ -36,7 +31,7 @@ BANG_module* BANG_load_module(char *path) {
 	}
 
 	*(void **) (&(module->module_init)) = dlsym(handle,"BANG_module_init");
-	if (check_errors = dlerror() != NULL) {
+	if ((check_errors = dlerror()) != NULL) {
 		dlclose(handle);
 		free(module);
 		BANG_send_signal(BANG_MODULE_ERROR,check_errors);
@@ -44,7 +39,7 @@ BANG_module* BANG_load_module(char *path) {
 	}
 
 	*(void **) (&(module->module_run)) = dlsym(handle,"BANG_module_run");
-	if (check_errors = dlerror() != NULL) {
+	if ((check_errors = dlerror()) != NULL) {
 		dlclose(handle);
 		free(module);
 		BANG_send_signal(BANG_MODULE_ERROR,check_errors);

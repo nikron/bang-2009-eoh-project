@@ -9,6 +9,12 @@
 #ifndef __BANG_TYPES_H
 #define __BANG_TYPES_H
 
+typedef struct _BANG_module {
+	char *module_name;
+	int (*module_init)();
+	void (*module_run)();
+} BANG_module;
+
 /// A signal handler function, it receives the BANGSIGNUM, and arguments depending on the signal.
 typedef void (*BANGSignalHandler)(int,int,void*);
 

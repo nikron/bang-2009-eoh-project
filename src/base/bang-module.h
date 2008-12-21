@@ -8,13 +8,14 @@
  */
 #ifndef __BANG_MODULE_H
 #define __BANG_MODULE_H
+#include"bang-types.h"
 
 /**
  * \param path File path to a module that can be loaded.
  *
  * \brief Loads a module.
  */
-int BANG_load_module(char *path);
+BANG_module* BANG_load_module(char *path);
 
 
 /**

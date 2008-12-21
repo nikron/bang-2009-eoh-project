@@ -8,11 +8,11 @@
 #ifndef __BANG_COM_H
 #define __BANG_COM_H
 /**
- * \param socket The connection with the peer.
+ * \param self_info Information about the peer.
  *
  * \brief A peer connection thread.
  */
-void* BANG_peer_thread(void *socket);
+void* BANG_peer_thread(void *self_info);
 
 /**
  * \param socket The slave client socket.

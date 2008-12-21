@@ -36,7 +36,7 @@ void BANG_init(int *argc, char **argv) {
 		}
 	}
 	BANG_com_init();
-	BANG_install_sighandler(BANG_PEER_CONNECTED,&BANG_peer_signal_handler);
+	BANG_install_sighandler(BANG_PEER_CONNECTED,&BANG_peer_added);
 	netthread = (pthread_t*) malloc(sizeof(pthread_t));
 	pthread_create(netthread,NULL,BANG_server_thread,(void*)port);
 }

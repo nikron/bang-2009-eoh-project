@@ -24,14 +24,20 @@ void* BANG_peer_thread(void *self_info);
  *
  * \brief Creates a slave thread using the socket gotten from the signal.
  */
-void BANG_peer_signal_handler(int signal,int sig_id,void* socket);
+void BANG_peer_added(int signal,int sig_id,void* socket);
+
+/**
+ * \param peer_id The peer to be remove
+ *
+ * \brief Catches BANG_PEER_TO_BE_REMOVED, and remove that peer, and emits
+ */
+void BANG_peer_being_removed(int signal,int sig_id,void *peer_id);
 
 /**
  *
  * \return A new unique peer id.
  */
 int BANG_new_peer_id();
-
 
 /**
  * \param peer_id The peer you want to add a request.
@@ -52,6 +58,9 @@ void BANG_add_request_all(void *request);
 /**
  * \param peer_id Peer to remove.
  *
- * \brief Removes peer_id, and it associated thread for existance.
+ * \brief Removes peer_id, and it associated thread for existance, and emits
+ * a BANG_PEER_REMOVED.  If you want the peer to removed in a diffrerent thread, send
+ * out a BANG_PEER_TO_BE_REMOVED
  */
+void BANG_remove_peer(int peer_id);
 #endif

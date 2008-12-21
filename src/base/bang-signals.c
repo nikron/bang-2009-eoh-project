@@ -14,6 +14,7 @@
 #include<semaphore.h>
 #include<stdio.h>
 #include<stdlib.h>
+#include<string.h>
 
 ///The handlers for each signal is stored in linked list.
 struct _signal_node {
@@ -101,7 +102,7 @@ void* thread_send_signal(void *args) {
 	return NULL;
 }
 
-int BANG_send_signal(int signal, void *args) {
+int BANG_send_signal(int signal, BANG_sigargs args) {
 #ifdef BDEBUG_1
 	fprintf(stderr,"Sending out the signal %d.\n",signal);
 	fprintf(stderr,"The signal_node is %p.\n",signal_handlers[signal]);
@@ -114,8 +115,15 @@ int BANG_send_signal(int signal, void *args) {
 	*/
 
 	int i = 0;
+	void *sigargs;
 	for (cur = signal_handlers[signal]; cur != NULL; cur = cur->next) {
-		cur->handler(signal,(signal << (sizeof(int) * 8 / 2)) + i,args);
+		if (args.args == NULL) {
+			sigargs = NULL;
+		} else {
+			sigargs = calloc(args.length,1);
+			memcpy(sigargs,args.args,args.length);
+		}
+		cur->handler(signal,(signal << (sizeof(int) * 8 / 2)) + i,sigargs);
 
 		/*
 		Signals really don't need to be atmoic.

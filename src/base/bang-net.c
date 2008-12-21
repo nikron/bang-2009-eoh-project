@@ -21,6 +21,7 @@ void* BANG_server_thread(void *port) {
 	int sock; ///The main server socket
 	struct addrinfo hints;
 	struct addrinfo *result, *rp;
+	BANG_sigargs args;
 
 	//sets the hints of getaddrinfo so it know what kind of address we want
 	//basic template of code from "man 2 getaddrinfo" section
@@ -35,7 +36,9 @@ void* BANG_server_thread(void *port) {
 
 	//check to see if we got available addresses
 	if (getaddrinfo(NULL,(char*)port,&hints,&result) != 0) {
-		BANG_send_signal(BANG_GADDRINFO_FAIL,port);
+		args.args = NULL;
+		args.length = 0;
+		BANG_send_signal(BANG_GADDRINFO_FAIL,args);
 		return NULL;
 	}
 
@@ -43,9 +46,15 @@ void* BANG_server_thread(void *port) {
 		sock = socket(rp->ai_family,rp->ai_socktype,rp->ai_protocol);
 
 		if (sock == -1) {
-			BANG_send_signal(BANG_BIND_FAIL,NULL);
+			args.args = NULL;
+			args.length = 0;
+			///TODO: Send something more meaningful.
+			BANG_send_signal(BANG_BIND_FAIL,args);
 		} else if (bind(sock,rp->ai_addr,rp->ai_addrlen) == 0) {
-			BANG_send_signal(BANG_BIND_SUC,NULL);
+			args.args = NULL;
+			args.length = 0;
+			///TODO: Send something more meaningful
+			BANG_send_signal(BANG_BIND_SUC,args);
 			break;
 		}
 	}
@@ -53,23 +62,32 @@ void* BANG_server_thread(void *port) {
 	//check to see if we could bind to a socket
 	if (rp == NULL) {
 		freeaddrinfo(result);
-		BANG_send_signal(BANG_BIND_FAIL,NULL);
+		close(sock);
+		args.args = NULL;
+		args.length = 0;
+		///TODO: Send something more meaningful
+		BANG_send_signal(BANG_BIND_FAIL,args);
 		return NULL;
 	}
 
 	//mark the socket for listening
 	if (listen(sock,MAX_BACKLOG) != 0) {
 		freeaddrinfo(result);
-		BANG_send_signal(BANG_LISTEN_FAIL,NULL);
+		close(sock);
+		args.args = NULL;
+		args.length = 0;
+		///TODO: Send something more meaningful
+		BANG_send_signal(BANG_LISTEN_FAIL,args);
 		return NULL;
 	}
 
 	//accepted client
-	int *accptsock;
+	args.length = sizeof(int);
 	while (1) {
-		accptsock = (int*) calloc(1,sizeof(int));
-		*accptsock = accept(sock,rp->ai_addr,&rp->ai_addrlen);
-		BANG_send_signal(BANG_PEER_CONNECTED,accptsock);
+		args.args = calloc(1,sizeof(int));
+		*((int*)args.args) = accept(sock,rp->ai_addr,&rp->ai_addrlen);
+		BANG_send_signal(BANG_PEER_CONNECTED,args);
+		free(args.args);
 	}
 
 	freeaddrinfo(result);
@@ -79,9 +97,9 @@ void* BANG_server_thread(void *port) {
 
 
 void* BANG_connect_thread(void *addr) {
-	int *sock = (int*) calloc(1,sizeof(int));
 	struct addrinfo hints;
 	struct addrinfo *result, *rp;
+	BANG_sigargs args;
 
 	//sets the hints of getaddrinfo so it know what kind of address we want
 	//basic template of code from "man 2 getaddrinfo" section
@@ -96,19 +114,32 @@ void* BANG_connect_thread(void *addr) {
 
 	//check to see if we got available addresses
 	if (getaddrinfo(NULL,(char*)addr,&hints,&result) != 0) {
-		BANG_send_signal(BANG_GADDRINFO_FAIL,addr);
+		args.args = addr;
+		args.length = strlen(addr) * sizeof(char);
+		///TODO: Send something more meaningful
+		BANG_send_signal(BANG_GADDRINFO_FAIL,args);
+		free(args.args);
 		return NULL;
 	}
 
 
+	args.args = calloc(1,sizeof(int));
+	args.length = sizeof(int);
 	for (rp = result; rp != NULL; rp = rp->ai_next) {
-		*sock = socket(rp->ai_family,rp->ai_socktype,rp->ai_protocol);
+		*((int*)args.args) = socket(rp->ai_family,rp->ai_socktype,rp->ai_protocol);
 
-		if (*sock == -1) {
+		if (*((int*)args.args) == -1) {
+			free(args.args);
+			args.args = addr;
+			args.length = strlen(addr) * sizeof(char);
 			///TODO:Make this signal send out something more useful
-			BANG_send_signal(BANG_CONNECT_FAIL,addr);
-		} else if (connect(*sock,rp->ai_addr,rp->ai_addrlen) == 0) {
-			BANG_send_signal(BANG_PEER_CONNECTED,sock);
+			BANG_send_signal(BANG_CONNECT_FAIL,args);
+			free(args.args);
+
+		} else if (connect(*((int*)args.args),rp->ai_addr,rp->ai_addrlen) == 0) {
+
+			BANG_send_signal(BANG_PEER_CONNECTED,args);
+			free(args.args);
 			break;
 		}
 	}

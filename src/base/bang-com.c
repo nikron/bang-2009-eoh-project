@@ -7,6 +7,7 @@
  * */
 #include"bang-com.h"
 #include"bang-signals.h"
+#include"bang-types.h"
 #include<pthread.h>
 #include<semaphore.h>
 #include<stdio.h>
@@ -58,7 +59,10 @@ void BANG_peer_added(int signal,int sig_id,void* socket) {
 
 void BANG_add_peer(int socket) {
 	///TODO: this should send out a peer_id in a non-leaking way.
-	BANG_send_signal(BANG_PEER_ADDED,NULL);
+	BANG_sigargs args;
+	args.args = NULL;
+	args.length = 0;
+	BANG_send_signal(BANG_PEER_ADDED,args);
 }
 
 void BANG_peer_removed(int signal,int sig_id,void *peer_id) {

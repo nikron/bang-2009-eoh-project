@@ -11,6 +11,7 @@
 #include"bang-types.h"
 #include<dlfcn.h>
 #include<stdlib.h>
+#include<string.h>
 
 /**
  * \page BANG Modules
@@ -23,35 +24,52 @@
  */
 BANG_module* BANG_load_module(char *path) {
 	void *handle = dlopen(path,RTLD_NOW);
-	char *check_errors = dlerror();
-	if (check_errors != NULL) {
-		BANG_send_signal(BANG_MODULE_ERROR,check_errors);
+	BANG_sigargs args;
+	args.args = dlerror();
+
+	///Make sure the dlopen worked.
+	if (args.args != NULL) {
+		args.length = strlen(args.args);
+		BANG_send_signal(BANG_MODULE_ERROR,args);
+		free(args.args);
 		return NULL;
 	}
 
 	BANG_module *module = (BANG_module*) calloc(1,sizeof(BANG_module));
 
 	module->module_name = dlsym(handle,"module_name");
-	if ((check_errors = dlerror()) != NULL) {
+
+	///Make sure the dlsym worked.
+	if ((args.args = dlerror()) != NULL) {
 		dlclose(handle);
 		free(module);
-		BANG_send_signal(BANG_MODULE_ERROR,check_errors);
+		args.length = strlen(args.args);
+		BANG_send_signal(BANG_MODULE_ERROR,args);
+		free(args.args);
 		return NULL;
 	}
 
 	*(void **) (&(module->module_init)) = dlsym(handle,"BANG_module_init");
-	if ((check_errors = dlerror()) != NULL) {
+
+	///Make sure the dlsym worked.
+	if ((args.args = dlerror()) != NULL) {
 		dlclose(handle);
 		free(module);
-		BANG_send_signal(BANG_MODULE_ERROR,check_errors);
+		args.length = strlen(args.args);
+		BANG_send_signal(BANG_MODULE_ERROR,args);
+		free(args.args);
 		return NULL;
 	}
 
 	*(void **) (&(module->module_run)) = dlsym(handle,"BANG_module_run");
-	if ((check_errors = dlerror()) != NULL) {
+
+	///Make sure the dlsym worked.
+	if ((args.args = dlerror()) != NULL) {
 		dlclose(handle);
 		free(module);
-		BANG_send_signal(BANG_MODULE_ERROR,check_errors);
+		args.length = strlen(args.args);
+		BANG_send_signal(BANG_MODULE_ERROR,args);
+		free(args.args);
 		return NULL;
 	}
 
@@ -60,7 +78,10 @@ BANG_module* BANG_load_module(char *path) {
 
 
 void BANG_run_module(BANG_module *module) {
-	BANG_send_signal(BANG_RUNNING_MODULE,module);
+	BANG_sigargs args;
+	args.args = module;
+	args.length = sizeof(BANG_module);
+	BANG_send_signal(BANG_RUNNING_MODULE,args);
 	module->module_init();
 	module->module_run();
 }

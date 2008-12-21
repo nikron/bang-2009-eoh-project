@@ -49,7 +49,7 @@ void BANG_acknowledge_signal(int signal, int sig_id);
  *
  * \brief Calls the handlers of signal with args.
  */
-int BANG_send_signal(int signal, void *args);
+int BANG_send_signal(int signal, BANG_sigargs args);
 
 /**
  *

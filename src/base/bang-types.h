@@ -15,6 +15,14 @@ typedef struct _BANG_module {
 	void (*module_run)();
 } BANG_module;
 
+///This is the structure that is sent to each signal handler.
+typedef struct {
+	///Arguements you want to send to signal handlers.
+	void *args;
+	///Lenth of the arguements.
+	int length;
+} BANG_sigargs;
+
 /// A signal handler function, it receives the BANGSIGNUM, and arguments depending on the signal.
 typedef void (*BANGSignalHandler)(int,int,void*);
 

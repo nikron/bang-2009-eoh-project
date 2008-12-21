@@ -35,7 +35,7 @@ void* BANG_server_thread(void *port) {
 
 	//check to see if we got available addresses
 	if (getaddrinfo(NULL,(char*)port,&hints,&result) != 0) {
-		BANG_send_signal(BANG_GADDRINFO_FAIL,NULL);
+		BANG_send_signal(BANG_GADDRINFO_FAIL,port);
 		return NULL;
 	}
 
@@ -74,5 +74,45 @@ void* BANG_server_thread(void *port) {
 
 	freeaddrinfo(result);
 	close(sock);
+	return NULL;
+}
+
+
+void* BANG_connect_thread(void *addr) {
+	int *sock = (int*) calloc(1,sizeof(int));
+	struct addrinfo hints;
+	struct addrinfo *result, *rp;
+
+	//sets the hints of getaddrinfo so it know what kind of address we want
+	//basic template of code from "man 2 getaddrinfo" section
+	memset(&hints, 0, sizeof(struct addrinfo));
+	hints.ai_family = AF_UNSPEC;	//don't about ipv4 or ipv6
+	hints.ai_socktype = SOCK_STREAM;//tcp
+	hints.ai_flags = AI_PASSIVE;	//for wildcard IP address
+	hints.ai_protocol = 0;		//any protocol
+	hints.ai_canonname = NULL;
+	hints.ai_addr = NULL;
+	hints.ai_next = NULL;
+
+	//check to see if we got available addresses
+	if (getaddrinfo(NULL,(char*)addr,&hints,&result) != 0) {
+		BANG_send_signal(BANG_GADDRINFO_FAIL,addr);
+		return NULL;
+	}
+
+
+	for (rp = result; rp != NULL; rp = rp->ai_next) {
+		*sock = socket(rp->ai_family,rp->ai_socktype,rp->ai_protocol);
+
+		if (*sock == -1) {
+			///TODO:Make this signal send out something more useful
+			BANG_send_signal(BANG_CONNECT_FAIL,addr);
+		} else if (connect(*sock,rp->ai_addr,rp->ai_addrlen) == 0) {
+			BANG_send_signal(BANG_PEER_CONNECTED,sock);
+			break;
+		}
+	}
+
+	freeaddrinfo(result);
 	return NULL;
 }

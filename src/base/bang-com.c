@@ -13,6 +13,13 @@
 #include<sys/socket.h>
 #include<unistd.h>
 
+/**
+ * \page Master-Slave Model
+ *
+ * A master thread should service requests from its slave-peer threads, and then request
+ * things of them.  (These requests would be made by the modules).
+ */
+
 ///Represents one of our peers.
 typedef struct {
 	pthread_t *thread;

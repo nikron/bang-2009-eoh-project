@@ -54,7 +54,6 @@ void* BANG_peer_thread(void *peer_id) {
 void BANG_peer_added(int signal,int sig_id,void* socket) {
 	BANG_add_peer(*((int*)socket));
 	///TODO: socket currently leaks, fix this.
-	BANG_acknowledge_signal(signal,sig_id);
 }
 
 void BANG_add_peer(int socket) {
@@ -68,7 +67,6 @@ void BANG_add_peer(int socket) {
 void BANG_peer_removed(int signal,int sig_id,void *peer_id) {
 	BANG_remove_peer(*((int*)peer_id));
 	///TODO: peer_id currently leaks, fix this.
-	BANG_acknowledge_signal(signal,sig_id);
 }
 
 void BANG_remove_peer(int peer_id) {

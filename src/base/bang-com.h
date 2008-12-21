@@ -46,7 +46,7 @@ int BANG_new_peer_id();
  * \brief Adds a request to the peer_id peer.
  */
 ///TODO: Figure out the structure for the request
-void BANG_add_request_to_peer(int peer_id,void *request); 
+void BANG_add_request_to_peer(int peer_id,void *request);
 
 /**
  * \param request The request to add.

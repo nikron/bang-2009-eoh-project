@@ -35,12 +35,10 @@
 
 void bind_suc(int signal, int sig_id, void *args) {
 	fprintf(stderr,"The bind signal has been caught.\n");
-	BANG_acknowledge_signal(signal,sig_id);
 }
 
 void client_con(int signal, int sig_id, void *args) {
 	fprintf(stderr,"A peer has connected.\n");
-	BANG_acknowledge_signal(signal,sig_id);
 }
 
 static gboolean delete_event(GtkWidget *widget, GdkEvent  *event, gpointer   data) {
@@ -55,12 +53,11 @@ static gboolean delete_event(GtkWidget *widget, GdkEvent  *event, gpointer   dat
 	return TRUE;
 }
 
-static void destroy( GtkWidget *widget, gpointer   data){
+static void destroy(GtkWidget *widget, gpointer data){
 	///TODO: make bang_close actually close rather than wait forever.
 	BANG_close();
 	gtk_main_quit();
 }
-
 
 int main(int argc, char **argv) {
 	GtkWidget *window;

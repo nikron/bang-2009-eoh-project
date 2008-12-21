@@ -34,16 +34,6 @@
 int BANG_install_sighandler(int signal, BANGSignalHandler handler);
 
 /**
- * \param signal The signal type to acknowledge.
- * \param sig_id The id of the signal
- *
- * \brief Acknowledges that the signal has been received, and that
- * the function is ready to take another.
- */
-void BANG_acknowledge_signal(int signal, int sig_id);
-
-
-/**
  * \param signal The signal number which to send.
  * \param args The arguements to the handlers which are called.
  *

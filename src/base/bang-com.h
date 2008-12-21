@@ -8,19 +8,11 @@
 #ifndef __BANG_COM_H
 #define __BANG_COM_H
 /**
- * \param args
- *
- * \brief The master of all the slaves threads.  It should make sure their request are fulfilled, and
- * send out requests using its slaves.
- */
-void* BANG_master_thread(void *args);
-
-/**
  * \param socket The connection with the peer.
  *
- * \brief A slave connection thread.  This thread symbolizes a connection with another peer.
+ * \brief A peer connection thread.
  */
-void* BANG_slave_thread(void *socket);
+void* BANG_peer_thread(void *socket);
 
 /**
  * \param socket The slave client socket.

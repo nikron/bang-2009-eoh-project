@@ -59,7 +59,7 @@ int BANG_install_sighandler(int signal, BANGSignalHandler *handler) {
 			if (cur->next == NULL) {
 				cur->next =(signal_node*) malloc(sizeof(signal_node));
 				cur->next->handler = handler;
-				sem_init(&(cur->next->signal_semaphore),0,0);
+				sem_init(&(cur->next->signal_semaphore),0,1);
 				cur->next->next = NULL;
 				return 0;
 			}
@@ -77,7 +77,13 @@ typedef struct {
 
 void* thread_send_signal(void *args) {
 	send_signal_args *sigargs = (send_signal_args*)args;
+#ifdef BDEBUG_1
+	fprintf(stderr,"Going to wait for handler %p with %p.\n",sigargs->signode->handler,&(sigargs->signode->signal_semaphore));
+#endif
 	sem_wait(&(sigargs->signode->signal_semaphore));
+#ifdef BDEBUG_1
+	fprintf(stderr,"Done waiting for handler %p.\n",sigargs->signode->handler);
+#endif
 	sigargs->signode->handler(sigargs->signal,sigargs->sig_id,args);
 	free(args);
 	return NULL;
@@ -100,7 +106,13 @@ int BANG_send_signal(int signal, void *args) {
 		sigargs->sig_id = (signal << (sizeof(int) * 8 / 2)) + i;
 		sigargs->handler_args = args;
 
+#ifdef BDEBUG_1
+		fprintf(stderr,"Sending out signal to handler %p.\n",cur->handler);
+#endif
 		if (pthread_create(&signal_threads,NULL,&thread_send_signal,(void*)sigargs) != 0) {
+#ifdef BDEBUG_1
+			fprintf(stderr,"Pthread create error.\n");
+#endif
 			return -1;
 		} else {
 			pthread_detach(signal_threads);

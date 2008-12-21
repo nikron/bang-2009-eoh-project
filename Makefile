@@ -7,10 +7,11 @@ EXENAME=bang-machine
 CC=gcc
 COPTS=-Wall -Werror -g -lpthread
 
-OBJS=bang-net.o bang-signals.o core.o main.o
+OBJS=bang-com.o bang-net.o bang-signals.o core.o main.o
 
 MAINSRC=src/app/main.c
 CORESRC=src/base/core.c
+COMSRC=src/base/bang-com.c
 NETWORKSRC=src/base/bang-net.c
 SIGNALSSRC=src/base/bang-signals.c
 
@@ -23,6 +24,9 @@ main.o: $(MAINSRC)
 	$(CC) -c $(COPTS) $^
 
 core.o: $(CORESRC)
+	$(CC) -c $(COPTS) $^
+
+bang-com.o: $(COMSRC)
 	$(CC) -c $(COPTS) $^
 
 bang-signals.o: $(SIGNALSSRC)

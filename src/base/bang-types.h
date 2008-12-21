@@ -10,7 +10,7 @@
 #define __BANG_TYPES_H
 
 /// A signal handler function, it receives the BANGSIGNUM, and arguments depending on the signal.
-typedef void BANGSignalHandler(int,int,void *args);
+typedef void BANGSignalHandler(int,int,void*);
 
 /// The number of signals that can be sent by the library.
 #define BANG_NUM_SIGS 5
@@ -21,7 +21,7 @@ enum BANG_signals {
 	BANG_BIND_FAIL,
 	BANG_GADDRINFO_FAIL,
 	BANG_LISTEN_FAIL,
-	BANG_CLIENT_CONNECTED
+	BANG_PEER_CONNECTED
 } BANG_signal;
 
 #endif

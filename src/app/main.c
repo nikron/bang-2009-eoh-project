@@ -39,13 +39,13 @@ void bind_suc(int signal, int sig_id, void *args) {
 }
 
 void client_con(int signal, int sig_id, void *args) {
-	fprintf(stderr,"A client has connected.\n");
+	fprintf(stderr,"A peer has connected.\n");
 	BANG_acknowledge_signal(signal,sig_id);
 }
 int main(int argc, char **argv) {
 	BANG_init(&argc,argv);
 	BANG_install_sighandler(BANG_BIND_SUC,&bind_suc);
-	BANG_install_sighandler(BANG_CLIENT_CONNECTED,&client_con);
+	BANG_install_sighandler(BANG_PEER_CONNECTED,&client_con);
 	while (1) {
 	}
 	BANG_close();

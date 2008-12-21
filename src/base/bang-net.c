@@ -11,6 +11,7 @@
 #include<stdlib.h>
 #include<errno.h>
 #include<netdb.h>
+#include<pthread.h>
 #include<string.h>
 #include<sys/types.h>
 #include<sys/socket.h>
@@ -64,11 +65,11 @@ void* BANG_server_thread(void *port) {
 	}
 
 	//accepted client
-	int accptsock;
+	int *accptsock;
 	while (1) {
-		accptsock = accept(sock,rp->ai_addr,&rp->ai_addrlen);
-		BANG_send_signal(BANG_CLIENT_CONNECTED,NULL);
-		shutdown(accptsock,SHUT_RDWR);
+		accptsock = (int*) calloc(1,sizeof(int));
+		*accptsock = accept(sock,rp->ai_addr,&rp->ai_addrlen);
+		BANG_send_signal(BANG_PEER_CONNECTED,accptsock);
 	}
 
 	freeaddrinfo(result);

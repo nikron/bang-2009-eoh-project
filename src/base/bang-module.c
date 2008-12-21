@@ -12,6 +12,15 @@
 #include<dlfcn.h>
 #include<stdlib.h>
 
+/**
+ * \page BANG Modules
+ *
+ * A bang module should be a C share object file.  Currently it must have
+ * the following symbol names defined:
+ *  -module_name: the name of the module
+ *  -BANG_module_init: initialize the module
+ *  -Bang_module_run: runs the module
+ */
 BANG_module* BANG_load_module(char *path) {
 	void *handle = dlopen(path,RTLD_NOW);
 	char *check_errors = dlerror();

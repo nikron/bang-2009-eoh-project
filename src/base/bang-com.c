@@ -53,7 +53,7 @@ void* BANG_peer_thread(void *peer_id) {
 
 ///TODO: Fix this implemntaiton so that it uses other the functions ie so that
 //it actually works
-void BANG_connection_signal_handler(int signal,int sig_id,void* socket) {
+void BANG_peer_signal_handler(int signal,int sig_id,void* socket) {
 	sem_wait(&peers_lock);
 	int peer_id = ++num_peers;
 	peers= (peer*) realloc(peers,(++num_peers) * sizeof(peer));

@@ -108,10 +108,17 @@ int BANG_send_signal(int signal, void *args) {
 #endif
 
 	signal_node *cur;
+	/*
 	pthread_t signal_threads;
 	send_signal_args *sigargs;
+	*/
+
 	int i = 0;
 	for (cur = signal_handlers[signal]; cur != NULL; cur = cur->next) {
+		cur->handler(signal,(signal << (sizeof(int) * 8 / 2)) + i,args);
+
+		/*
+		Signals really don't need to be atmoic.
 		sigargs = (send_signal_args*) calloc(1,sizeof(send_signal_args));
 		sigargs->signode = cur;
 		sigargs->signal = signal;
@@ -129,6 +136,7 @@ int BANG_send_signal(int signal, void *args) {
 		} else {
 			pthread_detach(signal_threads);
 		}
+		*/
 		++i;
 	}
 	return 0;
@@ -143,7 +151,7 @@ void BANG_acknowledge_signal(int signal, int sig_id) {
 #ifdef BDEBUG_1
 			fprintf(stderr,"Signal semaphore %d has been posted.\n",target);
 #endif
-			sem_post(&(cur->signal_semaphore));
+			//sem_post(&(cur->signal_semaphore));
 			break;
 		}
 		++i;

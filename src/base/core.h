@@ -27,14 +27,6 @@ void BANG_init(int *argc, char **argv);
 void BANG_close();
 
 /**
- * \param path File path to a module that can be loaded.
- *
- * \brief Loads a module.
- * TODO:  Put this into another file.
- */
-int BANG_load_module(char *path);
-
-/**
  * \brief Potientally finds peers using zero-conf.  This is a candidate to be moved to another file.
  */
 void* BANG_find_peers();

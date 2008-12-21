@@ -33,6 +33,8 @@ peer_slave *peer_slaves;
 
 void* BANG_master_thread(void *args) {
 	///TODO:Implement this whole thing..
+	while (1) {
+	}
 	return NULL;
 }
 

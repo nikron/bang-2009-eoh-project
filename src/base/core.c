@@ -19,7 +19,7 @@
 ///The port that will be passed to network thread.
 char *port = DEFAULT_PORT;
 
-///The network thread.
+///The server thread.
 pthread_t *netthread;
 
 void BANG_init(int *argc, char **argv) {

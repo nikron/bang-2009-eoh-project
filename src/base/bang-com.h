@@ -18,7 +18,7 @@ void* BANG_master_thread(void *args);
 /**
  * \param socket The connection with the peer.
  *
- * \brief A slave connection thread.  This thread symbolizes a connection with another peer. 
+ * \brief A slave connection thread.  This thread symbolizes a connection with another peer.
  */
 void* BANG_slave_thread(void *socket);
 

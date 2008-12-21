@@ -17,7 +17,7 @@
 
 ///The handlers for each signal is stored in linked list.
 struct _signal_node {
-	BANGSignalHandler *handler;
+	BANGSignalHandler handler;
 	sem_t signal_semaphore;
 	struct _signal_node *next;
 };
@@ -41,6 +41,7 @@ void BANG_sig_init() {
 
 void recursive_sig_free(signal_node *head) {
 	if (head->next != NULL) {
+		sem_destroy(&(head->signal_semaphore));
 		recursive_sig_free(head->next);
 	}
 	free(head);
@@ -56,7 +57,7 @@ void BANG_sig_close() {
 	signal_handlers = NULL;
 }
 
-int BANG_install_sighandler(int signal, BANGSignalHandler *handler) {
+int BANG_install_sighandler(int signal, BANGSignalHandler handler) {
 	if (signal_handlers[signal] == NULL) {
 		signal_handlers[signal] = (signal_node*) malloc(sizeof(signal_node));
 		signal_handlers[signal]->handler = handler;

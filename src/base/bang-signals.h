@@ -31,7 +31,7 @@
  * \brief Installs a signal such that whenever said signal gets generated
  *	handler gets called with the appropriate arguments.
  */
-int BANG_install_sighandler(int signal, BANGSignalHandler *handler);
+int BANG_install_sighandler(int signal, BANGSignalHandler handler);
 
 /**
  * \param signal The signal type to acknowledge.

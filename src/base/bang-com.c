@@ -47,25 +47,27 @@ peer *peers = NULL;
  */
 void* BANG_peer_thread(void *peer_id) {
 	while (1) {}
-	close(*((int*)socket));
 	return NULL;
 }
 
-///TODO: Fix this implemntaiton so that it uses other the functions ie so that
-//it actually works
-void BANG_peer_signal_handler(int signal,int sig_id,void* socket) {
-	sem_wait(&peers_lock);
-	int peer_id = ++num_peers;
-	peers= (peer*) realloc(peers,(++num_peers) * sizeof(peer));
-	sem_post(&peers_lock);
-
-	peers[peer_id].thread = (pthread_t*) calloc(1,sizeof(pthread_t));
-	peers[peer_id].peer_id = num_peers - 1;
-	peers[peer_id].requests = (BANG_requests*) calloc(1,sizeof(BANG_requests));
-	sem_init(&(peers[peer_id].requests->lock),0,1);
-	sem_init(&(peers[peer_id].requests->num_requests),0,0);
-	pthread_create(peers[peer_id].thread,NULL,&BANG_peer_thread,peers + peer_id);
+void BANG_peer_added(int signal,int sig_id,void* socket) {
+	BANG_add_peer(*((int*)socket));
+	///TODO: socket currently leaks, fix this.
 	BANG_acknowledge_signal(signal,sig_id);
+}
+
+void BANG_add_peer(int socket) {
+	///TODO: this should send out a peer_id in a non-leaking way.
+	BANG_send_signal(BANG_PEER_ADDED,NULL);
+}
+
+void BANG_peer_removed(int signal,int sig_id,void *peer_id) {
+	BANG_remove_peer(*((int*)peer_id));
+	///TODO: peer_id currently leaks, fix this.
+	BANG_acknowledge_signal(signal,sig_id);
+}
+
+void BANG_remove_peer(int peer_id) {
 }
 
 void BANG_com_init() {

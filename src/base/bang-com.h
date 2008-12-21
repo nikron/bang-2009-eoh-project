@@ -31,7 +31,7 @@ void BANG_peer_added(int signal,int sig_id,void* socket);
  *
  * \brief Catches BANG_PEER_TO_BE_REMOVED, and remove that peer, and emits
  */
-void BANG_peer_being_removed(int signal,int sig_id,void *peer_id);
+void BANG_peer_removed(int signal,int sig_id,void *peer_id);
 
 /**
  *
@@ -58,9 +58,17 @@ void BANG_add_request_all(void *request);
 /**
  * \param peer_id Peer to remove.
  *
- * \brief Removes peer_id, and it associated thread for existance, and emits
- * a BANG_PEER_REMOVED.  If you want the peer to removed in a diffrerent thread, send
+ * \brief Removes peer_id, and it associated threads from existence, and emits
+ * a BANG_PEER_REMOVED.  If you want the peer to removed in a different thread, send
  * out a BANG_PEER_TO_BE_REMOVED
  */
 void BANG_remove_peer(int peer_id);
+
+/**
+ * \param socket
+ *
+ * \brief Adds a peer with socket, creates its threads.  If you want other functions to
+ * be able to catch this, remember to use a signal.
+ */
+void BANG_add_peer(int socket);
 #endif

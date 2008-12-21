@@ -82,6 +82,16 @@ typedef struct {
 	void *handler_args;
 } send_signal_args;
 
+///This is so that each signal can be sent in its own thread, and the signal caller
+///does not have to wait for handler to end.
+void* threaded_send_signal(void *thread_args) {
+	send_signal_args *handler = (send_signal_args*) thread_args;
+	handler->signode->handler(handler->signal,handler->sig_id,handler->handler_args);
+	free(handler);
+	handler = NULL;
+	return NULL;
+}
+
 int BANG_send_signal(int signal, BANG_sigargs args) {
 #ifdef BDEBUG_1
 	fprintf(stderr,"Sending out the signal %d.\n",signal);
@@ -89,17 +99,26 @@ int BANG_send_signal(int signal, BANG_sigargs args) {
 #endif
 
 	signal_node *cur;
+	send_signal_args *thread_args;
+	pthread_t signal_thread;
 
 	int i = 0;
-	void *sigargs;
 	for (cur = signal_handlers[signal]; cur != NULL; cur = cur->next) {
+		thread_args = (send_signal_args*) calloc(1,sizeof(send_signal_args));
+
 		if (args.args == NULL) {
-			sigargs = NULL;
+			thread_args->handler_args = NULL;
 		} else {
-			sigargs = calloc(args.length,1);
-			memcpy(sigargs,args.args,args.length);
+			thread_args->handler_args = calloc(args.length,1);
+			memcpy(thread_args->handler_args,args.args,args.length);
 		}
-		cur->handler(signal,(signal << (sizeof(int) * 8 / 2)) + i,sigargs);
+
+		thread_args->signode = cur;
+		thread_args->signal = signal;
+		thread_args->sig_id = (signal << (sizeof(int) * 8 / 2));
+
+		pthread_create(&signal_thread,NULL,threaded_send_signal,(void*)thread_args);
+		pthread_detach(signal_thread);
 
 		++i;
 	}

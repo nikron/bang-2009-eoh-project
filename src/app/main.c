@@ -31,7 +31,7 @@
 #include"../base/bang-signals.h"
 #include"../base/bang-types.h"
 #include<stdio.h>
-#define BDEBUG_1
+#include<gtk/gtk.h>
 
 void bind_suc(int signal, int sig_id, void *args) {
 	fprintf(stderr,"The bind signal has been caught.\n");
@@ -42,12 +42,45 @@ void client_con(int signal, int sig_id, void *args) {
 	fprintf(stderr,"A peer has connected.\n");
 	BANG_acknowledge_signal(signal,sig_id);
 }
+
+static gboolean delete_event(GtkWidget *widget, GdkEvent  *event, gpointer   data) {
+	/* If you return FALSE in the "delete_event" signal handler,
+	 * GTK will emit the "destroy" signal. Returning TRUE means
+	 * you don't want the window to be destroyed.
+	 * This is useful for popping up 'are you sure you want to quit?'
+	 * type dialogs. */
+
+	/* Change TRUE to FALSE and the main window will be destroyed with
+	 * a "delete_event". */
+	return TRUE;
+}
+
+static void destroy( GtkWidget *widget, gpointer   data){
+	///TODO: make bang_close actually close rather than wait forever.
+	BANG_close();
+	gtk_main_quit();
+}
+
+
 int main(int argc, char **argv) {
+	GtkWidget *window;
+	///TODO: Add this statusbar, at let it display the bind state.
+	//GtkStatusbar *statusbar;
+
+	gtk_init(&argc,&argv);
+
+	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_window_set_title(GTK_WINDOW(window), "!bang Machine");
+
+	g_signal_connect(G_OBJECT(window), "delete_event", G_CALLBACK(delete_event), NULL);
+	g_signal_connect(G_OBJECT(window), "destroy", G_CALLBACK(destroy), NULL);
+
+	gtk_widget_show(window);
+
 	BANG_init(&argc,argv);
 	BANG_install_sighandler(BANG_BIND_SUC,&bind_suc);
 	BANG_install_sighandler(BANG_PEER_CONNECTED,&client_con);
-	while (1) {
-	}
-	BANG_close();
+
+	gtk_main();
 	return 0;
 }

@@ -22,6 +22,13 @@ typedef struct {
 int num_peers = 0;
 peer_slave *peer_slaves;
 
+///TODO: Question to be answered, how do these communicate?  BANG_signals?
+
+void* BANG_master_thread(void *args) {
+	///TODO:Implement this whole thing..
+	return NULL;
+}
+
 void* BANG_slave_thread(void *socket) {
 	///TODO: Implement this whole idea.. uhh any volunteers?
 	while (1) {}

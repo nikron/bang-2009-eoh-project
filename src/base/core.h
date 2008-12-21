@@ -30,6 +30,7 @@ void BANG_close();
  * \param path File path to a module that can be loaded.
  *
  * \brief Loads a module.
+ * TODO:  Put this into another file.
  */
 int BANG_load_module(char *path);
 

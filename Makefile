@@ -5,7 +5,7 @@
 EXENAME=bang-machine
 
 CC=gcc
-COPTS=-Wall -Werror -g -lpthread
+COPTS=-Wall -Werror -g `pkg-config --cflags --libs gtk+-2.0` -lpthread
 
 OBJS=bang-com.o bang-net.o bang-signals.o core.o main.o
 

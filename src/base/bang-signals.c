@@ -1,3 +1,12 @@
+/**
+ * \file bang-signals.c
+ * \author Nikhil Bysani
+ * \date December 20, 2009
+ *
+ * \brief  Implements the BANG signals.  Note: the signals will only be sent out one at a time, in
+ * no particular order.
+ *
+ */
 #include"bang-signals.h"
 #include"bang-types.h"
 #include<errno.h>
@@ -6,6 +15,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 
+///The handlers for each signal is stored in linked list.
 struct _signal_node {
 	BANGSignalHandler *handler;
 	sem_t signal_semaphore;
@@ -84,8 +94,9 @@ void* thread_send_signal(void *args) {
 #ifdef BDEBUG_1
 	fprintf(stderr,"Done waiting for handler %p.\n",sigargs->signode->handler);
 #endif
-	sigargs->signode->handler(sigargs->signal,sigargs->sig_id,args);
+	sigargs->signode->handler(sigargs->signal,sigargs->sig_id,sigargs->handler_args);
 	free(args);
+	args = NULL;
 	return NULL;
 }
 

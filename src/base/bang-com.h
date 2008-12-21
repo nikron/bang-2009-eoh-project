@@ -3,7 +3,7 @@
  * \author Nikhil Bysani
  * \date December 20, 2009
  *
- * \brief Communicates between peers using a master slave system.
+ * \brief Functions to communicate between peers using a master slave system.
  * */
 #ifndef __BANG_COM_H
 #define __BANG_COM_H

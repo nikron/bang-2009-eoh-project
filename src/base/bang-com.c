@@ -1,12 +1,39 @@
+/**
+ * \file bang-com.c
+ * \author Nikhil Bysani
+ * \date December 20, 2009
+ *
+ * \brief Implements "the master of slave peer threads" model.
+ * */
 #include"bang-com.h"
 #include"bang-signals.h"
 #include<pthread.h>
 #include<stdio.h>
 #include<stdlib.h>
 #include<sys/socket.h>
+#include<unistd.h>
+
+///Represents one of our peers.
+typedef struct {
+	pthread_t *thread;
+	int peer_id;
+} peer_slave;
+
+int num_peers = 0;
+peer_slave *peer_slaves;
+
+void* BANG_slave_thread(void *socket) {
+	///TODO: Implement this whole idea.. uhh any volunteers?
+	while (1) {}
+	close(*((int*)socket));
+	free(socket);
+	return NULL;
+}
 
 void BANG_connection_signal_handler(int signal,int sig_id,void* socket) {
-	///TODO: Create a slave thread
-	shutdown(*((int*)socket),SHUT_RDWR);
+	peer_slaves = (peer_slave*) realloc(peer_slaves,(++num_peers) * sizeof(peer_slave));
+	peer_slaves[num_peers - 1].thread = (pthread_t*) calloc(1,sizeof(pthread_t));
+	peer_slaves[num_peers - 1].peer_id = num_peers - 1;
+	pthread_create(peer_slaves[num_peers - 1].thread,NULL,&BANG_slave_thread,socket);
 	BANG_acknowledge_signal(signal,sig_id);
 }

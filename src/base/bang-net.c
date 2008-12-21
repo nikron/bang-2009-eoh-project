@@ -73,5 +73,6 @@ void* BANG_server_thread(void *port) {
 	}
 
 	freeaddrinfo(result);
+	close(sock);
 	return NULL;
 }

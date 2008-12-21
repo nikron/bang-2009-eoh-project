@@ -8,13 +8,15 @@
 #include"bang-net.h"
 #include"bang-signals.h"
 #include<stdio.h>
+#include<stdlib.h>
 #include<errno.h>
 #include<netdb.h>
 #include<string.h>
 #include<sys/types.h>
 #include<sys/socket.h>
+#include<unistd.h>
 
-void* BANG_network_thread(void *port) {
+void* BANG_server_thread(void *port) {
 	int sock; ///The main server socket
 	struct addrinfo hints;
 	struct addrinfo *result, *rp;

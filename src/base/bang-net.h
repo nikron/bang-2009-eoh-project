@@ -15,7 +15,32 @@
 /**
  * \param port The port that BANG should bind to.
  *
- * \brief A networking thread that allows others to connection to this machine.
+ * \brief A networking thread that allows others to connection to this machine.  It creates
+ * slave connection threads.
  */
-void* BANG_network_thread(void *port);
+void* BANG_server_thread(void *port);
+
+/**
+ * \param addr The address that the thread should connect to.
+ *
+ * \brief This thread connects to another bang-machine and creates a slave thread.
+ */
+void* BANG_connect_thread(void *addr);
+
+
+/**
+ * \param args
+ *
+ * \brief The master of all the slaves threads.  It should make sure their request are fulfilled, and
+ * send out requests using its slaves.
+ */
+void* BANG_master_thread(void *args);
+
+/**
+ * \param args
+ *
+ * \brief A slave connection thread.  This thread symbolizes a connection with another peer. 
+ */
+void* BANG_slave_thread(void *args);
+
 #endif

@@ -36,7 +36,7 @@ void BANG_init(int *argc, char **argv) {
 		}
 	}
 	netthread = (pthread_t*) malloc(sizeof(pthread_t));
-	pthread_create(netthread,NULL,BANG_network_thread,(void*)port);
+	pthread_create(netthread,NULL,BANG_server_thread,(void*)port);
 }
 
 void BANG_close() {

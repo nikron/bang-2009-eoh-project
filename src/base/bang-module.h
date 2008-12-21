@@ -15,4 +15,10 @@
  * \brief Loads a module.
  */
 int BANG_load_module(char *path);
+
+
+/**
+ * \brief Runs a module.
+ */
+void BANG_run_module(BANG_module *module);
 #endif

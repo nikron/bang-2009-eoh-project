@@ -15,7 +15,6 @@
 #include<stdio.h>
 #include<string.h>
 
-
 ///The port that will be passed to network thread.
 char *port = DEFAULT_PORT;
 

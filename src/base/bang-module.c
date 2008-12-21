@@ -53,3 +53,10 @@ BANG_module* BANG_load_module(char *path) {
 
 	return module;
 }
+
+
+void BANG_run_module(BANG_module *module) {
+	BANG_send_signal(BANG_RUNNING_MODULE,module);
+	module->module_init();
+	module->module_run();
+}

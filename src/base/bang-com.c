@@ -35,16 +35,14 @@ typedef struct {
 } peer;
 
 
-sem_t peer_change_lock;
+sem_t peers_read_lock;
+int readers = 0;
+sem_t peers_change_lock;
 ///The total number of peers we get through the length of the program.
 unsigned int peer_count = 0;
 
-///A lock on both peers and num_peers, when you want to mess with one, you should want to
-///mess with both.
-sem_t peers_lock;
-
 ///The current number of peers connected to the program.
-unsigned int num_peers = 0;
+unsigned int current_peers = 0;
 peer **peers = NULL;
 
 ///TODO: make this structure not take linear time when sending a request
@@ -58,12 +56,29 @@ int *keys = NULL;
  * incoming requests, and one to manage outgoing requests.
  */
 
+void peer_read_lock() {
+	sem_wait(&peers_read_lock);
+	if (readers == 0)
+		sem_wait(&peers_change_lock);
+	++readers;
+	sem_post(&peers_read_lock);
+}
+
+void peer_read_unlock() {
+	sem_wait(&peers_read_lock);
+	--readers;
+	if (readers == 0)
+		sem_post(&peers_change_lock);
+	sem_post(&peers_read_lock);
+}
+
 void* BANG_read_peer_thread(void *peer_info) {
 	while (1) {}
 	return NULL;
 }
 
 void* BANG_write_peer_thread(void *peer_info) {
+	while(1) {}
 	return NULL;
 }
 
@@ -73,7 +88,14 @@ void BANG_peer_added(int signal,int sig_id,void* socket) {
 }
 
 int BANG_get_key_with_peer_id(int peer_id) {
-	return 0;
+	int i = 0;
+	for (i = 0; i < current_peers; ++i) {
+		if (peers[i]->peer_id == peer_id) {
+			return i;
+		}
+	}
+
+	return -1;
 }
 
 BANG_requests* allocateBANGRequests() {
@@ -85,17 +107,16 @@ BANG_requests* allocateBANGRequests() {
 }
 
 void BANG_add_peer(int socket) {
-	sem_wait(&peer_change_lock);
-	sem_wait(&peers_lock);
+	sem_wait(&peers_change_lock);
 
-	++num_peers;
-	int current_key = num_peers - 1;
+	++current_peers;
+	int current_key = current_peers - 1;
 	int current_id = peer_count++;
 
-	keys = (int*) realloc(keys,num_peers * sizeof(int));
+	keys = (int*) realloc(keys,current_peers * sizeof(int));
 	keys[current_key] = current_id;
 
-	peers = (peer**) realloc(peers,num_peers * sizeof(peer*));
+	peers = (peer**) realloc(peers,current_peers * sizeof(peer*));
 	peers[current_key] = (peer*) calloc(1,sizeof(peer));
 	peers[current_key]->peer_id = current_id;
 	peers[current_key]->socket = socket;
@@ -104,8 +125,7 @@ void BANG_add_peer(int socket) {
 	pthread_create(&(peers[current_key]->receive_thread),NULL,BANG_read_peer_thread,peers[current_key]);
 	pthread_create(&(peers[current_key]->send_thread),NULL,BANG_write_peer_thread,peers[current_key]);
 
-	sem_post(&peers_lock);
-	sem_post(&peer_change_lock);
+	sem_post(&peers_change_lock);
 
 	//Send out that we successfully started the peer threads.
 	BANG_sigargs args;
@@ -124,11 +144,15 @@ void BANG_peer_removed(int signal,int sig_id,void *peer_id) {
 }
 
 void BANG_remove_peer(int peer_id) {
+	peer_read_lock();
+	int pos = BANG_get_key_with_peer_id(peer_id);
+	if (pos == -1) return;
+	peer_read_unlock();
 }
 
 void BANG_com_init() {
-	sem_init(&peer_change_lock,0,1);
-	sem_init(&peers_lock,0,1);
+	sem_init(&peers_change_lock,0,1);
+	sem_init(&peers_read_lock,0,1);
 }
 
 ///TODO: write this
@@ -140,11 +164,11 @@ void BANG_com_close() {
 	///Should it be sent here?
 	///Anyway, we'll just wait for each thread now
 	int i = 0;
-	for (i = 0; i < num_peers; ++i) {
+	for (i = 0; i < current_peers; ++i) {
 		pthread_join(peers[i]->receive_thread,NULL);
 		pthread_join(peers[i]->send_thread,NULL);
 		free_BANGRequests(peers[i]->requests);
 	}
-	sem_destroy(&peer_change_lock);
-	sem_destroy(&peers_lock);
+	sem_destroy(&peers_change_lock);
+	sem_destroy(&peers_change_lock);
 }

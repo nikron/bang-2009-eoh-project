@@ -19,11 +19,43 @@ typedef struct _request_node {
 	struct _request_node *next;
 } request_node;
 
+/**
+ * \return The head of the request node list starting at head.
+ *
+ * \brief Pops off the head of the linked list.
+ */
+request_node* pop_request(request_node **head);
+
+/**
+ * \param node appends node to list started at head
+ * \param head start of the request node list
+ *
+ * \brief Appends a node to the head linked list.
+ */
+void append_request(request_node **head, request_node *node);
+
+///Holds requests of the peers in a linked list.
 typedef struct {
+	///The lock on adding or removing requests.
 	sem_t lock;
+	///Signals the thread that a new requests has been added.
 	sem_t num_requests;
-	request_node *node;
+	///A linked list of requests
+	request_node *head;
 } BANG_requests;
+
+/*
+ * \param requests The requests to be freed.
+ *
+ * \brief Frees a BANGRequests struct.
+ */
+void free_BANGRequests(BANG_requests *requests);
+
+/*
+ * \return Returns an initialized BANGRequest pointer.
+ */
+BANG_requests* allocate_BANGRequests();
+
 
 ///Represents one of our peers.
 typedef struct {
@@ -49,13 +81,6 @@ peer **peers = NULL;
 ///to a specific peer
 int *keys = NULL;
 
-/**
- * \page Peer Implementation
- * Outgoing requests are serviced by iterating through the peers and sending out requests using the
- * peers list and corresponding structure.  There are two threads for each peer.  One to manage
- * incoming requests, and one to manage outgoing requests.
- */
-
 void peer_read_lock() {
 	sem_wait(&peers_read_lock);
 	if (readers == 0)
@@ -77,8 +102,40 @@ void* BANG_read_peer_thread(void *peer_info) {
 	return NULL;
 }
 
+request_node* pop_request(request_node  **head) {
+	request_node *temp = *head;
+	if (temp->next == NULL) {
+		*head = NULL;
+		return temp;
+
+	} else {
+		*head = temp->next;
+		temp->next = NULL;
+		return temp;
+	}
+}
+
+void append_request(request_node **head, request_node *node) {
+	if (*head == NULL) {
+		*head = node;
+	} else {
+		request_node *cur;
+		for (cur = *head; cur != NULL; cur = cur->next);
+		cur->next = node;
+	}
+}
+
 void* BANG_write_peer_thread(void *peer_info) {
-	while(1) {}
+	peer *self = (peer*) peer_info;
+	request_node *current;
+	while (1) {
+		sem_wait(&(self->requests->num_requests));
+		sem_wait(&(self->requests->lock));
+		current = pop_request(&(self->requests->head));
+		sem_post(&(self->requests->lock));
+
+		///TODO: act on current request
+	}
 	return NULL;
 }
 
@@ -98,9 +155,9 @@ int BANG_get_key_with_peer_id(int peer_id) {
 	return -1;
 }
 
-BANG_requests* allocateBANGRequests() {
+BANG_requests* allocate_BANGRequests() {
 	BANG_requests *requests = (BANG_requests*) calloc(1,sizeof(BANG_requests));
-	requests->node = NULL;
+	requests->head = NULL;
 	sem_init(&(requests->lock),0,1);
 	sem_init(&(requests->num_requests),0,0);
 	return requests;
@@ -120,7 +177,7 @@ void BANG_add_peer(int socket) {
 	peers[current_key] = (peer*) calloc(1,sizeof(peer));
 	peers[current_key]->peer_id = current_id;
 	peers[current_key]->socket = socket;
-	peers[current_key]->requests = allocateBANGRequests();
+	peers[current_key]->requests = allocate_BANGRequests();
 
 	pthread_create(&(peers[current_key]->receive_thread),NULL,BANG_read_peer_thread,peers[current_key]);
 	pthread_create(&(peers[current_key]->send_thread),NULL,BANG_write_peer_thread,peers[current_key]);
@@ -197,4 +254,8 @@ void BANG_com_close() {
 	sem_destroy(&peers_read_lock);
 	free(peers);
 	free(keys);
+	keys = NULL;
+	peers = NULL;
+	current_peers = 0;
+	peer_count = 0;
 }

@@ -8,6 +8,13 @@
 #ifndef __BANG_COM_H
 #define __BANG_COM_H
 /**
+ * \page Peer Implementation
+ * Outgoing requests are serviced by iterating through the peers and sending out requests using the
+ * peers list and corresponding structure.  There are two threads for each peer.  One to manage
+ * incoming requests, and one to manage outgoing requests.
+ */
+
+/**
  * \brief Intializes the bang-com part of BANG.
  */
 void BANG_com_init();

@@ -36,6 +36,14 @@ request_node* pop_request(request_node **head);
  */
 void append_request(request_node **head, request_node *node);
 
+/**
+ * \param head The head of the list to be freed.
+ *
+ * \brief Frees resources used by a request list started at
+ * head.
+ */
+void free_requestList(request_node *head);
+
 ///Holds requests of the peers in a linked list.
 typedef struct {
 	///The lock on adding or removing requests.
@@ -202,9 +210,16 @@ void BANG_peer_removed(int signal,int sig_id,void *peer_id) {
 	free(peer_id);
 }
 
+void free_requestList(request_node *head) {
+	if (head->next != NULL)
+		free_requestList(head->next);
+	free(head);
+}
 
-///TODO: write this
 void free_BANGRequests(BANG_requests *requests) {
+	sem_destroy(&(requests->lock));
+	sem_destroy(&(requests->num_requests));
+	free_requestList(requests->head);
 }
 
 void clear_peer(int pos) {

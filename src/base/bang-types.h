@@ -9,17 +9,21 @@
 #ifndef __BANG_TYPES_H
 #define __BANG_TYPES_H
 
+///The structure that represents a module for the program.
 typedef struct _BANG_module {
+	///The name of the module.
 	char *module_name;
+	///The module initialize method.
 	int (*module_init)();
+	///The module run method.
 	void (*module_run)();
 } BANG_module;
 
 ///This is the structure that is sent to each signal handler.
 typedef struct {
-	///Arguements you want to send to signal handlers.
+	///Arguments you want to send to signal handlers.
 	void *args;
-	///Lenth of the arguements.
+	///Lenth of the arguments.
 	int length;
 } BANG_sigargs;
 

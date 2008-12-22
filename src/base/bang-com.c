@@ -15,7 +15,9 @@
 #include<sys/socket.h>
 #include<unistd.h>
 
+///A linked list of requests of peer send threads.
 typedef struct _request_node {
+	///The next node in the list.
 	struct _request_node *next;
 } request_node;
 

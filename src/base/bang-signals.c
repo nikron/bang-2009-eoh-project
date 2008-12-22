@@ -75,10 +75,15 @@ int BANG_install_sighandler(int signal, BANGSignalHandler handler) {
 	return -1;
 }
 
+///Each signal must be sent in its own thread, so BANG_send_signal creates this structure
+///in order to pass arguements to a thread_send_signal pthread
 typedef struct {
+	///Node of the handler located in signal linked list.
 	signal_node *signode;
+	///The signal being sent to the handler.
 	int signal;
 	int sig_id;
+	///Arguements to the signal handler.
 	void *handler_args;
 } send_signal_args;
 

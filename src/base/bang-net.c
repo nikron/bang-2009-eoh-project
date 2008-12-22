@@ -19,7 +19,7 @@
 
 ///TODO:currently only one server can be run a time, good or bad?
 ///The server thread.
-pthread_t *server_thread;
+pthread_t *server_thread = NULL;
 char *port = DEFAULT_PORT;
 int sock = -1;
 
@@ -166,20 +166,33 @@ void* BANG_connect_thread(void *addr) {
 	return NULL;
 }
 
-
-void BANG_net_init(char *server_port,char start_server) {
+void BANG_server_start(char *server_port) {
 	if (server_port != NULL) {
 		port = server_port;
 	}
+	pthread_create(server_thread,NULL,BANG_server_thread,(void*)port);
+}
+
+
+void BANG_server_stop() {
+	pthread_cancel(*server_thread);
+	pthread_join(*server_thread,NULL);
+}
+
+
+void BANG_net_init(char *server_port ,char start_server) {
+	if (server_port != NULL) {
+		port = server_port;
+	}
+
+	server_thread = (pthread_t*) calloc(1,sizeof(pthread_t));
 	if (start_server) {
-		server_thread = (pthread_t*) malloc(sizeof(pthread_t));
-		pthread_create(server_thread,NULL,BANG_server_thread,(void*)port);
+		BANG_server_start(NULL);
 	}
 }
 
 void BANG_net_close() {
 	fprintf(stderr,"BANG net library closing.\n");
-	pthread_cancel(*server_thread);
-	pthread_join(*server_thread,NULL);
 	free(server_thread);
+	server_thread = NULL;
 }

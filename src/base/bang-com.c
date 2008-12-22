@@ -279,6 +279,7 @@ void BANG_com_close() {
 	///All of threads should of got hit by a global BANG_CLOSE_ALL
 	///Should it be sent here?
 	///Anyway, we'll just wait for each thread now
+	fprintf(stderr,"BANG com closing.\n");
 	int i = 0;
 	sem_wait(&peers_change_lock);
 	for (i = 0; i < current_peers; ++i) {

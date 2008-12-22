@@ -31,7 +31,7 @@ void BANG_init(int *argc, char **argv) {
 	}
 	BANG_sig_init();
 	BANG_com_init();
-	BANG_net_init(NULL,1);
+	BANG_net_init(NULL,0);
 }
 
 void BANG_close() {

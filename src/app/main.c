@@ -42,9 +42,13 @@ GtkWidget *file;
 GtkWidget *filemenu;
 GtkWidget *open_module;
 
-void bind_suc(int signal, int sig_id, void *args) {
+void bind_status(int signal, int sig_id, void *args) {
 	guint context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar),"right");
-	gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine has been bound.");
+	if (signal == BANG_BIND_SUC) {
+		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine has been bound.");
+	} else {
+		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine could not bind.");
+	}
 }
 
 void client_con(int signal, int sig_id, void *args) {
@@ -109,8 +113,10 @@ int main(int argc, char **argv) {
 	gtk_widget_show(window);
 
 	BANG_init(&argc,argv);
-	BANG_install_sighandler(BANG_BIND_SUC,&bind_suc);
+	BANG_install_sighandler(BANG_BIND_SUC,&bind_status);
+	BANG_install_sighandler(BANG_BIND_FAIL,&bind_status);
 	BANG_install_sighandler(BANG_PEER_CONNECTED,&client_con);
+	BANG_server_start(NULL);
 
 	gtk_main();
 	return 0;

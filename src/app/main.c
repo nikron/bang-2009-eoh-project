@@ -61,16 +61,17 @@ static gboolean delete_event(GtkWidget *widget, GdkEvent *event, gpointer data) 
 
 	/* Change TRUE to FALSE and the main window will be destroyed with
 	 * a "delete_event". */
-	return TRUE;
+	return FALSE;
 }
 
 static void destroy(GtkWidget *widget, gpointer data){
-	///TODO: make bang_close actually close rather than wait forever.
 	BANG_close();
 	gtk_main_quit();
 }
 
 int main(int argc, char **argv) {
+	///Note:  gtk expects that as a process, you do not need to free its memory
+	///So, it lets the operating system free all memory when the process closes.
 	gtk_init(&argc,&argv);
 
 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);

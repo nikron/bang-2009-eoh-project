@@ -39,6 +39,7 @@ void BANG_sig_init() {
 }
 
 void recursive_sig_free(signal_node *head) {
+	if (head == NULL) return;
 	if (head->next != NULL) {
 		recursive_sig_free(head->next);
 	}

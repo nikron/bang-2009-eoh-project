@@ -35,6 +35,7 @@ void BANG_init(int *argc, char **argv) {
 }
 
 void BANG_close() {
+	fprintf(stderr,"BANG library closing.\n");
 	BANG_com_close();
 	BANG_net_close();
 	BANG_sig_close();

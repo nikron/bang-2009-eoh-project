@@ -17,12 +17,18 @@
 #include<sys/socket.h>
 #include<unistd.h>
 
+///TODO:currently only one server can be run a time, good or bad?
 ///The server thread.
 pthread_t *server_thread;
 char *port = DEFAULT_PORT;
+int sock = -1;
+
+void free_server_addrinfo(void *result) {
+	freeaddrinfo((struct addrinfo*)result);
+}
 
 void* BANG_server_thread(void *port) {
-	int sock; ///The main server socket
+	//int sock; ///The main server socket
 	struct addrinfo hints;
 	struct addrinfo *result, *rp;
 	BANG_sigargs args;
@@ -45,6 +51,12 @@ void* BANG_server_thread(void *port) {
 		BANG_send_signal(BANG_GADDRINFO_FAIL,args);
 		return NULL;
 	}
+
+	///Let me rant about cleanup push.  First of all, it is a macro. WTF!?!?
+	///Second of all it must have a matching pair pthread_cleanup_pop
+	///Third of all, it means that anything between those two lines is
+	///in a big do{}while(0).  Seriously. god damn.
+	pthread_cleanup_push(free_server_addrinfo,result);
 
 	for (rp = result; rp != NULL; rp = rp->ai_next) {
 		sock = socket(rp->ai_family,rp->ai_socktype,rp->ai_protocol);
@@ -87,18 +99,19 @@ void* BANG_server_thread(void *port) {
 
 	//accepted client
 	args.length = sizeof(int);
+	int accptsock;
 	while (1) {
+		accptsock = accept(sock,rp->ai_addr,&rp->ai_addrlen);
 		args.args = calloc(1,sizeof(int));
-		*((int*)args.args) = accept(sock,rp->ai_addr,&rp->ai_addrlen);
+		*((int*)args.args) = accptsock;
 		BANG_send_signal(BANG_PEER_CONNECTED,args);
 		free(args.args);
 	}
 
-	freeaddrinfo(result);
+	pthread_cleanup_pop(1);
 	close(sock);
 	return NULL;
 }
-
 
 void* BANG_connect_thread(void *addr) {
 	struct addrinfo hints;
@@ -164,6 +177,8 @@ void BANG_net_init(char *server_port,char start_server) {
 }
 
 void BANG_net_close() {
+	fprintf(stderr,"BANG net library closing.\n");
+	pthread_cancel(*server_thread);
 	pthread_join(*server_thread,NULL);
 	free(server_thread);
 }

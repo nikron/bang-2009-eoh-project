@@ -13,11 +13,24 @@
 void BANG_com_init();
 
 /**
+ * \brief Closes down all the peer threads, destroy the semaphores, and
+ * frees all the used memory.
+ */
+void BANG_com_close();
+
+/**
  * \param self_info Information about the peer.
  *
  * \brief A peer connection thread.
  */
-void* BANG_peer_thread(void *self_info);
+void* BANG_read_peer_thread(void *self_info);
+
+/**
+ * \param self_info Information about the peer.
+ *
+ * \brief A peer connection thread.
+ */
+void* BANG_write_peer_thread(void *self_info);
 
 /**
  * \param socket The slave client socket.
@@ -71,4 +84,12 @@ void BANG_remove_peer(int peer_id);
  * be able to catch this, remember to use a signal.
  */
 void BANG_add_peer(int socket);
+
+
+/**
+ * \param peer_id The id of the peer thread.
+ *
+ * \brief Gets the current key of the peer id (the place it is located in the keys array).
+ */
+int BANG_get_key_with_peer_id(int peer_id);
 #endif

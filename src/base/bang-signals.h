@@ -15,9 +15,8 @@
  * from the network binding, a client connecting, or a module getting loaded.
  *
  * Usage is simple, install a BANGSignalHandler to catch a signal defined in
- * bang-types.h.  Once the handler is done doing its job, it should use
- * BANG_acknowledge_signal to be able to receive more signals.  If you are
- * writing a library function, use BANG_send_signal to send out a signal to
+ * bang-types.h.  If you are writing a library function, 
+ * use BANG_send_signal to send out a signal to
  * all of its handlers.  Be sure to document what its arguments are.
  */
 #ifndef __BANG_SIGNALS_H

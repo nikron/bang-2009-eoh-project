@@ -17,6 +17,10 @@
 #include<sys/socket.h>
 #include<unistd.h>
 
+///The server thread.
+pthread_t *server_thread;
+char *port = DEFAULT_PORT;
+
 void* BANG_server_thread(void *port) {
 	int sock; ///The main server socket
 	struct addrinfo hints;
@@ -146,4 +150,20 @@ void* BANG_connect_thread(void *addr) {
 
 	freeaddrinfo(result);
 	return NULL;
+}
+
+
+void BANG_net_init(char *server_port,char start_server) {
+	if (server_port != NULL) {
+		port = server_port;
+	}
+	if (start_server) {
+		server_thread = (pthread_t*) malloc(sizeof(pthread_t));
+		pthread_create(server_thread,NULL,BANG_server_thread,(void*)port);
+	}
+}
+
+void BANG_net_close() {
+	pthread_join(*server_thread,NULL);
+	free(server_thread);
 }

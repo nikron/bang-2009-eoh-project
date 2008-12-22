@@ -15,15 +15,9 @@
 #include<stdio.h>
 #include<string.h>
 
-///The port that will be passed to network thread.
-char *port = DEFAULT_PORT;
-
-///The server thread.
-pthread_t *netthread;
-
 void BANG_init(int *argc, char **argv) {
 	int i = 0;
-	BANG_sig_init();
+	char *port;
 	for (i = 0; i < *argc; ++i) {
 		if (!strcmp(argv[i],"--port")) {
 			if (i + 1 < *argc) {
@@ -35,16 +29,13 @@ void BANG_init(int *argc, char **argv) {
 			}
 		}
 	}
+	BANG_sig_init();
 	BANG_com_init();
-	BANG_install_sighandler(BANG_PEER_CONNECTED,&BANG_peer_added);
-	netthread = (pthread_t*) malloc(sizeof(pthread_t));
-	pthread_create(netthread,NULL,BANG_server_thread,(void*)port);
+	BANG_net_init(NULL,1);
 }
 
 void BANG_close() {
 	BANG_com_close();
-	///TODO:Shouldn't this be a called function? BANG_net_close()?
-	pthread_join(*netthread,NULL);
-	free(netthread);
+	BANG_net_close();
 	BANG_sig_close();
 }

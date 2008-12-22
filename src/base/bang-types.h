@@ -30,9 +30,6 @@ typedef struct {
 /// A signal handler function, it receives the BANGSIGNUM, and arguments depending on the signal.
 typedef void (*BANGSignalHandler)(int,int,void*);
 
-/// The number of signals that can be sent by the library.
-#define BANG_NUM_SIGS 7
-
 /// The signals that can be sent by library.
 enum BANG_signals {
 	BANG_BIND_SUC = 0,
@@ -46,7 +43,10 @@ enum BANG_signals {
 	BANG_PEER_REMOVED,
 	BANG_MODULE_ERROR,
 	BANG_RUNNING_MODULE,
-	BANG_CLOSE_ALL
+	BANG_CLOSE_ALL,
+
+	///The number of signals.  All new signals should be above this line.
+	BANG_NUM_SIGS
 } BANG_signal;
 
 #endif

@@ -52,7 +52,7 @@ void client_con(int signal, int sig_id, void *args) {
 	free(args);
 }
 
-static gboolean delete_event(GtkWidget *widget, GdkEvent  *event, gpointer   data) {
+static gboolean delete_event(GtkWidget *widget, GdkEvent *event, gpointer data) {
 	/* If you return FALSE in the "delete_event" signal handler,
 	 * GTK will emit the "destroy" signal. Returning TRUE means
 	 * you don't want the window to be destroyed.
@@ -92,8 +92,8 @@ int main(int argc, char **argv) {
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(file),filemenu);
 	gtk_menu_append(menubar,file);
 
-	gtk_box_pack_start(GTK_BOX(vbox),menubar,TRUE,FALSE,0);
-	gtk_box_pack_end(GTK_BOX(vbox),statusbar,TRUE,FALSE,0);
+	gtk_box_pack_start(GTK_BOX(vbox),menubar,FALSE,FALSE,0);
+	gtk_box_pack_end(GTK_BOX(vbox),statusbar,FALSE,FALSE,0);
 
 	gtk_container_add(GTK_CONTAINER(window),vbox);
 

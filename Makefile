@@ -42,7 +42,7 @@ bang-net.o: $(NETWORKSRC)
 all: $(EXENAME) doc
 
 doc:
-	cd doc && doxygen Doxygen;
+	cd doc && doxygen Doxygen
 
 clean:
 	rm -f $(EXENAME)

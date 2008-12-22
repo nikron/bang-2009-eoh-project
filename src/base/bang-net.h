@@ -26,4 +26,17 @@ void* BANG_server_thread(void *port);
  * \brief This thread connects to another bang-machine and creates a slave thread.
  */
 void* BANG_connect_thread(void *addr);
+
+/**
+ * \brief Closes and frees the net part of the library.
+ */
+void BANG_net_close();
+
+/**
+ * \param port The port the server should start at.
+ * \param start_server If true, the server thread is started on init.
+ *
+ * \brief Initalizes the net part of the library.
+ */
+void BANG_net_init(char *port,char start_server);
 #endif

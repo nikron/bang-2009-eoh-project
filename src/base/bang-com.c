@@ -149,7 +149,7 @@ void* BANG_write_peer_thread(void *peer_info) {
 	return NULL;
 }
 
-void BANG_peer_added(int signal,int sig_id,void* socket) {
+void BANG_peer_added(int signal,int sig_id,void *socket) {
 	BANG_add_peer(*((int*)socket));
 	free(socket);
 }
@@ -254,6 +254,7 @@ void BANG_remove_peer(int peer_id) {
 }
 
 void BANG_com_init() {
+	BANG_install_sighandler(BANG_PEER_CONNECTED,&BANG_peer_added);
 	sem_init(&peers_change_lock,0,1);
 	sem_init(&peers_read_lock,0,1);
 }

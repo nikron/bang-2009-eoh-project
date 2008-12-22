@@ -37,6 +37,10 @@
 GtkWidget *window;
 GtkWidget *vbox;
 GtkWidget *statusbar;
+GtkWidget *menubar;
+GtkWidget *file;
+GtkWidget *filemenu;
+GtkWidget *open_module;
 
 void bind_suc(int signal, int sig_id, void *args) {
 	guint context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar),"right");
@@ -78,11 +82,27 @@ int main(int argc, char **argv) {
 
 	statusbar = gtk_statusbar_new();
 
+	menubar = gtk_menu_bar_new();
+
+	file = gtk_menu_item_new_with_label("File");
+	filemenu = gtk_menu_new();
+	open_module = gtk_menu_item_new_with_label("Open Module");
+
+	gtk_menu_shell_append(GTK_MENU_SHELL(filemenu),open_module);
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(file),filemenu);
+	gtk_menu_append(menubar,file);
+
+	gtk_box_pack_start(GTK_BOX(vbox),menubar,TRUE,FALSE,0);
 	gtk_box_pack_end(GTK_BOX(vbox),statusbar,TRUE,FALSE,0);
+
 	gtk_container_add(GTK_CONTAINER(window),vbox);
 
 	gtk_window_maximize(GTK_WINDOW(window));
 
+	gtk_widget_show(open_module);
+	gtk_widget_show(filemenu);
+	gtk_widget_show(file);
+	gtk_widget_show(menubar);
 	gtk_widget_show(statusbar);
 	gtk_widget_show(vbox);
 	gtk_widget_show(window);

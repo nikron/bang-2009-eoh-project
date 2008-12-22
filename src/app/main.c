@@ -31,14 +31,21 @@
 #include"../base/bang-signals.h"
 #include"../base/bang-types.h"
 #include<stdio.h>
+#include<stdlib.h>
 #include<gtk/gtk.h>
 
+GtkWidget *window;
+GtkWidget *vbox;
+GtkWidget *statusbar;
+
 void bind_suc(int signal, int sig_id, void *args) {
-	fprintf(stderr,"The bind signal has been caught.\n");
+	guint context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar),"right");
+	gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine has been bound.");
 }
 
 void client_con(int signal, int sig_id, void *args) {
 	fprintf(stderr,"A peer has connected.\n");
+	free(args);
 }
 
 static gboolean delete_event(GtkWidget *widget, GdkEvent  *event, gpointer   data) {
@@ -60,18 +67,24 @@ static void destroy(GtkWidget *widget, gpointer data){
 }
 
 int main(int argc, char **argv) {
-	GtkWidget *window;
-	///TODO: Add this statusbar, at let it display the bind state.
-	//GtkStatusbar *statusbar;
-
 	gtk_init(&argc,&argv);
 
 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_title(GTK_WINDOW(window), "!bang Machine");
-
 	g_signal_connect(G_OBJECT(window), "delete_event", G_CALLBACK(delete_event), NULL);
 	g_signal_connect(G_OBJECT(window), "destroy", G_CALLBACK(destroy), NULL);
 
+	vbox = gtk_vbox_new(FALSE,0);
+
+	statusbar = gtk_statusbar_new();
+
+	gtk_box_pack_end(GTK_BOX(vbox),statusbar,TRUE,FALSE,0);
+	gtk_container_add(GTK_CONTAINER(window),vbox);
+
+	gtk_window_maximize(GTK_WINDOW(window));
+
+	gtk_widget_show(statusbar);
+	gtk_widget_show(vbox);
 	gtk_widget_show(window);
 
 	BANG_init(&argc,argv);

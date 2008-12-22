@@ -143,11 +143,40 @@ void BANG_peer_removed(int signal,int sig_id,void *peer_id) {
 	free(peer_id);
 }
 
+
+///TODO: write this
+void free_BANGRequests(BANG_requests *requests) {
+}
+
+void clear_peer(int pos) {
+	///This should quickly make the two threads stop.
+	///TODO:Send a close request to the send thread.
+	close(peers[pos]->socket);
+	pthread_join(peers[pos]->receive_thread,NULL);
+	pthread_join(peers[pos]->send_thread,NULL);
+	free_BANGRequests(peers[pos]->requests);
+	free(peers[pos]);
+}
+
 void BANG_remove_peer(int peer_id) {
-	peer_read_lock();
+	sem_wait(&peers_change_lock);
+
 	int pos = BANG_get_key_with_peer_id(peer_id);
 	if (pos == -1) return;
-	peer_read_unlock();
+
+	clear_peer(pos);
+
+	for (;pos < current_peers - 1; ++pos) {
+		peers[pos] = peers[pos + 1];
+		keys[pos] = keys[pos + 1];
+	}
+
+	--current_peers;
+
+	peers = (peer**) realloc(peers,current_peers * sizeof(peer*));
+	keys = (int*) realloc(keys,current_peers * sizeof(int));
+
+	sem_post(&peers_change_lock);
 }
 
 void BANG_com_init() {
@@ -155,20 +184,17 @@ void BANG_com_init() {
 	sem_init(&peers_read_lock,0,1);
 }
 
-///TODO: write this
-void free_BANGRequests(BANG_requests *requests) {
-}
-
 void BANG_com_close() {
 	///All of threads should of got hit by a global BANG_CLOSE_ALL
 	///Should it be sent here?
 	///Anyway, we'll just wait for each thread now
 	int i = 0;
+	sem_wait(&peers_change_lock);
 	for (i = 0; i < current_peers; ++i) {
-		pthread_join(peers[i]->receive_thread,NULL);
-		pthread_join(peers[i]->send_thread,NULL);
-		free_BANGRequests(peers[i]->requests);
+		clear_peer(i);
 	}
 	sem_destroy(&peers_change_lock);
-	sem_destroy(&peers_change_lock);
+	sem_destroy(&peers_read_lock);
+	free(peers);
+	free(keys);
 }

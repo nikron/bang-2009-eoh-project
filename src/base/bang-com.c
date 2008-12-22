@@ -77,14 +77,25 @@ typedef struct {
 } peer;
 
 
+///The peers structure is a reader-writer structure.  That is, mulitple threads
+///can be reading data from the structure, but only one process can change the
+///size at once
+
+///This is a lock on readers
 sem_t peers_read_lock;
+
+///The number of threads currently reading for the peers structure
 int readers = 0;
+
+///A lock on changing the size of peers
 sem_t peers_change_lock;
+
 ///The total number of peers we get through the length of the program.
 unsigned int peer_count = 0;
 
 ///The current number of peers connected to the program.
 unsigned int current_peers = 0;
+///Information and threads for each peer connected to the program
 peer **peers = NULL;
 
 ///TODO: make this structure not take linear time when sending a request
@@ -107,9 +118,15 @@ void peer_read_unlock() {
 	sem_post(&peers_read_lock);
 }
 
-void* BANG_read_peer_thread(void *peer_info) {
-	while (1) {}
-	return NULL;
+void clear_peer(int pos) {
+	///This should quickly make the two threads stop.
+	pthread_cancel(peers[pos]->receive_thread);
+	pthread_cancel(peers[pos]->send_thread);
+	pthread_join(peers[pos]->receive_thread,NULL);
+	pthread_join(peers[pos]->send_thread,NULL);
+	free_BANGRequests(peers[pos]->requests);
+	close(peers[pos]->socket);
+	free(peers[pos]);
 }
 
 request_node* pop_request(request_node  **head) {
@@ -135,6 +152,27 @@ void append_request(request_node **head, request_node *node) {
 	}
 }
 
+BANG_requests* allocate_BANGRequests() {
+	BANG_requests *requests = (BANG_requests*) calloc(1,sizeof(BANG_requests));
+	requests->head = NULL;
+	sem_init(&(requests->lock),0,1);
+	sem_init(&(requests->num_requests),0,0);
+	return requests;
+}
+
+void free_BANGRequests(BANG_requests *requests) {
+	sem_destroy(&(requests->lock));
+	sem_destroy(&(requests->num_requests));
+	free_requestList(requests->head);
+}
+
+///peer_info should be cleared by whoever by clear_peer
+void* BANG_read_peer_thread(void *peer_info) {
+	while (1) {}
+	return NULL;
+}
+
+///peer_info should be cleared by whoever by clear_peer
 void* BANG_write_peer_thread(void *peer_info) {
 	peer *self = (peer*) peer_info;
 	request_node *current;
@@ -163,14 +201,6 @@ int BANG_get_key_with_peer_id(int peer_id) {
 	}
 
 	return -1;
-}
-
-BANG_requests* allocate_BANGRequests() {
-	BANG_requests *requests = (BANG_requests*) calloc(1,sizeof(BANG_requests));
-	requests->head = NULL;
-	sem_init(&(requests->lock),0,1);
-	sem_init(&(requests->num_requests),0,0);
-	return requests;
 }
 
 void BANG_add_peer(int socket) {
@@ -216,23 +246,9 @@ void free_requestList(request_node *head) {
 	free(head);
 }
 
-void free_BANGRequests(BANG_requests *requests) {
-	sem_destroy(&(requests->lock));
-	sem_destroy(&(requests->num_requests));
-	free_requestList(requests->head);
-}
-
-void clear_peer(int pos) {
-	///This should quickly make the two threads stop.
-	///TODO:Send a close request to the send thread.
-	close(peers[pos]->socket);
-	pthread_join(peers[pos]->receive_thread,NULL);
-	pthread_join(peers[pos]->send_thread,NULL);
-	free_BANGRequests(peers[pos]->requests);
-	free(peers[pos]);
-}
-
 void BANG_remove_peer(int peer_id) {
+	///this lock is needed when trying to change the
+	///peers structure
 	sem_wait(&peers_change_lock);
 
 	int pos = BANG_get_key_with_peer_id(peer_id);

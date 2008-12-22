@@ -155,6 +155,7 @@ void* BANG_connect_thread(void *addr) {
 
 		} else if (connect(*((int*)args.args),rp->ai_addr,rp->ai_addrlen) == 0) {
 
+			///Sends out a signal of the peer with its socket.
 			BANG_send_signal(BANG_PEER_CONNECTED,args);
 			free(args.args);
 			break;

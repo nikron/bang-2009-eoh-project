@@ -43,16 +43,21 @@ GtkWidget *filemenu;
 GtkWidget *open_module;
 
 void bind_status(int signal, int sig_id, void *args) {
-	guint context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar),"right");
+	guint context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar),"bind_status");
+	gtk_statusbar_pop(GTK_STATUSBAR(statusbar),context_id);
 	if (signal == BANG_BIND_SUC) {
 		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine has been bound.");
 	} else {
 		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine could not bind.");
 	}
+	free(args);
 }
 
 void client_con(int signal, int sig_id, void *args) {
 	fprintf(stderr,"A peer has connected.\n");
+	guint context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar),"peer_status");
+	gtk_statusbar_pop(GTK_STATUSBAR(statusbar),context_id);
+	gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"A peer has connected.");
 	free(args);
 }
 

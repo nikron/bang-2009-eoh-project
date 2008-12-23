@@ -177,6 +177,7 @@ void BANG_server_start(char *server_port) {
 void BANG_server_stop() {
 	pthread_cancel(*server_thread);
 	pthread_join(*server_thread,NULL);
+	close(sock);
 }
 
 
@@ -192,7 +193,8 @@ void BANG_net_init(char *server_port ,char start_server) {
 }
 
 void BANG_net_close() {
-	fprintf(stderr,"BANG net library closing.\n");
+	fprintf(stderr,"BANG net closing.\n");
+	BANG_server_stop();
 	free(server_thread);
 	server_thread = NULL;
 }

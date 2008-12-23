@@ -14,20 +14,6 @@
 #include<stdlib.h>
 #include<sys/socket.h>
 #include<unistd.h>
-
-///A linked list of requests of peer send threads.
-typedef struct _request_node {
-	///The next node in the list.
-	struct _request_node *next;
-} request_node;
-
-/**
- * \return The head of the request node list starting at head.
- *
- * \brief Pops off the head of the linked list.
- */
-request_node* pop_request(request_node **head);
-
 /**
  * \param node appends node to list started at head
  * \param head start of the request node list
@@ -44,16 +30,6 @@ void append_request(request_node **head, request_node *node);
  */
 void free_requestList(request_node *head);
 
-///Holds requests of the peers in a linked list.
-typedef struct {
-	///The lock on adding or removing requests.
-	sem_t lock;
-	///Signals the thread that a new requests has been added.
-	sem_t num_requests;
-	///A linked list of requests
-	request_node *head;
-} BANG_requests;
-
 /*
  * \param requests The requests to be freed.
  *
@@ -65,16 +41,6 @@ void free_BANGRequests(BANG_requests *requests);
  * \return Returns an initialized BANGRequest pointer.
  */
 BANG_requests* allocate_BANGRequests();
-
-
-///Represents one of our peers.
-typedef struct {
-	pthread_t receive_thread;
-	pthread_t send_thread;
-	int peer_id;
-	int socket;
-	BANG_requests *requests;
-} peer;
 
 
 ///The peers structure is a reader-writer structure.  That is, mulitple threads
@@ -122,7 +88,8 @@ void clear_peer(int pos) {
 	///This should quickly make the two threads stop.
 	pthread_cancel(peers[pos]->receive_thread);
 	pthread_cancel(peers[pos]->send_thread);
-	pthread_join(peers[pos]->receive_thread,NULL);
+	///TODO: find a way to stop this thread.
+	//pthread_join(peers[pos]->receive_thread,NULL);
 	pthread_join(peers[pos]->send_thread,NULL);
 	free_BANGRequests(peers[pos]->requests);
 	close(peers[pos]->socket);
@@ -167,14 +134,15 @@ void free_BANGRequests(BANG_requests *requests) {
 }
 
 ///peer_info should be cleared by whoever by clear_peer
-void* BANG_read_peer_thread(void *peer_info) {
+void* BANG_read_peer_thread(void *self_info) {
+	//peer *self = (peer*)self_info;
 	while (1) {}
 	return NULL;
 }
 
 ///peer_info should be cleared by whoever by clear_peer
-void* BANG_write_peer_thread(void *peer_info) {
-	peer *self = (peer*) peer_info;
+void* BANG_write_peer_thread(void *self_info) {
+	peer *self = (peer*)self_info;
 	request_node *current;
 	while (1) {
 		sem_wait(&(self->requests->num_requests));
@@ -219,6 +187,7 @@ void BANG_add_peer(int socket) {
 	peers[current_key]->socket = socket;
 	peers[current_key]->requests = allocate_BANGRequests();
 
+	fprintf(stderr,"Threads being started at %d",current_key);
 	pthread_create(&(peers[current_key]->receive_thread),NULL,BANG_read_peer_thread,peers[current_key]);
 	pthread_create(&(peers[current_key]->send_thread),NULL,BANG_write_peer_thread,peers[current_key]);
 
@@ -241,6 +210,7 @@ void BANG_peer_removed(int signal,int sig_id,void *peer_id) {
 }
 
 void free_requestList(request_node *head) {
+	if (head == NULL) return;
 	if (head->next != NULL)
 		free_requestList(head->next);
 	free(head);
@@ -283,6 +253,7 @@ void BANG_com_close() {
 	int i = 0;
 	sem_wait(&peers_change_lock);
 	for (i = 0; i < current_peers; ++i) {
+		fprintf(stderr,"Clearing a peer at %d.\n",i);
 		clear_peer(i);
 	}
 	sem_destroy(&peers_change_lock);

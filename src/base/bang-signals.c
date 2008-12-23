@@ -24,6 +24,20 @@ struct _signal_node {
 typedef struct _signal_node signal_node;
 
 /**
+ * \param head The head of the signal_node list.
+ *
+ * \brief Frees a signal node linked list.
+ */
+void recursive_sig_free(signal_node *head) {
+	if (head == NULL) return;
+	if (head->next != NULL) {
+		recursive_sig_free(head->next);
+	}
+	free(head);
+	head = NULL;
+}
+
+/**
  * \brief The handlers for each of the signals is kept in a linked list stored
  *  in an array which is index by the signal's number
  */
@@ -38,16 +52,8 @@ void BANG_sig_init() {
 	}
 }
 
-void recursive_sig_free(signal_node *head) {
-	if (head == NULL) return;
-	if (head->next != NULL) {
-		recursive_sig_free(head->next);
-	}
-	free(head);
-	head = NULL;
-}
-
 void BANG_sig_close() {
+	fprintf(stderr,"BANG sig closing.\n");
 	int i;
 	for (i = 0; i < BANG_NUM_SIGS; ++i) {
 		recursive_sig_free(signal_handlers[i]);

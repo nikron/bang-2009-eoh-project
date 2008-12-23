@@ -41,25 +41,39 @@ GtkWidget *menubar;
 GtkWidget *file;
 GtkWidget *filemenu;
 GtkWidget *open_module;
+GtkWidget *server;
+GtkWidget *servermenu;
+///Start Stop Server
+GtkWidget *ssserver;
 
 void bind_status(int signal, int sig_id, void *args) {
-	guint context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar),"bind_status");
-	gtk_statusbar_pop(GTK_STATUSBAR(statusbar),context_id);
+	//guint context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar),"bind_status");
+	//gtk_statusbar_pop(GTK_STATUSBAR(statusbar),context_id);
 	if (signal == BANG_BIND_SUC) {
-		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine has been bound.");
+		//gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine has been bound.");
 	} else {
-		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine could not bind.");
+		//gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine could not bind.");
 	}
 	free(args);
 }
 
 void client_con(int signal, int sig_id, void *args) {
-	fprintf(stderr,"A peer has connected.\n");
 	guint context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar),"peer_status");
 	gtk_statusbar_pop(GTK_STATUSBAR(statusbar),context_id);
 	gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"A peer has connected.");
 	free(args);
 }
+
+static void change_server_status(GtkWidget *widget, gpointer data) {
+	if(BANG_is_server_running()) {
+		BANG_server_stop();
+		gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(widget))),"Start Server");
+	} else {
+		BANG_server_start(NULL);
+		gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(widget))),"Stop Server");
+	}
+}
+
 
 static gboolean delete_event(GtkWidget *widget, GdkEvent *event, gpointer data) {
 	/* If you return FALSE in the "delete_event" signal handler,
@@ -73,12 +87,18 @@ static gboolean delete_event(GtkWidget *widget, GdkEvent *event, gpointer data) 
 	return FALSE;
 }
 
-static void destroy(GtkWidget *widget, gpointer data){
+static void destroy(GtkWidget *widget, gpointer data) {
 	BANG_close();
 	gtk_main_quit();
 }
 
 int main(int argc, char **argv) {
+
+	BANG_init(&argc,argv);
+	BANG_install_sighandler(BANG_BIND_SUC,&bind_status);
+	BANG_install_sighandler(BANG_BIND_FAIL,&bind_status);
+	BANG_install_sighandler(BANG_PEER_CONNECTED,&client_con);
+
 	///Note:  gtk expects that as a process, you do not need to free its memory
 	///So, it lets the operating system free all memory when the process closes.
 	gtk_init(&argc,&argv);
@@ -100,7 +120,17 @@ int main(int argc, char **argv) {
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(filemenu),open_module);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(file),filemenu);
+
+	server = gtk_menu_item_new_with_label("Server");
+	servermenu = gtk_menu_new();
+	ssserver = gtk_menu_item_new_with_label("Start Server");
+	g_signal_connect(G_OBJECT(ssserver), "activate", G_CALLBACK(change_server_status), NULL);
+
+	gtk_menu_shell_append(GTK_MENU_SHELL(servermenu),ssserver);
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(server),servermenu);
+
 	gtk_menu_append(menubar,file);
+	gtk_menu_append(menubar,server);
 
 	gtk_box_pack_start(GTK_BOX(vbox),menubar,FALSE,FALSE,0);
 	gtk_box_pack_end(GTK_BOX(vbox),statusbar,FALSE,FALSE,0);
@@ -109,6 +139,9 @@ int main(int argc, char **argv) {
 
 	gtk_window_maximize(GTK_WINDOW(window));
 
+	gtk_widget_show(ssserver);
+	gtk_widget_show(servermenu);
+	gtk_widget_show(server);
 	gtk_widget_show(open_module);
 	gtk_widget_show(filemenu);
 	gtk_widget_show(file);
@@ -116,12 +149,6 @@ int main(int argc, char **argv) {
 	gtk_widget_show(statusbar);
 	gtk_widget_show(vbox);
 	gtk_widget_show(window);
-
-	BANG_init(&argc,argv);
-	BANG_install_sighandler(BANG_BIND_SUC,&bind_status);
-	BANG_install_sighandler(BANG_BIND_FAIL,&bind_status);
-	BANG_install_sighandler(BANG_PEER_CONNECTED,&client_con);
-	BANG_server_start(NULL);
 
 	gtk_main();
 	return 0;

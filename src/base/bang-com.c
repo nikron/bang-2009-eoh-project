@@ -4,7 +4,8 @@
  * \date December 20, 2009
  *
  * \brief Implements "the master of slave peer threads" model.
- * */
+ * 
+ */
 #include"bang-com.h"
 #include"bang-signals.h"
 #include"bang-types.h"
@@ -187,7 +188,9 @@ void BANG_add_peer(int socket) {
 	peers[current_key]->socket = socket;
 	peers[current_key]->requests = allocate_BANGRequests();
 
-	fprintf(stderr,"Threads being started at %d",current_key);
+#ifdef BDEBUG_1
+	fprintf(stderr,"Threads being started at %d\n",current_key);
+#endif
 	pthread_create(&(peers[current_key]->receive_thread),NULL,BANG_read_peer_thread,peers[current_key]);
 	pthread_create(&(peers[current_key]->send_thread),NULL,BANG_write_peer_thread,peers[current_key]);
 

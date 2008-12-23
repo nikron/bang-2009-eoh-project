@@ -13,6 +13,7 @@
 #include<netdb.h>
 #include<pthread.h>
 #include<string.h>
+#include<semaphore.h>
 #include<sys/types.h>
 #include<sys/socket.h>
 #include<unistd.h>
@@ -22,12 +23,13 @@
 pthread_t *server_thread = NULL;
 char *port = DEFAULT_PORT;
 int sock = -1;
+sem_t server_status_lock;
 
 void free_server_addrinfo(void *result) {
 	freeaddrinfo((struct addrinfo*)result);
 }
 
-void* BANG_server_thread(void *port) {
+void* BANG_server_thread(void *not_used) {
 	//int sock; ///The main server socket
 	struct addrinfo hints;
 	struct addrinfo *result, *rp;
@@ -45,7 +47,7 @@ void* BANG_server_thread(void *port) {
 	hints.ai_next = NULL;
 
 	//check to see if we got available addresses
-	if (getaddrinfo(NULL,(char*)port,&hints,&result) != 0) {
+	if (getaddrinfo(NULL,port,&hints,&result) != 0) {
 		args.args = NULL;
 		args.length = 0;
 		BANG_send_signal(BANG_GADDRINFO_FAIL,args);
@@ -77,7 +79,6 @@ void* BANG_server_thread(void *port) {
 
 	//check to see if we could bind to a socket
 	if (rp == NULL) {
-		freeaddrinfo(result);
 		close(sock);
 		args.args = NULL;
 		args.length = 0;
@@ -88,7 +89,6 @@ void* BANG_server_thread(void *port) {
 
 	//mark the socket for listening
 	if (listen(sock,MAX_BACKLOG) != 0) {
-		freeaddrinfo(result);
 		close(sock);
 		args.args = NULL;
 		args.length = 0;
@@ -167,26 +167,55 @@ void* BANG_connect_thread(void *addr) {
 }
 
 void BANG_server_start(char *server_port) {
+	sem_wait(&server_status_lock);
 	if (server_port != NULL) {
 		port = server_port;
 	}
-	pthread_create(server_thread,NULL,BANG_server_thread,(void*)port);
+	if (server_thread == NULL) {
+#ifdef BDEBUG_1
+		fprintf(stderr,"Starting server.\n");
+#endif
+		server_thread = (pthread_t*) calloc(1,sizeof(pthread_t));
+		pthread_create(server_thread,NULL,BANG_server_thread,NULL);
+	}
+	sem_post(&server_status_lock);
 }
 
 
 void BANG_server_stop() {
-	pthread_cancel(*server_thread);
-	pthread_join(*server_thread,NULL);
-	close(sock);
+	sem_wait(&server_status_lock);
+	if (server_thread != NULL) {
+#ifdef BDEBUG_1
+		fprintf(stderr,"Stoping server.\n");
+#endif
+		pthread_cancel(*server_thread);
+		pthread_join(*server_thread,NULL);
+		if (sock != -1) {
+			close(sock);
+			sock = -1;
+		}
+		free(server_thread);
+		server_thread = NULL;
+	}
+	sem_post(&server_status_lock);
 }
 
+char BANG_is_server_running(){
+	sem_wait(&server_status_lock);
+	if (server_thread) {
+		sem_post(&server_status_lock);
+		return 1;
+	}
+	sem_post(&server_status_lock);
+	return 0;
+}
 
 void BANG_net_init(char *server_port ,char start_server) {
 	if (server_port != NULL) {
 		port = server_port;
 	}
+	sem_init(&server_status_lock,0,1);
 
-	server_thread = (pthread_t*) calloc(1,sizeof(pthread_t));
 	if (start_server) {
 		BANG_server_start(NULL);
 	}
@@ -195,6 +224,5 @@ void BANG_net_init(char *server_port ,char start_server) {
 void BANG_net_close() {
 	fprintf(stderr,"BANG net closing.\n");
 	BANG_server_stop();
-	free(server_thread);
-	server_thread = NULL;
+	sem_destroy(&server_status_lock);
 }

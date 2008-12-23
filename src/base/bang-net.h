@@ -42,6 +42,11 @@ void* BANG_server_thread(void *port);
  */
 void* BANG_connect_thread(void *addr);
 
+/**
+ *
+ * \brief Status of the server.
+ */
+char BANG_is_server_running();
 
 /**
  * \param server_port Starts server on server_port or previously chosen one if NULL.

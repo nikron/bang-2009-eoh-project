@@ -33,6 +33,9 @@
  * graphical took kit on my system, so we use it.  Anyway, gtk programs are susposed to be single threaded.  Obviously
  * this a recipe for failure.  So, we invoke some not often used methods to acquire the global gdk lock.  But since
  * it is not often used, we may encounter problems.  Well, cross your fingers and hope for the best.
+ *
+ * Turns out the main failure of this is that it will be even harder to port this program to windows because gtk is
+ * _not_ at all thread safe in windows.
  */
 #include"../base/core.h"
 #include"../base/bang-signals.h"

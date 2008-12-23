@@ -4,15 +4,17 @@
  * \date December 20, 2009
  *
  * \brief Implements "the master of slave peer threads" model.
- * 
+ *
  */
 #include"bang-com.h"
 #include"bang-signals.h"
 #include"bang-types.h"
+#include<poll.h>
 #include<pthread.h>
 #include<semaphore.h>
 #include<stdio.h>
 #include<stdlib.h>
+#include<string.h>
 #include<sys/socket.h>
 #include<unistd.h>
 /**
@@ -136,8 +138,40 @@ void free_BANGRequests(BANG_requests *requests) {
 
 ///peer_info should be cleared by whoever by clear_peer
 void* BANG_read_peer_thread(void *self_info) {
-	//peer *self = (peer*)self_info;
-	while (1) {}
+	peer *self = (peer*)self_info;
+	struct pollfd pfd;
+	//initialize pfd
+	memset(&pfd,0,sizeof(struct pollfd));
+	pfd.fd = self->socket;
+	pfd.events = POLLIN | POLLOUT | POLLERR | POLLHUP | POLLNVAL;
+
+	char buf[BUFSIZ];
+	int check_read;
+
+	while (1) {
+		if (poll(&pfd,1,-1) != -1) {
+			check_read = read(self->socket,buf,BUFSIZ);
+
+			if (check_read == 0) {
+				//TODO: the other end hung up, kill self in some thread safe way
+				//can't just call remove_peer because uhhh that will cancel us
+				//and we would have the lock and then things would go wrong =/
+				//need to send a signal --why am I even commenting when I could
+				//just right this code--
+				BANG_sigargs args;
+				args.args = calloc(1,sizeof(int));
+				*((int*)args.args) = self->peer_id;
+				args.length = sizeof(int);
+				//need to lock so they don't kill me before i can free mah int bytes
+				peer_read_lock();
+				BANG_send_signal(BANG_PEER_TO_BE_REMOVED,args);
+				free(args.args);
+				peer_read_unlock();
+			}
+		} else {
+			break;
+		}
+	}
 	return NULL;
 }
 

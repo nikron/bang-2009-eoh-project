@@ -26,6 +26,13 @@
  * perform the vast majority of the actions that application would want to take based on the library.
  * However, there are a few exceptions, such as loading a module which critical for this project
  * to actually do something useful (loading a module will probably generate some signals!).
+ *
+ * \section GTK
+ *
+ * The first(last?) GUI we make will be in gtk.  However, it turns out that gtk sucks.  However, it is the main
+ * graphical took kit on my system, so we use it.  Anyway, gtk programs are susposed to be single threaded.  Obviously
+ * this a recipe for failure.  So, we invoke some not often used methods to acquire the global gdk lock.  But since
+ * it is not often used, we may encounter problems.  Well, cross your fingers and hope for the best.
  */
 #include"../base/core.h"
 #include"../base/bang-signals.h"

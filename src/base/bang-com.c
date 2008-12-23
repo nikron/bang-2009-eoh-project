@@ -88,6 +88,7 @@ void peer_read_unlock() {
 }
 
 void clear_peer(int pos) {
+	fprintf(stderr,"Clearing a peer at %d.\n",pos);
 	///This should quickly make the two threads stop.
 	pthread_cancel(peers[pos]->receive_thread);
 	pthread_cancel(peers[pos]->send_thread);
@@ -97,6 +98,7 @@ void clear_peer(int pos) {
 	free_BANGRequests(peers[pos]->requests);
 	close(peers[pos]->socket);
 	free(peers[pos]);
+	peers[pos] = NULL;
 }
 
 request_node* pop_request(request_node  **head) {
@@ -164,9 +166,10 @@ void* BANG_read_peer_thread(void *self_info) {
 				args.length = sizeof(int);
 				//need to lock so they don't kill me before i can free mah int bytes
 				peer_read_lock();
-				BANG_send_signal(BANG_PEER_TO_BE_REMOVED,args);
+				BANG_send_signal(BANG_PEER_DISCONNECTED,args);
 				free(args.args);
 				peer_read_unlock();
+				return NULL;
 			}
 		} else {
 			break;
@@ -278,6 +281,7 @@ void BANG_remove_peer(int peer_id) {
 
 void BANG_com_init() {
 	BANG_install_sighandler(BANG_PEER_CONNECTED,&BANG_peer_added);
+	BANG_install_sighandler(BANG_PEER_DISCONNECTED,&BANG_peer_removed);
 	sem_init(&peers_change_lock,0,1);
 	sem_init(&peers_read_lock,0,1);
 }
@@ -290,7 +294,6 @@ void BANG_com_close() {
 	int i = 0;
 	sem_wait(&peers_change_lock);
 	for (i = 0; i < current_peers; ++i) {
-		fprintf(stderr,"Clearing a peer at %d.\n",i);
 		clear_peer(i);
 	}
 	sem_destroy(&peers_change_lock);

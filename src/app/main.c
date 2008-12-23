@@ -47,6 +47,8 @@
 
 GtkWidget *window;
 GtkWidget *vbox;
+GtkWidget *notebook;
+GtkWidget *peers_page_label;
 GtkWidget *statusbar;
 GtkWidget *menubar;
 GtkWidget *file;
@@ -128,6 +130,7 @@ int main(int argc, char **argv) {
 	gdk_threads_init();
 	gtk_init(&argc,&argv);
 
+	///Set up the windwo
 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_title(GTK_WINDOW(window), "!bang Machine");
 	g_signal_connect(G_OBJECT(window), "delete_event", G_CALLBACK(delete_event), NULL);
@@ -135,8 +138,19 @@ int main(int argc, char **argv) {
 
 	vbox = gtk_vbox_new(FALSE,0);
 
+	///Set up the netebook
+	notebook = gtk_notebook_new();
+
+	peers_page_label = gtk_label_new("Peers");
+	///gtk_notebook_append_page(GTK_NOTEBOOK(notebook),peers_page_label,peers_page_label);
+
+	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(notebook),TRUE);
+	gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook),TRUE);
+
+	///Set up the statusbar
 	statusbar = gtk_statusbar_new();
 
+	///Set up the menubar
 	menubar = gtk_menu_bar_new();
 
 	file = gtk_menu_item_new_with_label("File");
@@ -157,13 +171,18 @@ int main(int argc, char **argv) {
 	gtk_menu_append(menubar,file);
 	gtk_menu_append(menubar,server);
 
+	///set up the layout of the top level window
 	gtk_box_pack_start(GTK_BOX(vbox),menubar,FALSE,FALSE,0);
+	gtk_box_pack_start(GTK_BOX(vbox),notebook,FALSE,FALSE,0);
 	gtk_box_pack_end(GTK_BOX(vbox),statusbar,FALSE,FALSE,0);
 
+	///make the box the container for the window
 	gtk_container_add(GTK_CONTAINER(window),vbox);
 
+	///Max the window for now rather than reading in last used
 	gtk_window_maximize(GTK_WINDOW(window));
 
+	///Show the menubar and its contents.
 	gtk_widget_show(ssserver);
 	gtk_widget_show(servermenu);
 	gtk_widget_show(server);
@@ -171,7 +190,15 @@ int main(int argc, char **argv) {
 	gtk_widget_show(filemenu);
 	gtk_widget_show(file);
 	gtk_widget_show(menubar);
+
+	///Show the statusbar
 	gtk_widget_show(statusbar);
+
+	//Show the notebook and its contents
+	gtk_widget_show(peers_page_label);
+	gtk_widget_show(notebook);
+
+	//Show the window
 	gtk_widget_show(vbox);
 	gtk_widget_show(window);
 

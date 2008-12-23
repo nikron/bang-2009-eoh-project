@@ -32,17 +32,24 @@ typedef void (*BANGSignalHandler)(int,int,void*);
 
 /// The signals that can be sent by library.
 enum BANG_signals {
+	///Success signals.
 	BANG_BIND_SUC = 0,
+	BANG_PEER_ADDED,
+	BANG_PEER_REMOVED,
+	BANG_RUNNING_MODULE,
+
+	///Error signals.
 	BANG_BIND_FAIL,
 	BANG_GADDRINFO_FAIL,
 	BANG_CONNECT_FAIL,
 	BANG_LISTEN_FAIL,
-	BANG_PEER_CONNECTED,
-	BANG_PEER_ADDED,
-	BANG_PEER_TO_BE_REMOVED,
-	BANG_PEER_REMOVED,
 	BANG_MODULE_ERROR,
-	BANG_RUNNING_MODULE,
+
+	//To be acted on signals.
+	BANG_PEER_CONNECTED,
+	BANG_PEER_DISCONNECTED,
+
+	///Don't know if we can implment this signals
 	BANG_CLOSE_ALL,
 
 	///The number of signals.  All new signals should be above this line.

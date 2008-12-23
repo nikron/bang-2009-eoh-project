@@ -6,7 +6,7 @@ EXENAME=bang-machine
 
 CC=gcc
 COPTS=-Wall -Werror -g -D_REENTRANT -lpthread
-GTKOPTS=`pkg-config --cflags --libs gtk+-2.0`
+GTKOPTS=`pkg-config --cflags --libs gtk+-2.0` -lgthread-2.0
 
 OBJS=bang-com.o bang-net.o bang-signals.o bang-module.o core.o main.o
 

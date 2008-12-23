@@ -32,6 +32,7 @@
 #include"../base/bang-types.h"
 #include<stdio.h>
 #include<stdlib.h>
+#include<glib.h>
 #include<gtk/gtk.h>
 
 GtkWidget *window;
@@ -55,20 +56,24 @@ GtkWidget *ssserver;
  * NOTE: GTK IS NOT THREAD SAFE!  Umm, let me think how we should fix this.
  */
 void bind_status(int signal, int sig_id, void *args) {
-	//guint context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar),"bind_status");
-	//gtk_statusbar_pop(GTK_STATUSBAR(statusbar),context_id);
+	gdk_threads_enter();
+	guint context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar),"bind_status");
+	gtk_statusbar_pop(GTK_STATUSBAR(statusbar),context_id);
 	if (signal == BANG_BIND_SUC) {
-		//gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine has been bound.");
+		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine has been bound.");
 	} else {
-		//gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine could not bind.");
+		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine could not bind.");
 	}
+	gdk_threads_leave();
 	free(args);
 }
 
 void client_con(int signal, int sig_id, void *args) {
+	gdk_threads_enter();
 	guint context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar),"peer_status");
 	gtk_statusbar_pop(GTK_STATUSBAR(statusbar),context_id);
 	gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"A peer has connected.");
+	gdk_threads_leave();
 	free(args);
 }
 
@@ -109,6 +114,8 @@ int main(int argc, char **argv) {
 
 	///Note:  gtk expects that as a process, you do not need to free its memory
 	///So, it lets the operating system free all memory when the process closes.
+	g_thread_init(NULL);
+	gdk_threads_init();
 	gtk_init(&argc,&argv);
 
 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);

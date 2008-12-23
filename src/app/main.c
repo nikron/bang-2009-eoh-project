@@ -46,6 +46,14 @@ GtkWidget *servermenu;
 ///Start Stop Server
 GtkWidget *ssserver;
 
+/*
+ * \param signal The signal from the BANG library.
+ * \param sig_id Useless... mah library already has deprecated features!
+ * \param args Different depending on what signal this function caught.
+ *
+ * \brief Updates the statusbar depending on what signals it catches.
+ * NOTE: GTK IS NOT THREAD SAFE!  Umm, let me think how we should fix this.
+ */
 void bind_status(int signal, int sig_id, void *args) {
 	//guint context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar),"bind_status");
 	//gtk_statusbar_pop(GTK_STATUSBAR(statusbar),context_id);

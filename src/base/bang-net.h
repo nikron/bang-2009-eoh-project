@@ -15,8 +15,8 @@
 /**
  * \param port
  *
- * \brief Sets the port of the server.  DOES NOT change the port of the currently
- * running server.
+ * \brief Sets the port of the server.  Will attempt to restart the server.
+ * This of course may fail for any number of reasons.
  */
 void BANG_set_server_port(char *new_port);
 

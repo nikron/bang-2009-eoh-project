@@ -149,6 +149,7 @@ void BANG_run_module(BANG_module *module) {
 	args.args = module;
 	args.length = sizeof(BANG_module);
 	BANG_send_signal(BANG_RUNNING_MODULE,args);
-	module->module_init();
-	module->module_run();
+	if(!module->module_init()) {;
+		module->module_run();
+	}
 }

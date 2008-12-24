@@ -131,6 +131,12 @@ BANG_module* BANG_load_module(char *path) {
 	return module;
 }
 
+void BANG_unload_module(BANG_module *module) {
+	dlclose(module->handle);
+	free(module->md);
+	free(module);
+}
+
 
 void BANG_run_module(BANG_module *module) {
 	BANG_sigargs args;

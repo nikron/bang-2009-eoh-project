@@ -17,10 +17,15 @@
  */
 BANG_module* BANG_load_module(char *path);
 
+/**
+ * \param module The module to unload.
+ *
+ * \brief Unloads a module.
+ */
+void BANG_unload_module(BANG_module *module);
 
 /**
  * \brief Runs a module.
  */
 void BANG_run_module(BANG_module *module);
-
 #endif

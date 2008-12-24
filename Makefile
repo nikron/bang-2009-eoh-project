@@ -8,10 +8,10 @@ CC=gcc
 COPTS=-Wall -Werror -g -D_REENTRANT -lpthread
 GTKOPTS=`pkg-config --cflags --libs gtk+-2.0` -lgthread-2.0
 
-OBJS=bang-com.o bang-net.o bang-signals.o bang-module.o core.o set-port.o main.o
+OBJS=bang-com.o bang-net.o bang-signals.o bang-module.o core.o server-preferences.o main.o
 
 MAINSRC=src/app/main.c
-SETPORTSRC=src/app/set-port.c
+SPREFERENCESSRC=src/app/server-preferences.c
 CORESRC=src/base/core.c
 COMSRC=src/base/bang-com.c
 NETWORKSRC=src/base/bang-net.c
@@ -26,7 +26,7 @@ $(EXENAME): $(OBJS)
 main.o: $(MAINSRC)
 	$(CC) -c $(COPTS) $(GTKOPTS) $^
 
-set-port.o: $(SETPORTSRC)
+server-preferences.o: $(SPREFERENCESSRC)
 	$(CC) -c $(COPTS) $(GTKOPTS) $^
 
 core.o: $(CORESRC)

@@ -1,2 +1,2 @@
-#include"server-prefrences.h"
+#include"server-preferences.h"
 #include<glib.h>

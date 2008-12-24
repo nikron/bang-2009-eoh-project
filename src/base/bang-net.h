@@ -13,12 +13,20 @@
 #define DEFAULT_PORT "7878"
 
 /**
+ * \param port
+ *
+ * \brief Sets the port of the server.  DOES NOT change the port of the currently
+ * running server.
+ */
+void BANG_set_server_port(char *new_port);
+
+/**
  * \param port The port the server should start at.
  * \param start_server If true, the server thread is started on init.
  *
  * \brief Initalizes the net part of the library.
  */
-void BANG_net_init(char *port,char start_server);
+void BANG_net_init(char *sever_port,char start_server);
 
 /**
  * \brief Closes and frees the net part of the library.
@@ -33,7 +41,7 @@ void BANG_net_close();
  * TODO: Currently only one of theses works at a time, should the program be allowed to sit on
  * any number of ports?
  */
-void* BANG_server_thread(void *port);
+void* BANG_server_thread(void *not_used);
 
 /**
  * \param addr The address that the thread should connect to.

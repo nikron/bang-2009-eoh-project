@@ -171,9 +171,9 @@ void* BANG_connect_thread(void *addr) {
 
 void BANG_server_start(char *server_port) {
 	sem_wait(&server_status_lock);
-	if (server_port != NULL) {
+	if (server_port != NULL) 
 		port = server_port;
-	}
+	
 	if (server_thread == NULL) {
 #ifdef BDEBUG_1
 		fprintf(stderr,"Starting server.\n");
@@ -184,6 +184,19 @@ void BANG_server_start(char *server_port) {
 	sem_post(&server_status_lock);
 }
 
+void BANG_server_set_port(char *new_port) {
+	sem_wait(&server_status_lock);
+	if (new_port != NULL && !strcmp(port,new_port)) {
+		sem_post(&server_status_lock);
+		if (BANG_is_server_running()) {
+			BANG_server_stop();
+			BANG_server_start(new_port);
+		}
+	} else {
+		sem_post(&server_status_lock);
+	}
+
+}
 
 void BANG_server_stop() {
 	sem_wait(&server_status_lock);

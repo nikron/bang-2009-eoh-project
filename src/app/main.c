@@ -40,6 +40,7 @@
 #include"../base/core.h"
 #include"../base/bang-signals.h"
 #include"../base/bang-types.h"
+#include"set-port.h"
 #include<stdio.h>
 #include<stdlib.h>
 #include<glib.h>
@@ -58,6 +59,7 @@ GtkWidget *server;
 GtkWidget *servermenu;
 ///Start Stop Server
 GtkWidget *ssserver;
+GtkWidget *set_port;
 
 /*
  * \param signal The signal from the BANG library.
@@ -76,6 +78,8 @@ void server_status(int signal, int sig_id, void *args) {
 		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine has been bound.");
 	} else if (signal == BANG_BIND_FAIL){
 		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine could not bind.");
+		gtk_widget_set_sensitive(ssserver,TRUE);
+		gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(ssserver))),"Start Server");
 	} else if (signal == BANG_SERVER_STARTED) {
 		gtk_widget_set_sensitive(ssserver,TRUE);
 		gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(ssserver))),"Stop Server");
@@ -85,6 +89,7 @@ void server_status(int signal, int sig_id, void *args) {
 		gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(ssserver))),"Start Server");
 		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine server stopped.");
 	}
+	///It's recommended to flush before calling the leave function.  I've seen that it stops some seg faults.
 	gdk_flush();
 	gdk_threads_leave();
 	free(args);
@@ -189,8 +194,10 @@ int main(int argc, char **argv) {
 	servermenu = gtk_menu_new();
 	ssserver = gtk_menu_item_new_with_label("Start Server");
 	g_signal_connect(G_OBJECT(ssserver), "activate", G_CALLBACK(change_server_status), NULL);
+	set_port = gtk_menu_item_new_with_label("Set Port");
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(servermenu),ssserver);
+	gtk_menu_shell_append(GTK_MENU_SHELL(servermenu),set_port);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(server),servermenu);
 
 	gtk_menu_append(menubar,file);
@@ -208,6 +215,7 @@ int main(int argc, char **argv) {
 	gtk_window_maximize(GTK_WINDOW(window));
 
 	///Show the menubar and its contents.
+	gtk_widget_show(set_port);
 	gtk_widget_show(ssserver);
 	gtk_widget_show(servermenu);
 	gtk_widget_show(server);

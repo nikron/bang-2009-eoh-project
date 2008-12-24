@@ -42,6 +42,27 @@ void recursive_sig_free(signal_node *head) {
  *  in an array which is index by the signal's number
  */
 signal_node **signal_handlers;
+///Another read-writer problem, multiple threads can send out the same signal at the same time, but only one thread
+///should be allowed add a signal handler.
+pthread_mutex_t send_sig_lock[BANG_NUM_SIGS];
+pthread_mutex_t add_handler_lock[BANG_NUM_SIGS];
+int sig_senders[BANG_NUM_SIGS];
+
+void acquire_sig_lock(int signal) {
+	pthread_mutex_lock(&send_sig_lock[signal]);
+	if (sig_senders[signal] == 0)
+		pthread_mutex_lock(&add_handler_lock[signal]);
+	++sig_senders[signal];
+	pthread_mutex_unlock(&send_sig_lock[signal]);
+}
+
+void release_sig_lock(int signal) {
+	pthread_mutex_lock(&send_sig_lock[signal]);
+	--sig_senders[signal];
+	if (sig_senders[signal] == 0)
+		pthread_mutex_unlock(&add_handler_lock[signal]);
+	pthread_mutex_unlock(&send_sig_lock[signal]);
+}
 
 void BANG_sig_init() {
 	int i;
@@ -63,10 +84,12 @@ void BANG_sig_close() {
 }
 
 int BANG_install_sighandler(int signal, BANGSignalHandler handler) {
+	pthread_mutex_lock(&add_handler_lock[signal]);
 	if (signal_handlers[signal] == NULL) {
 		signal_handlers[signal] = (signal_node*) malloc(sizeof(signal_node));
 		signal_handlers[signal]->handler = handler;
 		signal_handlers[signal]->next = NULL;
+		pthread_mutex_unlock(&add_handler_lock[signal]);
 		return 0;
 	} else {
 		signal_node *cur;
@@ -75,10 +98,13 @@ int BANG_install_sighandler(int signal, BANGSignalHandler handler) {
 				cur->next =(signal_node*) malloc(sizeof(signal_node));
 				cur->next->handler = handler;
 				cur->next->next = NULL;
+				pthread_mutex_unlock(&add_handler_lock[signal]);
 				return 0;
 			}
 		}
 	}
+	///How could it possibly come here!?1?!?
+	pthread_mutex_unlock(&add_handler_lock[signal]);
 	return -1;
 }
 
@@ -86,7 +112,7 @@ int BANG_install_sighandler(int signal, BANGSignalHandler handler) {
 ///in order to pass arguements to a thread_send_signal pthread
 typedef struct {
 	///Node of the handler located in signal linked list.
-	signal_node *signode;
+	BANGSignalHandler handler;
 	///The signal being sent to the handler.
 	int signal;
 	int sig_id;
@@ -97,14 +123,14 @@ typedef struct {
 ///This is so that each signal can be sent in its own thread, and the signal caller
 ///does not have to wait for handler to end.
 void* threaded_send_signal(void *thread_args) {
-	send_signal_args *handler = (send_signal_args*) thread_args;
-	handler->signode->handler(handler->signal,handler->sig_id,handler->handler_args);
-	free(handler);
-	handler = NULL;
+	send_signal_args *h = (send_signal_args*)thread_args;
+	h->handler(h->signal,h->sig_id,h->handler_args);
+	free(h);
 	return NULL;
 }
 
 int BANG_send_signal(int signal, BANG_sigargs args) {
+	acquire_sig_lock(signal);
 #ifdef BDEBUG_1
 	fprintf(stderr,"Sending out the signal %d.\n",signal);
 	fprintf(stderr,"The signal_node is %p.\n",signal_handlers[signal]);
@@ -125,7 +151,7 @@ int BANG_send_signal(int signal, BANG_sigargs args) {
 			memcpy(thread_args->handler_args,args.args,args.length);
 		}
 
-		thread_args->signode = cur;
+		thread_args->handler = cur->handler;
 		thread_args->signal = signal;
 		thread_args->sig_id = (signal << (sizeof(int) * 8 / 2));
 
@@ -134,5 +160,6 @@ int BANG_send_signal(int signal, BANG_sigargs args) {
 
 		++i;
 	}
+	release_sig_lock(signal);
 	return 0;
 }

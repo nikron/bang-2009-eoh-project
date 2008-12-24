@@ -54,7 +54,7 @@ BANG_requests* allocate_BANGRequests();
 pthread_mutex_t peers_read_lock;
 
 ///The number of threads currently reading for the peers structure
-int readers = 0;
+int peers_readers = 0;
 
 ///A lock on changing the size of peers
 pthread_mutex_t peers_change_lock;
@@ -71,18 +71,18 @@ peer **peers = NULL;
 ///to a specific peer
 int *keys = NULL;
 
-void peer_read_lock() {
+void acquire_peers_read_lock() {
 	pthread_mutex_lock(&peers_read_lock);
-	if (readers == 0)
+	if (peers_readers == 0)
 		pthread_mutex_lock(&peers_change_lock);
-	++readers;
+	++peers_readers;
 	pthread_mutex_unlock(&peers_read_lock);
 }
 
-void peer_read_unlock() {
+void release_peers_read_lock() {
 	pthread_mutex_lock(&peers_read_lock);
-	--readers;
-	if (readers == 0)
+	--peers_readers;
+	if (peers_readers == 0)
 		pthread_mutex_lock(&peers_change_lock);
 	pthread_mutex_unlock(&peers_read_lock);
 }
@@ -167,10 +167,10 @@ void* BANG_read_peer_thread(void *self_info) {
 				*((int*)args.args) = self->peer_id;
 				args.length = sizeof(int);
 				//need to lock so they don't kill me before i can free mah int bytes
-				peer_read_lock();
+				acquire_peers_read_lock();
 				BANG_send_signal(BANG_PEER_DISCONNECTED,args);
 				free(args.args);
-				peer_read_unlock();
+				release_peers_read_lock();
 				return NULL;
 			}
 		} else {

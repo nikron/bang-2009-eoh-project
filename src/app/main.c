@@ -36,6 +36,9 @@
  *
  * Turns out the main failure of this is that it will be even harder to port this program to windows because gtk is
  * _not_ at all thread safe in windows.
+ *
+ * Basic look of the application. menubar, tabbed views, statusbar.  Tabs included, but not limited to, listing of a
+ * the peers and their status.  And then a tab for each module.
  */
 #include"../base/core.h"
 #include"../base/bang-signals.h"
@@ -114,6 +117,16 @@ void client_con(int signal, int sig_id, void *args) {
 	free(args);
 }
 
+static void open_bang_module(GtkWidget *widget, gpointer data) {
+	GtkWidget *get_module = gtk_file_chooser_dialog_new("Open Module", GTK_WINDOW(window), GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
+	if (gtk_dialog_run(GTK_DIALOG(get_module)) == GTK_RESPONSE_ACCEPT) {
+		char *filename;
+		filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(get_module));
+		free(filename);
+	}
+	gtk_widget_destroy(get_module);
+}
+
 //gtk callback, does not need to get locked is automatic
 static void change_server_status(GtkWidget *widget, gpointer data) {
 	///Just make the stop button inactive.  We'll make it active when we get the signal.
@@ -190,6 +203,7 @@ int main(int argc, char **argv) {
 	filemenu = gtk_menu_new();
 	open_module = gtk_image_menu_item_new_from_stock(GTK_STOCK_OPEN,NULL);
 	gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(open_module))),"Open Module");
+	g_signal_connect(G_OBJECT(open_module),"activate",G_CALLBACK(open_bang_module),NULL);
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(filemenu),open_module);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(file),filemenu);

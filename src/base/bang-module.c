@@ -20,9 +20,10 @@
  *
  * A bang module should be a C share object file.  Currently it must have
  * the following symbol names defined:
- *  -module_name: the name of the module
+ *  -BANG_module_name: the name of the module
+ *  -BANG_module_version: version of the module
  *  -BANG_module_init: initialize the module
- *  -Bang_module_run: runs the module
+ *  -BANG_module_run: runs the module
  */
 
 #define UPDATE_SIZE 1024
@@ -86,7 +87,7 @@ BANG_module* BANG_load_module(char *path) {
 		return NULL;
 	}
 
-	module->module_version = dlsym(handle,"BANG_module_versin");
+	module->module_version = dlsym(handle,"BANG_module_version");
 
 	///Make sure the dlsym worked.
 	if ((args.args = dlerror()) != NULL) {

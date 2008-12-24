@@ -59,7 +59,7 @@ GtkWidget *server;
 GtkWidget *servermenu;
 ///Start Stop Server
 GtkWidget *ssserver;
-GtkWidget *set_port;
+GtkWidget *server_pref;
 
 /*
  * \param signal The signal from the BANG library.
@@ -89,7 +89,7 @@ void server_status(int signal, int sig_id, void *args) {
 		gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(ssserver))),"Start Server");
 		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine server stopped.");
 	}
-	///It's recommended to flush before calling the leave function.  I've seen that it stops some seg faults.
+	///It's recommended to flush before calling the leave function.
 	gdk_flush();
 	gdk_threads_leave();
 	free(args);
@@ -140,12 +140,14 @@ static gboolean delete_event(GtkWidget *widget, GdkEvent *event, gpointer data) 
 
 //gtk callback, does not need to get locked is automatic
 static void destroy(GtkWidget *widget, gpointer data) {
+	gdk_flush();
 	BANG_close();
 	gtk_main_quit();
 }
 
 int main(int argc, char **argv) {
 
+	//Set up our library.
 	BANG_init(&argc,argv);
 	BANG_install_sighandler(BANG_BIND_SUC,&server_status);
 	BANG_install_sighandler(BANG_BIND_FAIL,&server_status);
@@ -185,19 +187,22 @@ int main(int argc, char **argv) {
 
 	file = gtk_menu_item_new_with_label("File");
 	filemenu = gtk_menu_new();
-	open_module = gtk_menu_item_new_with_label("Open Module");
+	open_module = gtk_image_menu_item_new_from_stock(GTK_STOCK_OPEN,NULL);
+	gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(open_module))),"Open Module");
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(filemenu),open_module);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(file),filemenu);
 
 	server = gtk_menu_item_new_with_label("Server");
 	servermenu = gtk_menu_new();
-	ssserver = gtk_menu_item_new_with_label("Start Server");
+	ssserver = gtk_image_menu_item_new_from_stock(GTK_STOCK_CONNECT,NULL);
+	gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(ssserver))),"Start Server");
 	g_signal_connect(G_OBJECT(ssserver), "activate", G_CALLBACK(change_server_status), NULL);
-	set_port = gtk_menu_item_new_with_label("Server Prefrences");
+
+	server_pref = gtk_image_menu_item_new_from_stock(GTK_STOCK_PREFERENCES,NULL);
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(servermenu),ssserver);
-	gtk_menu_shell_append(GTK_MENU_SHELL(servermenu),set_port);
+	gtk_menu_shell_append(GTK_MENU_SHELL(servermenu),server_pref);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(server),servermenu);
 
 	gtk_menu_append(menubar,file);
@@ -215,7 +220,7 @@ int main(int argc, char **argv) {
 	gtk_window_maximize(GTK_WINDOW(window));
 
 	///Show the menubar and its contents.
-	gtk_widget_show(set_port);
+	gtk_widget_show(server_pref);
 	gtk_widget_show(ssserver);
 	gtk_widget_show(servermenu);
 	gtk_widget_show(server);

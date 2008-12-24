@@ -70,6 +70,7 @@ BANG_module* BANG_load_module(char *path) {
 		args.length = strlen(args.args);
 		BANG_send_signal(BANG_MODULE_ERROR,args);
 		free(args.args);
+		fprintf(stderr,"Could not find the module.\n");
 		return NULL;
 	}
 
@@ -84,6 +85,7 @@ BANG_module* BANG_load_module(char *path) {
 		args.length = strlen(args.args);
 		BANG_send_signal(BANG_MODULE_ERROR,args);
 		free(args.args);
+		fprintf(stderr,"Could not find the module name.\n");
 		return NULL;
 	}
 
@@ -96,6 +98,7 @@ BANG_module* BANG_load_module(char *path) {
 		args.length = strlen(args.args);
 		BANG_send_signal(BANG_MODULE_ERROR,args);
 		free(args.args);
+		fprintf(stderr,"Could not find the module version.\n");
 		return NULL;
 	}
 
@@ -108,6 +111,7 @@ BANG_module* BANG_load_module(char *path) {
 		args.length = strlen(args.args);
 		BANG_send_signal(BANG_MODULE_ERROR,args);
 		free(args.args);
+		fprintf(stderr,"Could not find the module init function.\n");
 		return NULL;
 	}
 
@@ -120,6 +124,7 @@ BANG_module* BANG_load_module(char *path) {
 		args.length = strlen(args.args);
 		BANG_send_signal(BANG_MODULE_ERROR,args);
 		free(args.args);
+		fprintf(stderr,"Could not find the module run function.\n");
 		return NULL;
 	}
 

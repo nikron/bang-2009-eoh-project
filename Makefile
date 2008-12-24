@@ -20,6 +20,8 @@ MODULESRC=src/base/bang-module.c
 
 .PHONY: doc
 
+all: $(EXENAME) test-module.so
+
 $(EXENAME): $(OBJS)
 	$(CC) $(COPTS) $(GTKOPTS)  $^ -o $(EXENAME)
 
@@ -44,7 +46,9 @@ bang-module.o: $(MODULESRC)
 bang-net.o: $(NETWORKSRC)
 	$(CC) -c $(COPTS) $^
 
-all: $(EXENAME) doc
+test-module.so: src/modules/test-module.c
+	$(CC) --shared -Wl,-soname,testmodule.so  $(COPTS) $^ -o test-module.so
+
 
 doc:
 	cd doc && doxygen Doxygen
@@ -52,4 +56,5 @@ doc:
 clean:
 	rm -f $(EXENAME)
 	rm -f *.o
+	rm -f *.so
 	rm -Rf doc/dox

@@ -40,6 +40,7 @@
 #include"../base/core.h"
 #include"../base/bang-signals.h"
 #include"../base/bang-types.h"
+#include"../base/bang-module.h"
 #include"server-preferences.h"
 #include<stdio.h>
 #include<stdlib.h>

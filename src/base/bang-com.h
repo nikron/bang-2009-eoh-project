@@ -32,7 +32,7 @@ request_node* pop_request(request_node **head);
 ///Holds requests of the peers in a linked list.
 typedef struct {
 	///The lock on adding or removing requests.
-	sem_t lock;
+	pthread_mutex_t lock;
 	///Signals the thread that a new requests has been added.
 	sem_t num_requests;
 	///A linked list of requests

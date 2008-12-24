@@ -51,13 +51,13 @@ BANG_requests* allocate_BANGRequests();
 ///size at once
 
 ///This is a lock on readers
-sem_t peers_read_lock;
+pthread_mutex_t peers_read_lock;
 
 ///The number of threads currently reading for the peers structure
 int readers = 0;
 
 ///A lock on changing the size of peers
-sem_t peers_change_lock;
+pthread_mutex_t peers_change_lock;
 
 ///The total number of peers we get through the length of the program.
 unsigned int peer_count = 0;
@@ -72,19 +72,19 @@ peer **peers = NULL;
 int *keys = NULL;
 
 void peer_read_lock() {
-	sem_wait(&peers_read_lock);
+	pthread_mutex_lock(&peers_read_lock);
 	if (readers == 0)
-		sem_wait(&peers_change_lock);
+		pthread_mutex_lock(&peers_change_lock);
 	++readers;
-	sem_post(&peers_read_lock);
+	pthread_mutex_unlock(&peers_read_lock);
 }
 
 void peer_read_unlock() {
-	sem_wait(&peers_read_lock);
+	pthread_mutex_lock(&peers_read_lock);
 	--readers;
 	if (readers == 0)
-		sem_post(&peers_change_lock);
-	sem_post(&peers_read_lock);
+		pthread_mutex_lock(&peers_change_lock);
+	pthread_mutex_unlock(&peers_read_lock);
 }
 
 void clear_peer(int pos) {
@@ -129,13 +129,13 @@ void append_request(request_node **head, request_node *node) {
 BANG_requests* allocate_BANGRequests() {
 	BANG_requests *requests = (BANG_requests*) calloc(1,sizeof(BANG_requests));
 	requests->head = NULL;
-	sem_init(&(requests->lock),0,1);
+	pthread_mutex_init(&(requests->lock),NULL);
 	sem_init(&(requests->num_requests),0,0);
 	return requests;
 }
 
 void free_BANGRequests(BANG_requests *requests) {
-	sem_destroy(&(requests->lock));
+	pthread_mutex_destroy(&(requests->lock));
 	sem_destroy(&(requests->num_requests));
 	free_requestList(requests->head);
 }
@@ -186,9 +186,9 @@ void* BANG_write_peer_thread(void *self_info) {
 	request_node *current;
 	while (1) {
 		sem_wait(&(self->requests->num_requests));
-		sem_wait(&(self->requests->lock));
+		pthread_mutex_lock(&(self->requests->lock));
 		current = pop_request(&(self->requests->head));
-		sem_post(&(self->requests->lock));
+		pthread_mutex_unlock(&(self->requests->lock));
 
 		///TODO: act on current request
 	}
@@ -212,7 +212,7 @@ int BANG_get_key_with_peer_id(int peer_id) {
 }
 
 void BANG_add_peer(int socket) {
-	sem_wait(&peers_change_lock);
+	pthread_mutex_lock(&peers_change_lock);
 
 	++current_peers;
 	int current_key = current_peers - 1;
@@ -233,7 +233,7 @@ void BANG_add_peer(int socket) {
 	pthread_create(&(peers[current_key]->receive_thread),NULL,BANG_read_peer_thread,peers[current_key]);
 	pthread_create(&(peers[current_key]->send_thread),NULL,BANG_write_peer_thread,peers[current_key]);
 
-	sem_post(&peers_change_lock);
+	pthread_mutex_unlock(&peers_change_lock);
 
 	//Send out that we successfully started the peer threads.
 	BANG_sigargs args;
@@ -265,7 +265,7 @@ void BANG_remove_peer(int peer_id) {
 	fprintf(stderr,"Removing peer %d.\n",peer_id);
 #endif
 
-	sem_wait(&peers_change_lock);
+	pthread_mutex_lock(&peers_change_lock);
 
 	int pos = BANG_get_key_with_peer_id(peer_id);
 	if (pos == -1) return;
@@ -282,7 +282,7 @@ void BANG_remove_peer(int peer_id) {
 	peers = (peer**) realloc(peers,current_peers * sizeof(peer*));
 	keys = (int*) realloc(keys,current_peers * sizeof(int));
 
-	sem_post(&peers_change_lock);
+	pthread_mutex_unlock(&peers_change_lock);
 
 	BANG_sigargs peer_send;
 	peer_send.args = calloc(1,sizeof(int));
@@ -295,8 +295,8 @@ void BANG_remove_peer(int peer_id) {
 void BANG_com_init() {
 	BANG_install_sighandler(BANG_PEER_CONNECTED,&BANG_peer_added);
 	BANG_install_sighandler(BANG_PEER_DISCONNECTED,&BANG_peer_removed);
-	sem_init(&peers_change_lock,0,1);
-	sem_init(&peers_read_lock,0,1);
+	pthread_mutex_init(&peers_change_lock,NULL);
+	pthread_mutex_init(&peers_read_lock,NULL);
 }
 
 void BANG_com_close() {
@@ -305,12 +305,12 @@ void BANG_com_close() {
 	///Anyway, we'll just wait for each thread now
 	fprintf(stderr,"BANG com closing.\n");
 	int i = 0;
-	sem_wait(&peers_change_lock);
+	pthread_mutex_unlock(&peers_change_lock);
 	for (i = 0; i < current_peers; ++i) {
 		clear_peer(i);
 	}
-	sem_destroy(&peers_change_lock);
-	sem_destroy(&peers_read_lock);
+	pthread_mutex_destroy(&peers_change_lock);
+	pthread_mutex_destroy(&peers_read_lock);
 	free(peers);
 	free(keys);
 	keys = NULL;

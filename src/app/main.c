@@ -40,7 +40,7 @@
 #include"../base/core.h"
 #include"../base/bang-signals.h"
 #include"../base/bang-types.h"
-#include"set-port.h"
+#include"server-preferences.h"
 #include<stdio.h>
 #include<stdlib.h>
 #include<glib.h>
@@ -194,7 +194,7 @@ int main(int argc, char **argv) {
 	servermenu = gtk_menu_new();
 	ssserver = gtk_menu_item_new_with_label("Start Server");
 	g_signal_connect(G_OBJECT(ssserver), "activate", G_CALLBACK(change_server_status), NULL);
-	set_port = gtk_menu_item_new_with_label("Set Port");
+	set_port = gtk_menu_item_new_with_label("Server Prefrences");
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(servermenu),ssserver);
 	gtk_menu_shell_append(GTK_MENU_SHELL(servermenu),set_port);

@@ -13,10 +13,15 @@
 typedef struct _BANG_module {
 	///The name of the module.
 	char *module_name;
+	double *module_version;
 	///The module initialize method.
 	int (*module_init)();
 	///The module run method.
 	void (*module_run)();
+
+	unsigned char *md;
+	void *handle;
+	char *path;
 } BANG_module;
 
 ///This is the structure that is sent to each signal handler.

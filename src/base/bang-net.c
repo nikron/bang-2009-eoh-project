@@ -97,6 +97,9 @@ void* BANG_server_thread(void *not_used) {
 		return NULL;
 	}
 
+	args.args = NULL;
+	args.length = 0;
+	BANG_send_signal(BANG_SERVER_STARTED,args);
 	//accepted client
 	args.length = sizeof(int);
 	int accptsock;
@@ -196,6 +199,10 @@ void BANG_server_stop() {
 		}
 		free(server_thread);
 		server_thread = NULL;
+		BANG_sigargs args;
+		args.args = NULL;
+		args.length = 0;
+		BANG_send_signal(BANG_SERVER_STOPPED,args);
 	}
 	sem_post(&server_status_lock);
 }

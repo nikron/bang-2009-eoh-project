@@ -67,19 +67,30 @@ GtkWidget *ssserver;
  * \brief Updates the statusbar depending on what signals it catches.
  * NOTE: GTK IS NOT THREAD SAFE!  Umm, let me think how we should fix this.
  */
-void bind_status(int signal, int sig_id, void *args) {
+//bang callback, gtk needs to be locked
+void server_status(int signal, int sig_id, void *args) {
 	gdk_threads_enter();
-	guint context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar),"bind_status");
+	guint context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar),"server_status");
 	gtk_statusbar_pop(GTK_STATUSBAR(statusbar),context_id);
 	if (signal == BANG_BIND_SUC) {
 		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine has been bound.");
-	} else {
+	} else if (signal == BANG_BIND_FAIL){
 		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine could not bind.");
+	} else if (signal == BANG_SERVER_STARTED) {
+		gtk_widget_set_sensitive(ssserver,TRUE);
+		gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(ssserver))),"Stop Server");
+		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine server started.");
+	} else {
+		gtk_widget_set_sensitive(ssserver,TRUE);
+		gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(ssserver))),"Start Server");
+		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine server stopped.");
 	}
+	gdk_flush();
 	gdk_threads_leave();
 	free(args);
 }
 
+//bang callback, gtk needs to be locked
 void client_con(int signal, int sig_id, void *args) {
 	///We could make this buffer smaller.
 	char buf[30];
@@ -92,21 +103,24 @@ void client_con(int signal, int sig_id, void *args) {
 		sprintf(buf,"Peer %d has been removed.",*((int*)args));
 		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,buf);
 	}
+	gdk_flush();
 	gdk_threads_leave();
 	free(args);
 }
 
+//gtk callback, does not need to get locked is automatic
 static void change_server_status(GtkWidget *widget, gpointer data) {
+	///Just make the stop button inactive.  We'll make it active when we get the signal.
 	if(BANG_is_server_running()) {
 		BANG_server_stop();
-		gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(widget))),"Start Server");
+		gtk_widget_set_sensitive(widget,FALSE);
 	} else {
 		BANG_server_start(NULL);
-		gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(widget))),"Stop Server");
+		gtk_widget_set_sensitive(widget,FALSE);
 	}
 }
 
-
+//gtk callback, does not need to get locked is automatic
 static gboolean delete_event(GtkWidget *widget, GdkEvent *event, gpointer data) {
 	/* If you return FALSE in the "delete_event" signal handler,
 	 * GTK will emit the "destroy" signal. Returning TRUE means
@@ -119,6 +133,7 @@ static gboolean delete_event(GtkWidget *widget, GdkEvent *event, gpointer data) 
 	return FALSE;
 }
 
+//gtk callback, does not need to get locked is automatic
 static void destroy(GtkWidget *widget, gpointer data) {
 	BANG_close();
 	gtk_main_quit();
@@ -127,8 +142,10 @@ static void destroy(GtkWidget *widget, gpointer data) {
 int main(int argc, char **argv) {
 
 	BANG_init(&argc,argv);
-	BANG_install_sighandler(BANG_BIND_SUC,&bind_status);
-	BANG_install_sighandler(BANG_BIND_FAIL,&bind_status);
+	BANG_install_sighandler(BANG_BIND_SUC,&server_status);
+	BANG_install_sighandler(BANG_BIND_FAIL,&server_status);
+	BANG_install_sighandler(BANG_SERVER_STARTED,&server_status);
+	BANG_install_sighandler(BANG_SERVER_STOPPED,&server_status);
 	BANG_install_sighandler(BANG_PEER_CONNECTED,&client_con);
 	BANG_install_sighandler(BANG_PEER_REMOVED,&client_con);
 

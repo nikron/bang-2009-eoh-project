@@ -88,7 +88,9 @@ void peer_read_unlock() {
 }
 
 void clear_peer(int pos) {
+#ifdef BDEBUG_1
 	fprintf(stderr,"Clearing a peer at %d.\n",pos);
+#endif
 	///This should quickly make the two threads stop.
 	pthread_cancel(peers[pos]->receive_thread);
 	pthread_cancel(peers[pos]->send_thread);
@@ -259,6 +261,10 @@ void free_requestList(request_node *head) {
 void BANG_remove_peer(int peer_id) {
 	///this lock is needed when trying to change the
 	///peers structure
+#ifdef BDEBUG_1
+	fprintf(stderr,"Removing peer %d.\n",peer_id);
+#endif
+
 	sem_wait(&peers_change_lock);
 
 	int pos = BANG_get_key_with_peer_id(peer_id);
@@ -277,6 +283,13 @@ void BANG_remove_peer(int peer_id) {
 	keys = (int*) realloc(keys,current_peers * sizeof(int));
 
 	sem_post(&peers_change_lock);
+
+	BANG_sigargs peer_send;
+	peer_send.args = calloc(1,sizeof(int));
+	*((int*)peer_send.args) = peer_id;
+	peer_send.length = sizeof(int);
+	BANG_send_signal(BANG_PEER_REMOVED,peer_send);
+	free(peer_send.args);
 }
 
 void BANG_com_init() {

@@ -81,10 +81,17 @@ void bind_status(int signal, int sig_id, void *args) {
 }
 
 void client_con(int signal, int sig_id, void *args) {
+	///We could make this buffer smaller.
+	char buf[30];
 	gdk_threads_enter();
 	guint context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar),"peer_status");
 	gtk_statusbar_pop(GTK_STATUSBAR(statusbar),context_id);
-	gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"A peer has connected.");
+	if (signal == BANG_PEER_CONNECTED) {
+		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"A peer has connected.");
+	} else {
+		sprintf(buf,"Peer %d has been removed.",*((int*)args));
+		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,buf);
+	}
 	gdk_threads_leave();
 	free(args);
 }
@@ -123,6 +130,7 @@ int main(int argc, char **argv) {
 	BANG_install_sighandler(BANG_BIND_SUC,&bind_status);
 	BANG_install_sighandler(BANG_BIND_FAIL,&bind_status);
 	BANG_install_sighandler(BANG_PEER_CONNECTED,&client_con);
+	BANG_install_sighandler(BANG_PEER_REMOVED,&client_con);
 
 	///Note:  gtk expects that as a process, you do not need to free its memory
 	///So, it lets the operating system free all memory when the process closes.

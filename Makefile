@@ -8,7 +8,7 @@ CC=gcc
 COPTS=-Wall -Werror -g -D_REENTRANT -lpthread
 GTKOPTS=`pkg-config --cflags --libs gtk+-2.0 --libs openssl ` -lgthread-2.0
 
-OBJS=bang-com.o bang-net.o bang-signals.o bang-module.o core.o server-preferences.o main.o
+OBJS=bang-com.o bang-net.o bang-signals.o bang-module.o bang-module-api.o core.o server-preferences.o main.o
 MODULES=test-module.so
 
 MAINSRC=src/app/main.c
@@ -18,13 +18,14 @@ COMSRC=src/base/bang-com.c
 NETWORKSRC=src/base/bang-net.c
 SIGNALSSRC=src/base/bang-signals.c
 MODULESRC=src/base/bang-module.c
+APISRC=src/base/bang-module-api.c
 
 .PHONY: doc modules
 
 all: $(EXENAME) modules
 
 $(EXENAME): $(OBJS)
-	$(CC) $(COPTS) $(GTKOPTS)  $^ -o $(EXENAME)
+	$(CC) $(COPTS) $(GTKOPTS) -rdynamic $^ -o $(EXENAME)
 
 main.o: $(MAINSRC)
 	$(CC) -c $(COPTS) $(GTKOPTS) $^
@@ -42,6 +43,9 @@ bang-signals.o: $(SIGNALSSRC)
 	$(CC) -c $(COPTS) $^
 
 bang-module.o: $(MODULESRC)
+	$(CC) -c $(COPTS) $^
+
+bang-module-api.o: $(APISRC)
 	$(CC) -c $(COPTS) $^
 
 bang-net.o: $(NETWORKSRC)

@@ -44,6 +44,7 @@
 #include"../base/bang-signals.h"
 #include"../base/bang-types.h"
 #include"../base/bang-module.h"
+#include"../base/bang-module-api.h"
 #include"server-preferences.h"
 #include<stdio.h>
 #include<stdlib.h>

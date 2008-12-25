@@ -6,6 +6,7 @@
  * \brief A interface to load modules into the program.
  */
 #include"bang-module.h"
+#include"bang-module-api.h"
 #include"bang-signals.h"
 #include"bang-types.h"
 #include"bang-types.h"
@@ -27,6 +28,7 @@
  */
 
 #define UPDATE_SIZE 1024
+#define BDEBUG_1
 
 /**
  * \param path Valid path to a file.
@@ -69,10 +71,12 @@ BANG_module* BANG_load_module(char *path) {
 	if (args.args != NULL) {
 		args.length = strlen(args.args);
 		BANG_send_signal(BANG_MODULE_ERROR,args);
-		free(args.args);
 #ifdef BDEBUG_1
 		fprintf(stderr,"Could not find the module.\n");
+		fprintf(stderr,args.args);
+		fprintf(stderr,"\n");
 #endif
+		free(args.args);
 		return NULL;
 	}
 
@@ -148,18 +152,22 @@ BANG_module* BANG_load_module(char *path) {
 }
 
 void BANG_unload_module(BANG_module *module) {
-	dlclose(module->handle);
-	free(module->md);
-	free(module);
+	if (module != NULL) {
+		dlclose(module->handle);
+		free(module->md);
+		free(module);
+	}
 }
 
 
 void BANG_run_module(BANG_module *module) {
-	BANG_sigargs args;
-	args.args = module;
-	args.length = sizeof(BANG_module);
-	BANG_send_signal(BANG_RUNNING_MODULE,args);
-	if(!module->module_init()) {;
-		module->module_run();
+	if (module != NULL) {
+		BANG_sigargs args;
+		args.args = module;
+		args.length = sizeof(BANG_module);
+		BANG_send_signal(BANG_RUNNING_MODULE,args);
+		if(!module->module_init()) {;
+			module->module_run();
+		}
 	}
 }

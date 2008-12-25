@@ -16,9 +16,13 @@
 #include<pthread.h>
 #include<semaphore.h>
 
-///A linked list of requests of peer send threads.
+/**
+ * A linked list of requests of peer send threads.
+ */
 typedef struct _request_node {
-	///The next node in the list.
+	/**
+	 * The next node in the request list.
+	 */
 	struct _request_node *next;
 } request_node;
 
@@ -29,17 +33,27 @@ typedef struct _request_node {
  */
 request_node* pop_request(request_node **head);
 
-///Holds requests of the peers in a linked list.
+/**
+ * Holds requests of the peers in a linked list.
+ */
 typedef struct {
-	///The lock on adding or removing requests.
+	/**
+	 * The lock on adding or removing requests.
+	 */
 	pthread_mutex_t lock;
-	///Signals the thread that a new requests has been added.
+	/**
+	 * Signals the thread that a new requests has been added.
+	 */
 	sem_t num_requests;
-	///A linked list of requests
+	/**
+	 * A linked list of requests
+	 */
 	request_node *head;
 } BANG_requests;
 
-///Represents one of our peers.
+/**
+ * Represents one of our peers.
+ */
 typedef struct {
 	pthread_t receive_thread;
 	pthread_t send_thread;

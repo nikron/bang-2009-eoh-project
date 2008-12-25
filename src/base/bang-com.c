@@ -141,42 +141,71 @@ void free_BANGRequests(BANG_requests *requests) {
 	free_requestList(requests->head);
 }
 
-///peer_info should be cleared by whoever by clear_peer
+/**
+ * \param self The current peer.
+ *
+ * Closes one of the two peer threads, after the connection has formally stopped
+ * and the mess has to been cleaned up..
+ */
+void peer_self_close(peer *self) {
+	BANG_sigargs args;
+	args.args = calloc(1,sizeof(int));
+	*((int*)args.args) = self->peer_id;
+	args.length = sizeof(int);
+
+	acquire_peers_read_lock();
+	BANG_send_signal(BANG_PEER_DISCONNECTED,args);
+	free(args.args);
+	release_peers_read_lock();
+
+	pthread_exit(NULL);
+}
+
 void* BANG_read_peer_thread(void *self_info) {
 	peer *self = (peer*)self_info;
 	struct pollfd pfd;
-	//initialize pfd
 	memset(&pfd,0,sizeof(struct pollfd));
 	pfd.fd = self->socket;
 	pfd.events = POLLIN | POLLOUT | POLLERR | POLLHUP | POLLNVAL;
 
-	char *buf[BUFSIZ];
+	unsigned int header;
 	int check_read;
 
-	while (1) {
+	char reading = 1;
+
+	while (reading) {
 		if (poll(&pfd,1,-1) != -1) {
-			check_read = read(self->socket,buf,BUFSIZ);
+			check_read = read(self->socket,&header,sizeof(unsigned int));
+
+			/**
+			 * Lookup header message and act accordingly.
+			 */
+			switch (header) {
+				case BANG_HELLO:
+					break;
+				case BANG_DEBUG_MESSAGE:
+					break;
+				case BANG BYE:
+					break;
+				default:
+					/**
+					 * Protocol mismatch, hang up.
+					 */
+					reading = 0;
+					break;
+			}
 
 			if (check_read == 0) {
-				BANG_sigargs args;
-				args.args = calloc(1,sizeof(int));
-				*((int*)args.args) = self->peer_id;
-				args.length = sizeof(int);
-				//need to lock so they don't kill me before i can free mah int bytes
-				acquire_peers_read_lock();
-				BANG_send_signal(BANG_PEER_DISCONNECTED,args);
-				free(args.args);
-				release_peers_read_lock();
-				return NULL;
+				reading = 0;
 			}
 		} else {
-			break;
+			reading = 0;
 		}
 	}
+	peer_self_close(self);
 	return NULL;
 }
 
-///peer_info should be cleared by whoever by clear_peer
 void* BANG_write_peer_thread(void *self_info) {
 	peer *self = (peer*)self_info;
 	request_node *current;
@@ -231,7 +260,9 @@ void BANG_add_peer(int socket) {
 
 	pthread_mutex_unlock(&peers_change_lock);
 
-	//Send out that we successfully started the peer threads.
+	/**
+	 * Send out that we successfully started the peer threads.
+	 */
 	BANG_sigargs args;
 	args.args = calloc(1,sizeof(int));
 	*((int*)args.args) = current_id;

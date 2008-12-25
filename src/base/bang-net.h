@@ -24,7 +24,7 @@ void BANG_set_server_port(char *new_port);
  * \param port The port the server should start at.
  * \param start_server If true, the server thread is started on init.
  *
- * \brief Initalizes the net part of the library.
+ * \brief Initializes the net part of the library.
  */
 void BANG_net_init(char *sever_port,char start_server);
 

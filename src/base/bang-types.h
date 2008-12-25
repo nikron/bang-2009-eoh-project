@@ -9,6 +9,8 @@
 #ifndef __BANG_TYPES_H
 #define __BANG_TYPES_H
 
+#define BANG_VERSION .01
+
 ///The structure that represents a module for the program.
 typedef struct _BANG_module {
 	///The name of the module.
@@ -28,7 +30,7 @@ typedef struct _BANG_module {
 typedef struct {
 	///Arguments you want to send to signal handlers.
 	void *args;
-	///Lenth of the arguments.
+	///Length of the arguments.
 	int length;
 } BANG_sigargs;
 
@@ -56,11 +58,63 @@ enum BANG_signals {
 	BANG_PEER_CONNECTED,
 	BANG_PEER_DISCONNECTED,
 
-	///Don't know if we can implment this signals
+	/**
+	 * Don't know if we can (will) implement this signals
+	 */
 	BANG_CLOSE_ALL,
 
-	///The number of signals.  All new signals should be above this line.
+	/**
+	 * The number of signals.  All new signals should be above this line.
+	 */
 	BANG_NUM_SIGS
 } BANG_signal;
+
+/**
+ *
+ * \page The Protocol
+ *
+ * \brief The protocol is specified, like this:
+ *  - First, an unsigned int will be sent specifying what kind of communication it will be
+ *  - Then, everything else will follow
+ *
+ *  Following are possible unsigned ints to be sent.
+ *
+ *  Communications currently can be done by this:
+ *  assuming peer1, peer2
+ * 
+ * peer1: BANG_HELLO
+ * peer2: BANG_HELLO
+ *
+ * ... any number of BANG_DEBUG_MESSAGE
+ *
+ * peer2: BANG_BYE
+ *
+ */
+
+enum BANG_headers {
+	/**
+	 * message:
+	 * 	-BANG_HELLO (unsigned int)
+	 * 	-BANG_VERSION (unsigned double)
+	 * 	-length of name (unsigned int)
+	 * 	-peer name (char*)
+	 */
+	BANG_HELLO,
+	/**
+	 * message:
+	 * 	-BANG_DEBUG_MESSAGE (unsigned int)
+	 * 	-length of message (unsigned int)
+	 * 	-message (char*)
+	 */
+	BANG_DEBUG_MESSAGE,
+	/**
+	 * message:
+	 * 	-BANG_BYE (unsigned int)
+	 */
+	BANG_BYE,
+	/**
+	 * Number of headers.*/
+	BANG_NUM_HEADERS
+} BANG_header;
 
 #endif

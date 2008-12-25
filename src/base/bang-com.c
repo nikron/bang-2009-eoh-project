@@ -7,6 +7,7 @@
  *
  */
 #include"bang-com.h"
+#include"bang-net.h"
 #include"bang-signals.h"
 #include"bang-types.h"
 #include<poll.h>
@@ -149,7 +150,7 @@ void* BANG_read_peer_thread(void *self_info) {
 	pfd.fd = self->socket;
 	pfd.events = POLLIN | POLLOUT | POLLERR | POLLHUP | POLLNVAL;
 
-	char buf[BUFSIZ];
+	char *buf[BUFSIZ];
 	int check_read;
 
 	while (1) {
@@ -157,11 +158,6 @@ void* BANG_read_peer_thread(void *self_info) {
 			check_read = read(self->socket,buf,BUFSIZ);
 
 			if (check_read == 0) {
-				//TODO: the other end hung up, kill self in some thread safe way
-				//can't just call remove_peer because uhhh that will cancel us
-				//and we would have the lock and then things would go wrong =/
-				//need to send a signal --why am I even commenting when I could
-				//just right this code--
 				BANG_sigargs args;
 				args.args = calloc(1,sizeof(int));
 				*((int*)args.args) = self->peer_id;

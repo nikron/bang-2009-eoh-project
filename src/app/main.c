@@ -122,6 +122,9 @@ static void open_bang_module(GtkWidget *widget, gpointer data) {
 	if (gtk_dialog_run(GTK_DIALOG(get_module)) == GTK_RESPONSE_ACCEPT) {
 		char *filename;
 		filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(get_module));
+		BANG_module *module = BANG_load_module(filename);
+		BANG_run_module(module);
+		BANG_unload_module(module);
 		free(filename);
 	}
 	gtk_widget_destroy(get_module);

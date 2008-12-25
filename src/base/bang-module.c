@@ -28,7 +28,6 @@
  */
 
 #define UPDATE_SIZE 1024
-#define BDEBUG_1
 
 /**
  * \param path Valid path to a file.

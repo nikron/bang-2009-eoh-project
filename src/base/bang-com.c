@@ -47,29 +47,45 @@ void free_BANGRequests(BANG_requests *requests);
 BANG_requests* allocate_BANGRequests();
 
 
-///The peers structure is a reader-writer structure.  That is, mulitple threads
-///can be reading data from the structure, but only one process can change the
-///size at once
+/**
+ * The peers structure is a reader-writer structure.  That is, multiple threads
+ * can be reading data from the structure, but only one process can change the
+ * size at once.
+ */
 
-///This is a lock on readers
+/**
+ * This is a lock on readers
+ */
 pthread_mutex_t peers_read_lock;
 
-///The number of threads currently reading for the peers structure
+/**
+ * The number of threads currently reading for the peers structure
+ */
 int peers_readers = 0;
 
-///A lock on changing the size of peers
+/**
+ * A lock on changing the size of peers
+ */
 pthread_mutex_t peers_change_lock;
 
-///The total number of peers we get through the length of the program.
+/**
+ * The total number of peers we get through the length of the program.
+ */
 unsigned int peer_count = 0;
 
-///The current number of peers connected to the program.
+/**
+ * The current number of peers connected to the program.
+ */
 unsigned int current_peers = 0;
-///Information and threads for each peer connected to the program
+
+/**
+ * Information and threads for each peer connected to the program
+ */
 peer **peers = NULL;
 
-///TODO: make this structure not take linear time when sending a request
-///to a specific peer
+/**TODO: make this structure not take linear time when sending a request
+ * to a specific peer
+ */
 int *keys = NULL;
 
 void acquire_peers_read_lock() {
@@ -161,12 +177,40 @@ void peer_self_close(peer *self) {
 	pthread_exit(NULL);
 }
 
+
+void peer_respond_hello(peer *self) {
+	char responding = 1;
+	int check_read;
+	double version;
+
+	while (responding) {
+		if (poll(&(self->pfd),1,-1) != -1 && self->pfd.revents & POLLIN) {
+			check_read = read(self->socket,&version,sizeof(double));
+			if (check_read <= 0) {
+				responding = 0;
+			} else {
+				if (version == BANG_VERSION) {
+					/**
+					 * TODO: Get the peer name.
+					 */
+				} else {
+					/**
+					 * TODO: File a mismatch version request.
+					 */
+					responding = 0;
+				}
+			}
+		} else {
+			responding = 0;
+		}
+	}
+}
+
 void* BANG_read_peer_thread(void *self_info) {
 	peer *self = (peer*)self_info;
-	struct pollfd pfd;
-	memset(&pfd,0,sizeof(struct pollfd));
-	pfd.fd = self->socket;
-	pfd.events = POLLIN | POLLOUT | POLLERR | POLLHUP | POLLNVAL;
+	memset(&(self->pfd),0,sizeof(struct pollfd));
+	self->pfd.fd = self->socket;
+	self->pfd.events = POLLIN | POLLOUT | POLLERR | POLLHUP | POLLNVAL;
 
 	unsigned int header;
 	int check_read;
@@ -174,29 +218,33 @@ void* BANG_read_peer_thread(void *self_info) {
 	char reading = 1;
 
 	while (reading) {
-		if (poll(&pfd,1,-1) != -1) {
+		if (poll(&(self->pfd),1,-1) != -1 && self->pfd.revents & POLLIN) {
 			check_read = read(self->socket,&header,sizeof(unsigned int));
 
 			/**
 			 * Lookup header message and act accordingly.
 			 */
-			switch (header) {
-				case BANG_HELLO:
-					break;
-				case BANG_DEBUG_MESSAGE:
-					break;
-				case BANG BYE:
-					break;
-				default:
-					/**
-					 * Protocol mismatch, hang up.
-					 */
-					reading = 0;
-					break;
-			}
 
-			if (check_read == 0) {
+			if (check_read <= 0) {
 				reading = 0;
+			} else {
+				switch (header) {
+					case BANG_HELLO:
+						peer_respond_hello(self);
+						break;
+					case BANG_DEBUG_MESSAGE:
+						break;
+					case BANG_MISMATCH_VERSION:
+					case BANG_BYE:
+						reading = 0;
+						break;
+					default:
+						/**
+						 * Protocol mismatch, hang up.
+						 */
+						reading = 0;
+						break;
+				}
 			}
 		} else {
 			reading = 0;

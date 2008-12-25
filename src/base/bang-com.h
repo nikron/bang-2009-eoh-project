@@ -13,6 +13,7 @@
  * peers list and corresponding structure.  There are two threads for each peer.  One to manage
  * incoming requests, and one to manage outgoing requests.
  */
+#include<poll.h>
 #include<pthread.h>
 #include<semaphore.h>
 
@@ -55,11 +56,13 @@ typedef struct {
  * Represents one of our peers.
  */
 typedef struct {
-	pthread_t receive_thread;
-	pthread_t send_thread;
 	int peer_id;
+	char *peername;
 	int socket;
+	pthread_t receive_thread;
 	BANG_requests *requests;
+	pthread_t send_thread;
+	struct pollfd pfd;
 } peer;
 
 /**

@@ -95,7 +95,7 @@ enum BANG_headers {
 	/**
 	 * message:
 	 * 	-BANG_HELLO (unsigned int)
-	 * 	-BANG_VERSION (unsigned double)
+	 * 	-BANG_VERSION (double)
 	 * 	-length of name (unsigned int)
 	 * 	-peer name (char*)
 	 */
@@ -107,6 +107,12 @@ enum BANG_headers {
 	 * 	-message (char*)
 	 */
 	BANG_DEBUG_MESSAGE,
+	/**
+	 * message:
+	 * 	-BANG_MISMATCH_VERSION (unsigned int)
+	 * 	-our version (double)
+	 */
+	BANG_MISMATCH_VERSION,
 	/**
 	 * message:
 	 * 	-BANG_BYE (unsigned int)

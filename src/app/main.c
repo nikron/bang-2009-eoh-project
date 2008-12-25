@@ -118,6 +118,7 @@ void client_con(int signal, int sig_id, void *args) {
 }
 
 static void open_bang_module(GtkWidget *widget, gpointer data) {
+	///OMG THE LINE IS SO LONG,OH SHI--
 	GtkWidget *get_module = gtk_file_chooser_dialog_new("Open Module", GTK_WINDOW(window), GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
 	if (gtk_dialog_run(GTK_DIALOG(get_module)) == GTK_RESPONSE_ACCEPT) {
 		char *filename;

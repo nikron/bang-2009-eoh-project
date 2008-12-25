@@ -70,7 +70,9 @@ BANG_module* BANG_load_module(char *path) {
 		args.length = strlen(args.args);
 		BANG_send_signal(BANG_MODULE_ERROR,args);
 		free(args.args);
+#ifdef BDEBUG_1
 		fprintf(stderr,"Could not find the module.\n");
+#endif
 		return NULL;
 	}
 
@@ -85,7 +87,9 @@ BANG_module* BANG_load_module(char *path) {
 		args.length = strlen(args.args);
 		BANG_send_signal(BANG_MODULE_ERROR,args);
 		free(args.args);
+#ifdef BDEBUG_1
 		fprintf(stderr,"Could not find the module name.\n");
+#endif
 		return NULL;
 	}
 
@@ -98,7 +102,9 @@ BANG_module* BANG_load_module(char *path) {
 		args.length = strlen(args.args);
 		BANG_send_signal(BANG_MODULE_ERROR,args);
 		free(args.args);
+#ifdef BDEBUG_1
 		fprintf(stderr,"Could not find the module version.\n");
+#endif
 		return NULL;
 	}
 
@@ -111,7 +117,9 @@ BANG_module* BANG_load_module(char *path) {
 		args.length = strlen(args.args);
 		BANG_send_signal(BANG_MODULE_ERROR,args);
 		free(args.args);
+#ifdef BDEBUG_1
 		fprintf(stderr,"Could not find the module init function.\n");
+#endif
 		return NULL;
 	}
 
@@ -124,7 +132,9 @@ BANG_module* BANG_load_module(char *path) {
 		args.length = strlen(args.args);
 		BANG_send_signal(BANG_MODULE_ERROR,args);
 		free(args.args);
+#ifdef BDEBUG_1
 		fprintf(stderr,"Could not find the module run function.\n");
+#endif
 		return NULL;
 	}
 

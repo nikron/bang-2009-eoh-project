@@ -1,9 +1,28 @@
-               !BANG Engineering Open House Project for 2009.
+##############################################################################
+#############  !BANG Engineering Open House Project for 2009. ################
+##############################################################################
 
+##############################################################################
 ################################ ABSTRACT ####################################
+##############################################################################
 The abstract one liner describing the project:
 
 A program that distributes the load of arbitrary tasks to peers on the network
 to get things like transcoding and matrix multiplication done even faster.
 
+##############################################################################
+############################## HOW TO COMPILE ################################
+##############################################################################
+
+In the main directory run the command "make".  If that doesn't work make sure
+you have gtk and openssl installed.
+
+##############################################################################
+############################## DOCUMENTATION #################################
+##############################################################################
+
+The project is documented using the program called "doxygen".  If you want the
+documentation pretty printed, you must have doxygen installed and run
+"make doc" in the top directory, which will create some html pages in
+"dox/html/".  Or you can just read the source.
 ##############################################################################

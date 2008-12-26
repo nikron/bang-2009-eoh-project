@@ -66,7 +66,7 @@ typedef struct {
 } peer;
 
 /**
- * \brief Intializes the bang-com part of BANG.
+ * \brief Initializes the bang-com part of BANG.
  */
 void BANG_com_init();
 

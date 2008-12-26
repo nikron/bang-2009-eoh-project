@@ -160,7 +160,7 @@ void free_BANGRequests(BANG_requests *requests) {
 /**
  * \param self The current peer.
  *
- * Closes one of the two peer threads, after the connection has formally stopped
+ * \brief Closes one of the two peer threads, after the connection has formally stopped
  * and the mess has to been cleaned up..
  */
 void peer_self_close(peer *self) {
@@ -177,6 +177,34 @@ void peer_self_close(peer *self) {
 	pthread_exit(NULL);
 }
 
+/**
+ * \param sock An open socket.
+ * \brief Extracts a char* message from the socket per the specifications of all messages.
+ * (unsigned long length)(message of that length)
+ */
+char* extract_message(peer *self) {
+	char *message = NULL;
+	unsigned int length;
+	int check_read, read = 0;
+	char extracting = 1;
+
+	while (extracting) {
+		check_read = read(self->socket,&length,LENGTH_OF_LENGTH);
+
+		if (poll(&(self->pfd),1,-1) != -1 && self->pfd.revents & POLLIN) {
+			if (check_read <= 0) {
+				message = NULL;
+				extracting = 0;
+			} else {
+				extracting = 0;
+			}
+		} else {
+			extracting = 0;
+		}
+	}
+
+	return message;
+}
 
 void peer_respond_hello(peer *self) {
 	char responding = 1;
@@ -185,7 +213,7 @@ void peer_respond_hello(peer *self) {
 
 	while (responding) {
 		if (poll(&(self->pfd),1,-1) != -1 && self->pfd.revents & POLLIN) {
-			check_read = read(self->socket,&version,sizeof(double));
+			check_read = read(self->socket,&version,LENGTH_OF_VERSION);
 			if (check_read <= 0) {
 				responding = 0;
 			} else {
@@ -196,6 +224,7 @@ void peer_respond_hello(peer *self) {
 				} else {
 					/**
 					 * TODO: File a mismatch version request.
+					 * or do something.
 					 */
 					responding = 0;
 				}
@@ -219,7 +248,7 @@ void* BANG_read_peer_thread(void *self_info) {
 
 	while (reading) {
 		if (poll(&(self->pfd),1,-1) != -1 && self->pfd.revents & POLLIN) {
-			check_read = read(self->socket,&header,sizeof(unsigned int));
+			check_read = read(self->socket,&header,LENGTH_OF_HEADERS);
 
 			/**
 			 * Lookup header message and act accordingly.
@@ -353,6 +382,7 @@ void BANG_remove_peer(int peer_id) {
 	}
 
 	--current_peers;
+
 
 	peers = (peer**) realloc(peers,current_peers * sizeof(peer*));
 	keys = (int*) realloc(keys,current_peers * sizeof(int));

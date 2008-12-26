@@ -74,10 +74,10 @@ enum BANG_signals {
  * \page The Protocol
  *
  * \brief The protocol is specified, like this:
- *  - First, an unsigned int will be sent specifying what kind of communication it will be
+ *  - First, an unsigned 4 bytes will be sent specifying what kind of communication it will be
  *  - Then, everything else will follow
  *
- *  Following are possible unsigned ints to be sent.
+ *  Following are possible unsigned to be sent.
  *
  *  Communications currently can be done by this:
  *  assuming peer1, peer2
@@ -91,6 +91,10 @@ enum BANG_signals {
  *
  */
 
+#define LENGTH_OF_HEADER 4
+#define LENGTH_OF_LENGTHS 4
+#define LENGTH_OF_VERSION 8
+
 enum BANG_headers {
 	/**
 	 * message:
@@ -102,20 +106,20 @@ enum BANG_headers {
 	BANG_HELLO,
 	/**
 	 * message:
-	 * 	-BANG_DEBUG_MESSAGE (unsigned int)
-	 * 	-length of message (unsigned int)
+	 * 	-BANG_DEBUG_MESSAGE (unsigned 4 bytes)
+	 * 	-length of message (unsigned 4 bytes)
 	 * 	-message (char*)
 	 */
 	BANG_DEBUG_MESSAGE,
 	/**
 	 * message:
-	 * 	-BANG_MISMATCH_VERSION (unsigned int)
-	 * 	-our version (double)
+	 * 	-BANG_MISMATCH_VERSION (unsigned 4 bytes)
+	 * 	-our version (8 bytes)
 	 */
 	BANG_MISMATCH_VERSION,
 	/**
 	 * message:
-	 * 	-BANG_BYE (unsigned int)
+	 * 	-BANG_BYE (unsigned 4 bytes)
 	 */
 	BANG_BYE,
 	/**

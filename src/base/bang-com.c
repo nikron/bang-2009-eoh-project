@@ -178,27 +178,33 @@ void peer_self_close(peer *self) {
 }
 
 /**
- * \param sock An open socket.
- * \brief Extracts a char* message from the socket per the specifications of all messages.
- * (unsigned long length)(message of that length)
+ *
+ * \param self The peer wanting to extract a message from the socket.
+ * \param length The length of the message to extract.
+ *
+ * \brief Extracts a message of length length.
  */
-char* extract_message(peer *self) {
-	char *message = NULL;
-	unsigned int length;
-	int check_read, read = 0;
+void* extract_message(peer *self, unsigned int length) {
+	void *message = (char*) calloc(length,1);
+	int check_read;
+	unsigned int have_read = 0;
 	char extracting = 1;
 
 	while (extracting) {
-		check_read = read(self->socket,&length,LENGTH_OF_LENGTH);
-
 		if (poll(&(self->pfd),1,-1) != -1 && self->pfd.revents & POLLIN) {
+			check_read = read(self->socket,message + have_read,length);
+
 			if (check_read <= 0) {
+				free(message);
 				message = NULL;
 				extracting = 0;
 			} else {
-				extracting = 0;
+				have_read += check_read;
+				extracting = (have_read >= length) ? 0 : 1;
 			}
 		} else {
+			free(message);
+			message = NULL;
 			extracting = 0;
 		}
 	}
@@ -206,33 +212,8 @@ char* extract_message(peer *self) {
 	return message;
 }
 
+///TODO: THIS IMPLEMENT!
 void peer_respond_hello(peer *self) {
-	char responding = 1;
-	int check_read;
-	double version;
-
-	while (responding) {
-		if (poll(&(self->pfd),1,-1) != -1 && self->pfd.revents & POLLIN) {
-			check_read = read(self->socket,&version,LENGTH_OF_VERSION);
-			if (check_read <= 0) {
-				responding = 0;
-			} else {
-				if (version == BANG_VERSION) {
-					/**
-					 * TODO: Get the peer name.
-					 */
-				} else {
-					/**
-					 * TODO: File a mismatch version request.
-					 * or do something.
-					 */
-					responding = 0;
-				}
-			}
-		} else {
-			responding = 0;
-		}
-	}
 }
 
 void* BANG_read_peer_thread(void *self_info) {
@@ -241,40 +222,30 @@ void* BANG_read_peer_thread(void *self_info) {
 	self->pfd.fd = self->socket;
 	self->pfd.events = POLLIN | POLLOUT | POLLERR | POLLHUP | POLLNVAL;
 
-	unsigned int header;
-	int check_read;
+	unsigned int *header;
 
 	char reading = 1;
 
 	while (reading) {
-		if (poll(&(self->pfd),1,-1) != -1 && self->pfd.revents & POLLIN) {
-			check_read = read(self->socket,&header,LENGTH_OF_HEADERS);
-
-			/**
-			 * Lookup header message and act accordingly.
-			 */
-
-			if (check_read <= 0) {
-				reading = 0;
-			} else {
-				switch (header) {
-					case BANG_HELLO:
-						peer_respond_hello(self);
-						break;
-					case BANG_DEBUG_MESSAGE:
-						break;
-					case BANG_MISMATCH_VERSION:
-					case BANG_BYE:
-						reading = 0;
-						break;
-					default:
-						/**
-						 * Protocol mismatch, hang up.
-						 */
-						reading = 0;
-						break;
-				}
+		if ((header = (unsigned int*) extract_message(self,4)) != NULL) {
+			switch (*header) {
+				case BANG_HELLO:
+					peer_respond_hello(self);
+					break;
+				case BANG_DEBUG_MESSAGE:
+					break;
+				case BANG_MISMATCH_VERSION:
+				case BANG_BYE:
+					reading = 0;
+					break;
+				default:
+					/**
+					 * Protocol mismatch, hang up.
+					 */
+					reading = 0;
+					break;
 			}
+			free(header);
 		} else {
 			reading = 0;
 		}

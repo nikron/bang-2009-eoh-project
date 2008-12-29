@@ -212,8 +212,20 @@ void* extract_message(peer *self, unsigned int length) {
 	return message;
 }
 
-///TODO: THIS IMPLEMENT!
-void peer_respond_hello(peer *self) {
+char peer_respond_hello(peer *self) {
+	double *version = (double*) extract_message(self,8);
+	if (version == NULL || *version != BANG_VERSION) {
+		free(version);
+		return 0;
+	}
+	free(version);
+	unsigned int *length = (unsigned int*) extract_message(self,4);
+	if (length == NULL) {
+		return 0;
+	}
+	self->peername = (char*) extract_message(self,*length);
+	free(length);
+	return 1;
 }
 
 void* BANG_read_peer_thread(void *self_info) {
@@ -230,7 +242,7 @@ void* BANG_read_peer_thread(void *self_info) {
 		if ((header = (unsigned int*) extract_message(self,4)) != NULL) {
 			switch (*header) {
 				case BANG_HELLO:
-					peer_respond_hello(self);
+					reading = peer_respond_hello(self);
 					break;
 				case BANG_DEBUG_MESSAGE:
 					break;

@@ -98,9 +98,9 @@ enum BANG_signals {
 enum BANG_headers {
 	/**
 	 * message:
-	 * 	-BANG_HELLO (unsigned int)
-	 * 	-BANG_VERSION (double)
-	 * 	-length of name (unsigned int)
+	 * 	-BANG_HELLO (unsigned 4 bytes)
+	 * 	-BANG_VERSION (8 bytes to a double)
+	 * 	-length of name (unsigned 4 bytes)
 	 * 	-peer name (char*)
 	 */
 	BANG_HELLO,

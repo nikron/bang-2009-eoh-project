@@ -228,6 +228,21 @@ char peer_respond_hello(peer *self) {
 	return 1;
 }
 
+char read_debug_message(peer *self) {
+	unsigned int *length = (unsigned int*) extract_message(self,4);
+	if (length == NULL) {
+		return 0;
+	}
+	char *message = (char*) extract_message(self,*length);
+	if (message == NULL) {
+		return 0;
+	}
+	fprintf(stderr,"%s",message);
+	free(message);
+	return 1;
+
+}
+
 void* BANG_read_peer_thread(void *self_info) {
 	peer *self = (peer*)self_info;
 	memset(&(self->pfd),0,sizeof(struct pollfd));
@@ -245,6 +260,7 @@ void* BANG_read_peer_thread(void *self_info) {
 					reading = peer_respond_hello(self);
 					break;
 				case BANG_DEBUG_MESSAGE:
+					reading = read_debug_message(self);
 					break;
 				case BANG_MISMATCH_VERSION:
 				case BANG_BYE:

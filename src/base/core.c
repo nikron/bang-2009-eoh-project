@@ -18,6 +18,9 @@
 #define REQUIRED_ARGUEMENT 1
 
 void BANG_init(int *argc, char **argv) {
+#ifdef BDEBUG_1
+	fprintf(stderr,"BANG library starting.\n");
+#endif
 	///getopt!
 	opterr = 0; ///We'll print our own error messages.
 	optind = 1;
@@ -44,7 +47,9 @@ void BANG_init(int *argc, char **argv) {
 }
 
 void BANG_close() {
+#ifdef BDEBUG_1
 	fprintf(stderr,"BANG library closing.\n");
+#endif
 	BANG_com_close();
 	BANG_net_close();
 	BANG_sig_close();

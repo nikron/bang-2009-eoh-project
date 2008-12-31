@@ -57,6 +57,7 @@ enum BANG_signals {
 	//To be acted on signals.
 	BANG_PEER_CONNECTED,
 	BANG_PEER_DISCONNECTED,
+	BANG_SEND_DEBUG_MESSAGE,
 
 	/**
 	 * Don't know if we can (will) implement this signals

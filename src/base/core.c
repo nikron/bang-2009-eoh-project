@@ -10,28 +10,37 @@
 #include"bang-net.h"
 #include"bang-com.h"
 #include"bang-signals.h"
-#include<pthread.h>
 #include<stdlib.h>
 #include<stdio.h>
 #include<string.h>
+#include<getopt.h>
+
+#define REQUIRED_ARGUEMENT 1
 
 void BANG_init(int *argc, char **argv) {
-	int i = 0;
-	char *port;
-	for (i = 0; i < *argc; ++i) {
-		if (!strcmp(argv[i],"--port")) {
-			if (i + 1 < *argc) {
-				printf("Port set to %s.\n",argv[i + 1]);
-				port = argv[i + 1];
-			} else {
-				printf("Invalid port command.");
-				exit(1);
-			}
+	///getopt!
+	opterr = 0; ///We'll print our own error messages.
+	optind = 1;
+	char c;
+	char *set_port = NULL;
+	int option_index = 0;
+	struct option lopts[] = {
+		{"port", REQUIRED_ARGUEMENT, 0, 'p'}
+	};
+	while ((c = getopt_long(*argc, argv,"p:",lopts,&option_index)) != -1) {
+		switch (c) {
+			case 'p':
+				set_port = optarg;
+				break;
+			default:
+				///Error...
+				break;
 		}
 	}
+
 	BANG_sig_init();
 	BANG_com_init();
-	BANG_net_init(NULL,0);
+	BANG_net_init(set_port,0);
 }
 
 void BANG_close() {

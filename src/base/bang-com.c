@@ -4,7 +4,6 @@
  * \date December 20, 2009
  *
  * \brief Implements "the master of slave peer threads" model.
- *
  */
 #include"bang-com.h"
 #include"bang-net.h"
@@ -18,6 +17,57 @@
 #include<string.h>
 #include<sys/socket.h>
 #include<unistd.h>
+
+/**
+ * A linked list of requests of peer send threads.
+ */
+typedef struct _request_node {
+	/**
+	 * The next node in the request list.
+	 */
+	struct _request_node *next;
+} request_node;
+
+/**
+ * \return The head of the request node list starting at head.
+ *
+ * \brief Pops off the head of the linked list.
+ */
+request_node* pop_request(request_node **head);
+
+/**
+ * Holds requests of the peers in a linked list.
+ */
+typedef struct {
+	/**
+	 * The lock on adding or removing requests.
+	 */
+	pthread_mutex_t lock;
+	/**
+	 * Signals the thread that a new requests has been added.
+	 */
+	sem_t num_requests;
+	/**
+	 * A linked list of requests
+	 */
+	request_node *head;
+} BANG_requests;
+
+/**
+ * The peers structure is a reader-writer structure.  That is, multiple threads
+ * can be reading data from the structure, but only one process can change the
+ * size at once.
+ */
+typedef struct {
+	int peer_id;
+	char *peername;
+	int socket;
+	pthread_t receive_thread;
+	BANG_requests *requests;
+	pthread_t send_thread;
+	struct pollfd pfd;
+} peer;
+
 /**
  * \param node appends node to list started at head
  * \param head start of the request node list
@@ -45,13 +95,6 @@ void free_BANGRequests(BANG_requests *requests);
  * \return Returns an initialized BANGRequest pointer.
  */
 BANG_requests* allocate_BANGRequests();
-
-
-/**
- * The peers structure is a reader-writer structure.  That is, multiple threads
- * can be reading data from the structure, but only one process can change the
- * size at once.
- */
 
 /**
  * This is a lock on readers
@@ -83,7 +126,8 @@ unsigned int current_peers = 0;
  */
 peer **peers = NULL;
 
-/**TODO: make this structure not take linear time when sending a request
+/**
+ * TODO: make this structure not take linear time when sending a request
  * to a specific peer
  */
 int *keys = NULL;
@@ -141,6 +185,13 @@ void append_request(request_node **head, request_node *node) {
 		for (cur = *head; cur != NULL; cur = cur->next);
 		cur->next = node;
 	}
+}
+
+void free_requestList(request_node *head) {
+	if (head == NULL) return;
+	if (head->next != NULL)
+		free_requestList(head->next);
+	free(head);
 }
 
 BANG_requests* allocate_BANGRequests() {
@@ -291,14 +342,26 @@ void* BANG_write_peer_thread(void *self_info) {
 		current = pop_request(&(self->requests->head));
 		pthread_mutex_unlock(&(self->requests->lock));
 
-		///TODO: act on current request
+		/*
+		 * TODO: act on current request
+		 */
 	}
 	return NULL;
 }
 
-void BANG_peer_added(int signal,int sig_id,void *socket) {
+void BANG_peer_added(int signal, int sig_id, void *socket) {
 	BANG_add_peer(*((int*)socket));
 	free(socket);
+}
+
+
+void BANG_request_all(int signal, int sig_id, void *stuf) {
+	int i = 0;
+	acquire_peers_read_lock();
+	for (; i < current_peers; ++i) {
+
+	}
+	release_peers_read_lock();
 }
 
 int BANG_get_key_with_peer_id(int peer_id) {
@@ -354,16 +417,11 @@ void BANG_peer_removed(int signal,int sig_id,void *peer_id) {
 	free(peer_id);
 }
 
-void free_requestList(request_node *head) {
-	if (head == NULL) return;
-	if (head->next != NULL)
-		free_requestList(head->next);
-	free(head);
-}
-
 void BANG_remove_peer(int peer_id) {
-	///this lock is needed when trying to change the
-	///peers structure
+	/* 
+	 * this lock is needed when trying to change the
+	 * peers structure
+	 */
 #ifdef BDEBUG_1
 	fprintf(stderr,"Removing peer %d.\n",peer_id);
 #endif
@@ -404,9 +462,11 @@ void BANG_com_init() {
 }
 
 void BANG_com_close() {
-	///All of threads should of got hit by a global BANG_CLOSE_ALL
-	///Should it be sent here?
-	///Anyway, we'll just wait for each thread now
+	/*
+	 * All of threads should of got hit by a global BANG_CLOSE_ALL
+	 * Should it be sent here?
+	 * Anyway, we'll just wait for each thread now
+	 */
 #ifdef BDEBUG_1
 	fprintf(stderr,"BANG com closing.\n");
 #endif

@@ -4,21 +4,28 @@
  * \date December 20, 2009
  *
  * \brief Defines commonly used types in the BANG library.
- * 
  */
 #ifndef __BANG_TYPES_H
 #define __BANG_TYPES_H
 
 #define BANG_VERSION .01
 
-///The structure that represents a module for the program.
+/**
+ * The structure that represents a module for the program.
+ */
 typedef struct _BANG_module {
-	///The name of the module.
+	/**
+	 * The name of the module.
+	 */
 	char *module_name;
 	double *module_version;
-	///The module initialize method.
+	/**
+	 * The module initialize method.
+	 */
 	int (*module_init)();
-	///The module run method.
+	/**
+	 * The module run method.
+	 */
 	void (*module_run)();
 
 	unsigned char *md;
@@ -26,18 +33,28 @@ typedef struct _BANG_module {
 	char *path;
 } BANG_module;
 
-///This is the structure that is sent to each signal handler.
+/**
+ * This is the structure that is sent to each signal handler.
+ */
 typedef struct {
-	///Arguments you want to send to signal handlers.
+	/**
+	 * Arguments you want to send to signal handlers.
+	 */
 	void *args;
-	///Length of the arguments.
+	/**
+	 * Length of the arguments.
+	 */
 	int length;
 } BANG_sigargs;
 
-/// A signal handler function, it receives the BANGSIGNUM, and arguments depending on the signal.
+/**
+ * A signal handler function, it receives the BANGSIGNUM, and arguments depending on the signal.
+ */
 typedef void (*BANGSignalHandler)(int,int,void*);
 
-/// The signals that can be sent by library.
+/** 
+ * The signals that can be sent by library.
+ */
 enum BANG_signals {
 	///Success signals.
 	BANG_BIND_SUC = 0,
@@ -57,7 +74,7 @@ enum BANG_signals {
 	//To be acted on signals.
 	BANG_PEER_CONNECTED,
 	BANG_PEER_DISCONNECTED,
-	BANG_SEND_DEBUG_MESSAGE,
+	BANG_REQUEST_ALL,
 
 	/**
 	 * Don't know if we can (will) implement this signals

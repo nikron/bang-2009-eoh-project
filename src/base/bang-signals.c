@@ -5,7 +5,6 @@
  *
  * \brief  Implements the BANG signals.  Note: the signals will only be sent out one at a time, in
  * no particular order.
- *
  */
 #include"bang-signals.h"
 #include"bang-types.h"
@@ -42,8 +41,10 @@ void recursive_sig_free(signal_node *head) {
  *  in an array which is index by the signal's number
  */
 signal_node **signal_handlers;
-///Another read-writer problem, multiple threads can send out the same signal at the same time, but only one thread
-///should be allowed add a signal handler.
+/**
+ * Another read-writer problem, multiple threads can send out the same signal at the same time, but only one thread
+ * should be allowed add a signal handler.
+ */
 pthread_mutex_t send_sig_lock[BANG_NUM_SIGS];
 pthread_mutex_t add_handler_lock[BANG_NUM_SIGS];
 int sig_senders[BANG_NUM_SIGS];
@@ -74,7 +75,9 @@ void BANG_sig_init() {
 }
 
 void BANG_sig_close() {
+#ifdef BDEBUG_1
 	fprintf(stderr,"BANG sig closing.\n");
+#endif
 	int i;
 	for (i = 0; i < BANG_NUM_SIGS; ++i) {
 		recursive_sig_free(signal_handlers[i]);
@@ -108,20 +111,30 @@ int BANG_install_sighandler(int signal, BANGSignalHandler handler) {
 	return -1;
 }
 
-///Each signal must be sent in its own thread, so BANG_send_signal creates this structure
-///in order to pass arguements to a thread_send_signal pthread
+/**
+ * Each signal must be sent in its own thread, so BANG_send_signal creates this structure
+ * in order to pass arguements to a thread_send_signal pthread
+ */
 typedef struct {
-	///Node of the handler located in signal linked list.
+	/**
+	 * Node of the handler located in signal linked list.
+	 */
 	BANGSignalHandler handler;
-	///The signal being sent to the handler.
+	/**
+	 * The signal being sent to the handler.
+	 */
 	int signal;
 	int sig_id;
-	///Arguements to the signal handler.
+	/**
+	 * Arguements to the signal handler.
+	 */
 	void *handler_args;
 } send_signal_args;
 
-///This is so that each signal can be sent in its own thread, and the signal caller
-///does not have to wait for handler to end.
+/**
+ * This is so that each signal can be sent in its own thread, and the signal caller
+ * does not have to wait for handler to end.
+ */
 void* threaded_send_signal(void *thread_args) {
 	send_signal_args *h = (send_signal_args*)thread_args;
 	h->handler(h->signal,h->sig_id,h->handler_args);

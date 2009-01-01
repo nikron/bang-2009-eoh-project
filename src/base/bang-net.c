@@ -4,7 +4,7 @@
  * \date December 20, 2009
  *
  * \brief Implementation of the networking behind the BANG project.
- * */
+ */
 #include"bang-net.h"
 #include"bang-signals.h"
 #include<stdio.h>
@@ -17,8 +17,13 @@
 #include<sys/socket.h>
 #include<unistd.h>
 
-///TODO:currently only one server can be run a time, good or bad?
-///The server thread.
+/*
+ * TODO:  currently only one server can be run a time, good or bad?
+ */
+
+/**
+ * The server thread.
+ */
 pthread_t *server_thread = NULL;
 char *port = DEFAULT_PORT;
 int sock = -1;
@@ -29,13 +34,14 @@ void free_server_addrinfo(void *result) {
 }
 
 void* BANG_server_thread(void *not_used) {
-	//int sock; ///The main server socket
 	struct addrinfo hints;
 	struct addrinfo *result, *rp;
 	BANG_sigargs args;
 
-	//sets the hints of getaddrinfo so it know what kind of address we want
-	//basic template of code from "man 2 getaddrinfo" section
+	/*
+	 * sets the hints of getaddrinfo so it know what kind of address we want
+	 * basic template of code from "man 2 getaddrinfo" section
+	 */
 	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = AF_UNSPEC;	//don't about ipv4 or ipv6
 	hints.ai_socktype = SOCK_STREAM;//tcp
@@ -53,10 +59,12 @@ void* BANG_server_thread(void *not_used) {
 		return NULL;
 	}
 
-	///Let me rant about cleanup push.  First of all, it is a macro. WTF!?!?
-	///Second of all it must have a matching pair pthread_cleanup_pop
-	///Third of all, it means that anything between those two lines is
-	///in a big do{}while(0).  Seriously. god damn.
+	/*
+	 * Let me rant about cleanup push.  First of all, it is a macro. WTF!?!?
+	 * Second of all it must have a matching pair pthread_cleanup_pop
+	 * Third of all, it means that anything between those two lines is
+	 * in a big do{}while(0).  Seriously. god damn.
+	 */
 	pthread_cleanup_push(free_server_addrinfo,result);
 
 	for (rp = result; rp != NULL; rp = rp->ai_next) {
@@ -120,8 +128,10 @@ void* BANG_connect_thread(void *addr) {
 	struct addrinfo *result, *rp;
 	BANG_sigargs args;
 
-	//sets the hints of getaddrinfo so it know what kind of address we want
-	//basic template of code from "man 2 getaddrinfo" section
+	/*
+	 * sets the hints of getaddrinfo so it know what kind of address we want
+	 * basic template of code from "man 2 getaddrinfo" section
+	 */
 	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = AF_UNSPEC;	//don't about ipv4 or ipv6
 	hints.ai_socktype = SOCK_STREAM;//tcp
@@ -135,7 +145,9 @@ void* BANG_connect_thread(void *addr) {
 	if (getaddrinfo(NULL,(char*)addr,&hints,&result) != 0) {
 		args.args = addr;
 		args.length = strlen(addr) * sizeof(char);
-		///TODO: Send something more meaningful
+		/*
+		 * TODO: Send something more meaningful
+		 */
 		BANG_send_signal(BANG_GADDRINFO_FAIL,args);
 		free(args.args);
 		return NULL;
@@ -151,13 +163,17 @@ void* BANG_connect_thread(void *addr) {
 			free(args.args);
 			args.args = addr;
 			args.length = strlen(addr) * sizeof(char);
-			///TODO:Make this signal send out something more useful
+			/*
+			 * TODO:Make this signal send out something more useful
+			 */
 			BANG_send_signal(BANG_CONNECT_FAIL,args);
 			free(args.args);
 
 		} else if (connect(*((int*)args.args),rp->ai_addr,rp->ai_addrlen) == 0) {
 
-			///Sends out a signal of the peer with its socket.
+			/*
+			 * Sends out a signal of the peer with its socket.
+			 */
 			BANG_send_signal(BANG_PEER_CONNECTED,args);
 			free(args.args);
 			break;

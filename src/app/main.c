@@ -44,7 +44,6 @@
 #include"../base/bang-signals.h"
 #include"../base/bang-types.h"
 #include"../base/bang-module.h"
-#include"../base/bang-module-api.h"
 #include"server-preferences.h"
 #include<stdio.h>
 #include<stdlib.h>
@@ -56,15 +55,22 @@ GtkWidget *vbox;
 GtkWidget *notebook;
 GtkWidget *peers_page_label;
 GtkWidget *statusbar;
+
 GtkWidget *menubar;
+
 GtkWidget *file;
 GtkWidget *filemenu;
 GtkWidget *open_module;
+
 GtkWidget *server;
 GtkWidget *servermenu;
 ///Start Stop Server
 GtkWidget *ssserver;
 GtkWidget *server_pref;
+
+GtkWidget *peers_item;
+GtkWidget *peersmenu;
+GtkWidget *connect_peer;
 
 /*
  * \param signal The signal from the BANG library.
@@ -225,21 +231,40 @@ int main(int argc, char **argv) {
 	gtk_menu_shell_append(GTK_MENU_SHELL(servermenu),server_pref);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(server),servermenu);
 
+	peers_item = gtk_menu_item_new_with_label("Peers");
+	peersmenu = gtk_menu_new();
+	connect_peer = gtk_image_menu_item_new_from_stock(GTK_STOCK_CONNECT,NULL);
+	gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(connect_peer))),"Connect to A Peer");
+
+	gtk_menu_shell_append(GTK_MENU_SHELL(peersmenu),connect_peer);
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(peers_item),peersmenu);
+
 	gtk_menu_append(menubar,file);
 	gtk_menu_append(menubar,server);
+	gtk_menu_append(menubar,peers_item);
 
-	///set up the layout of the top level window
+	/*
+	 * set up the layout of the top level window
+	 */
 	gtk_box_pack_start(GTK_BOX(vbox),menubar,FALSE,FALSE,0);
 	gtk_box_pack_start(GTK_BOX(vbox),notebook,FALSE,FALSE,0);
 	gtk_box_pack_end(GTK_BOX(vbox),statusbar,FALSE,FALSE,0);
 
-	///make the box the container for the window
+	/*
+	 * make the box the container for the window
+	 */
 	gtk_container_add(GTK_CONTAINER(window),vbox);
 
-	///Max the window for now rather than reading in last used
+	/*
+	 * Max the window for now rather than reading in last used
+	 */
 	gtk_window_maximize(GTK_WINDOW(window));
 
-	///Show the menubar and its contents.
+	/*
+	 * Show the menubar and its contents.
+	 */
+	gtk_widget_show(connect_peer);
+	gtk_widget_show(peers_item);
 	gtk_widget_show(server_pref);
 	gtk_widget_show(ssserver);
 	gtk_widget_show(servermenu);

@@ -29,13 +29,6 @@ typedef struct _request_node {
 } request_node;
 
 /**
- * \return The head of the request node list starting at head.
- *
- * \brief Pops off the head of the linked list.
- */
-request_node* pop_request(request_node **head);
-
-/**
  * Holds requests of the peers in a linked list.
  */
 typedef struct {
@@ -69,6 +62,13 @@ typedef struct {
 } peer;
 
 /**
+ * \return The head of the request node list starting at head.
+ *
+ * \brief Pops off the head of the linked list.
+ */
+request_node* pop_request(request_node **head);
+
+/**
  * \param node appends node to list started at head
  * \param head start of the request node list
  *
@@ -83,6 +83,8 @@ void append_request(request_node **head, request_node *node);
  * head.
  */
 void free_requestList(request_node *head);
+
+request_node* allocate_requestNode();
 
 /*
  * \param requests The requests to be freed.
@@ -192,6 +194,12 @@ void free_requestList(request_node *head) {
 	if (head->next != NULL)
 		free_requestList(head->next);
 	free(head);
+}
+
+request_node* allocate_requestNode() {
+	request_node *new_node = (request_node*) calloc(1,sizeof(request_node));
+	new_node->next = NULL;
+	return new_node;
 }
 
 BANG_requests* allocate_BANGRequests() {
@@ -355,11 +363,18 @@ void BANG_peer_added(int signal, int sig_id, void *socket) {
 }
 
 
-void BANG_request_all(int signal, int sig_id, void *stuf) {
+void BANG_request_all(int signal, int sig_id, void *stuff) {
 	int i = 0;
+	request_node *temp;
 	acquire_peers_read_lock();
 	for (; i < current_peers; ++i) {
+		temp = allocate_requestNode();
 
+		pthread_mutex_lock(&(peers[i]->requests->lock));
+		append_request(&(peers[i]->requests->head),temp);
+		pthread_mutex_unlock(&(peers[i]->requests->lock));
+
+		sem_post(&(peers[i]->requests->num_requests));
 	}
 	release_peers_read_lock();
 }

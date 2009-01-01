@@ -64,7 +64,9 @@ GtkWidget *open_module;
 
 GtkWidget *server;
 GtkWidget *servermenu;
-///Start Stop Server
+/**
+ * Start Stop Server
+ */
 GtkWidget *ssserver;
 GtkWidget *server_pref;
 
@@ -78,9 +80,7 @@ GtkWidget *connect_peer;
  * \param args Different depending on what signal this function caught.
  *
  * \brief Updates the statusbar depending on what signals it catches.
- * NOTE: GTK IS NOT THREAD SAFE!  Umm, let me think how we should fix this.
  */
-//bang callback, gtk needs to be locked
 void server_status(int signal, int sig_id, void *args) {
 	gdk_threads_enter();
 	guint context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar),"server_status");
@@ -100,7 +100,7 @@ void server_status(int signal, int sig_id, void *args) {
 		gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(ssserver))),"Start Server");
 		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine server stopped.");
 	}
-	///It's recommended to flush before calling the leave function.
+	/* It's recommended to flush before calling the leave function. */
 	gdk_flush();
 	gdk_threads_leave();
 	free(args);
@@ -138,7 +138,6 @@ static void open_bang_module(GtkWidget *widget, gpointer data) {
 	gtk_widget_destroy(get_module);
 }
 
-//gtk callback, does not need to get locked is automatic
 static void change_server_status(GtkWidget *widget, gpointer data) {
 	///Just make the stop button inactive.  We'll make it active when we get the signal.
 	if(BANG_is_server_running()) {
@@ -150,7 +149,10 @@ static void change_server_status(GtkWidget *widget, gpointer data) {
 	}
 }
 
-//gtk callback, does not need to get locked is automatic
+/**
+ * GTK callback when the window is about to be deleted, does not to be locked as that comes
+ * automagically with all GTK functions.
+ */
 static gboolean delete_event(GtkWidget *widget, GdkEvent *event, gpointer data) {
 	/* If you return FALSE in the "delete_event" signal handler,
 	 * GTK will emit the "destroy" signal. Returning TRUE means
@@ -163,7 +165,10 @@ static gboolean delete_event(GtkWidget *widget, GdkEvent *event, gpointer data) 
 	return FALSE;
 }
 
-//gtk callback, does not need to get locked is automatic
+/**
+ * GTK callback when the window is destroyed, does not to be locked as that comes
+ * automagically with all GTK functions.
+ */
 static void destroy(GtkWidget *widget, gpointer data) {
 	gdk_flush();
 	BANG_close();
@@ -171,7 +176,6 @@ static void destroy(GtkWidget *widget, gpointer data) {
 }
 
 int main(int argc, char **argv) {
-
 	//Set up our library.
 	BANG_init(&argc,argv);
 	BANG_install_sighandler(BANG_BIND_SUC,&server_status);
@@ -274,14 +278,20 @@ int main(int argc, char **argv) {
 	gtk_widget_show(file);
 	gtk_widget_show(menubar);
 
-	///Show the statusbar
+	/*
+	 * Show the statusbar
+	 */
 	gtk_widget_show(statusbar);
 
-	//Show the notebook and its contents
+	/*
+	 * Show the notebook and its contents
+	 */
 	gtk_widget_show(peers_page_label);
 	gtk_widget_show(notebook);
 
-	//Show the window
+	/*
+	 * Show the window
+	 */
 	gtk_widget_show(vbox);
 	gtk_widget_show(window);
 

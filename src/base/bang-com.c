@@ -22,6 +22,7 @@
  * A linked list of requests of peer send threads.
  */
 typedef struct _request_node {
+	BANG_request *request;
 	/**
 	 * The next node in the request list.
 	 */
@@ -272,13 +273,13 @@ void* extract_message(peer *self, unsigned int length) {
 }
 
 char peer_respond_hello(peer *self) {
-	double *version = (double*) extract_message(self,8);
+	double *version = (double*) extract_message(self,LENGTH_OF_VERSION);
 	if (version == NULL || *version != BANG_VERSION) {
 		free(version);
 		return 0;
 	}
 	free(version);
-	unsigned int *length = (unsigned int*) extract_message(self,4);
+	unsigned int *length = (unsigned int*) extract_message(self,LENGTH_OF_LENGTHS);
 	if (length == NULL) {
 		return 0;
 	}
@@ -288,7 +289,7 @@ char peer_respond_hello(peer *self) {
 }
 
 char read_debug_message(peer *self) {
-	unsigned int *length = (unsigned int*) extract_message(self,4);
+	unsigned int *length = (unsigned int*) extract_message(self,LENGTH_OF_LENGTHS);
 	if (length == NULL) {
 		return 0;
 	}
@@ -313,7 +314,7 @@ void* BANG_read_peer_thread(void *self_info) {
 	char reading = 1;
 
 	while (reading) {
-		if ((header = (unsigned int*) extract_message(self,4)) != NULL) {
+		if ((header = (unsigned int*) extract_message(self,LENGTH_OF_HEADER)) != NULL) {
 			switch (*header) {
 				case BANG_HELLO:
 					reading = peer_respond_hello(self);
@@ -363,9 +364,10 @@ void BANG_peer_added(int signal, int sig_id, void *socket) {
 }
 
 
-void BANG_request_all(int signal, int sig_id, void *stuff) {
+void BANG_request_all(int signal, int sig_id, void *vrequest) {
 	int i = 0;
 	request_node *temp;
+	temp->request = (BANG_request*) vrequest;
 	acquire_peers_read_lock();
 	for (; i < current_peers; ++i) {
 		temp = allocate_requestNode();
@@ -472,6 +474,7 @@ void BANG_remove_peer(int peer_id) {
 void BANG_com_init() {
 	BANG_install_sighandler(BANG_PEER_CONNECTED,&BANG_peer_added);
 	BANG_install_sighandler(BANG_PEER_DISCONNECTED,&BANG_peer_removed);
+	BANG_install_sighandler(BANG_REQUEST_ALL,&BANG_request_all);
 	pthread_mutex_init(&peers_change_lock,NULL);
 	pthread_mutex_init(&peers_read_lock,NULL);
 }

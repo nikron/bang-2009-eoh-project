@@ -71,7 +71,9 @@ enum BANG_signals {
 	BANG_LISTEN_FAIL,
 	BANG_MODULE_ERROR,
 
-	//To be acted on signals.
+	/*
+	 * To be acted on signals.
+	 */
 	BANG_PEER_CONNECTED,
 	BANG_PEER_DISCONNECTED,
 	BANG_REQUEST_ALL,
@@ -121,7 +123,7 @@ enum BANG_headers {
 	 * 	-length of name (unsigned 4 bytes)
 	 * 	-peer name (char*)
 	 */
-	BANG_HELLO,
+	BANG_HELLO = 0,
 	/**
 	 * message:
 	 * 	-BANG_DEBUG_MESSAGE (unsigned 4 bytes)
@@ -145,4 +147,15 @@ enum BANG_headers {
 	BANG_NUM_HEADERS
 } BANG_header;
 
+typedef struct {
+	char type;
+	void *request;
+	unsigned int length;
+} BANG_request;
+
+enum BANG_request_types {
+	BANG_DEBUG_REQUEST = 0,
+	BANG_SEND_MODULE_REQUEST,
+	BANG_NUM_REQUESTS
+} BANG_request_type;
 #endif

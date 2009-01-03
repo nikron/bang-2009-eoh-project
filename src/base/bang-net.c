@@ -257,7 +257,9 @@ void BANG_net_init(char *server_port ,char start_server) {
 }
 
 void BANG_net_close() {
+#ifdef BDEBUG_1
 	fprintf(stderr,"BANG net closing.\n");
+#endif
 	BANG_server_stop();
 	pthread_mutex_destroy(&server_status_lock);
 }

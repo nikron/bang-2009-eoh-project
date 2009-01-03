@@ -25,7 +25,7 @@ APISRC=src/base/bang-module-api.c
 all: $(EXENAME) modules
 
 $(EXENAME): $(OBJS)
-	$(CC) $(COPTS) $(GTKOPTS) -rdynamic $^ -o $(EXENAME)
+	$(CC) $(COPTS) $(GTKOPTS) $^ -o $(EXENAME)
 
 main.o: $(MAINSRC)
 	$(CC) -c $(COPTS) $(GTKOPTS) $^

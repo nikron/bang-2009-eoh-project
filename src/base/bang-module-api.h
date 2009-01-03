@@ -15,4 +15,8 @@
  * \brief Prints a debugging message on all peers.
  */
 void BANG_debug_on_all_peers(char *message);
+
+typedef struct {
+	void (*BANG_debug_on_all_peers) (char *message);
+} BANG_api;
 #endif

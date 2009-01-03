@@ -161,11 +161,13 @@ void BANG_unload_module(BANG_module *module) {
 
 void BANG_run_module(BANG_module *module) {
 	if (module != NULL) {
+		BANG_api api;
+		api.BANG_debug_on_all_peers = &BANG_debug_on_all_peers;
 		BANG_sigargs args;
 		args.args = module;
 		args.length = sizeof(BANG_module);
 		BANG_send_signal(BANG_RUNNING_MODULE,args);
-		if(!module->module_init()) {;
+		if(!module->module_init(&api)) {;
 			module->module_run();
 		}
 	}

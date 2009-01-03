@@ -12,13 +12,15 @@
 
 char BANG_module_name[5] = "test";
 double BANG_module_version = .1;
+BANG_api *api;
 
-int BANG_module_init() {
+int BANG_module_init(BANG_api *get_api) {
+	api = get_api;
 	fprintf(stderr,"TEST:\t Module with name %s is initializing with version %.1f.\n",BANG_module_name,BANG_module_version);
 	return 0;
 }
 
 void BANG_module_run() {
 	fprintf(stderr,"TEST:\t Module with name %s is running with version %.1f.\n",BANG_module_name,BANG_module_version);
-	BANG_debug_on_all_peers("TESTING ON ALL PEERS!\n");
+	api->BANG_debug_on_all_peers("TESTING ON ALL PEERS!\n");
 }

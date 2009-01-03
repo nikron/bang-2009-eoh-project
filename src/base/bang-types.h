@@ -7,6 +7,7 @@
  */
 #ifndef __BANG_TYPES_H
 #define __BANG_TYPES_H
+#include"bang-module-api.h"
 
 #define BANG_VERSION .01
 
@@ -22,7 +23,7 @@ typedef struct _BANG_module {
 	/**
 	 * The module initialize method.
 	 */
-	int (*module_init)();
+	int (*module_init)(BANG_api*);
 	/**
 	 * The module run method.
 	 */

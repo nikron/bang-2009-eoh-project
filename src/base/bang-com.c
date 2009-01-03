@@ -85,7 +85,7 @@ void append_request(request_node **head, request_node *node);
  */
 void free_requestList(request_node *head);
 
-request_node* allocate_requestNode();
+request_node* new_request_node();
 
 /*
  * \param requests The requests to be freed.
@@ -97,7 +97,7 @@ void free_BANGRequests(BANG_requests *requests);
 /*
  * \return Returns an initialized BANGRequest pointer.
  */
-BANG_requests* allocate_BANGRequests();
+BANG_requests* new_BANG_requests();
 
 /**
  * This is a lock on readers
@@ -197,13 +197,13 @@ void free_requestList(request_node *head) {
 	free(head);
 }
 
-request_node* allocate_requestNode() {
+request_node* new_request_node() {
 	request_node *new_node = (request_node*) calloc(1,sizeof(request_node));
 	new_node->next = NULL;
 	return new_node;
 }
 
-BANG_requests* allocate_BANGRequests() {
+BANG_requests* new_BANG_requests() {
 	BANG_requests *requests = (BANG_requests*) calloc(1,sizeof(BANG_requests));
 	requests->head = NULL;
 	pthread_mutex_init(&(requests->lock),NULL);
@@ -363,20 +363,29 @@ void BANG_peer_added(int signal, int sig_id, void *socket) {
 	free(socket);
 }
 
+void request_peer(peer *to_be_requested, BANG_request *request) {
+	pthread_mutex_lock(&(to_be_requested->requests->lock));
+
+	request_node *temp = new_request_node();
+	temp->request = request;
+	append_request(&(to_be_requested->requests->head),temp);
+
+	pthread_mutex_unlock(&(to_be_requested->requests->lock));
+	sem_post(&(to_be_requested->requests->num_requests));
+}
 
 void BANG_request_all(int signal, int sig_id, void *vrequest) {
 	int i = 0;
-	request_node *temp;
-	temp->request = (BANG_request*) vrequest;
+	BANG_request *to_request  = (BANG_request*) vrequest;
+	BANG_request *temp;
 	acquire_peers_read_lock();
 	for (; i < current_peers; ++i) {
-		temp = allocate_requestNode();
+		temp = (BANG_request*) calloc(1,sizeof(BANG_request));
+		temp->length = to_request->length;
+		temp->request = calloc(to_request->length,1);
+		memcpy(temp->request,to_request->request,to_request->length);
+		request_peer(peers[i],temp);
 
-		pthread_mutex_lock(&(peers[i]->requests->lock));
-		append_request(&(peers[i]->requests->head),temp);
-		pthread_mutex_unlock(&(peers[i]->requests->lock));
-
-		sem_post(&(peers[i]->requests->num_requests));
 	}
 	release_peers_read_lock();
 }
@@ -406,7 +415,7 @@ void BANG_add_peer(int socket) {
 	peers[current_key] = (peer*) calloc(1,sizeof(peer));
 	peers[current_key]->peer_id = current_id;
 	peers[current_key]->socket = socket;
-	peers[current_key]->requests = allocate_BANGRequests();
+	peers[current_key]->requests = new_BANG_requests();
 
 #ifdef BDEBUG_1
 	fprintf(stderr,"Threads being started at %d\n",current_key);

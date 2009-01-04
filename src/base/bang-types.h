@@ -127,11 +127,19 @@ enum BANG_signals {
 	 */
 	BANG_MODULE_ERROR,
 
-	/*
-	 * To be acted on signals.
+	/**
+	 * A peer has connected and is being set up.
 	 */
 	BANG_PEER_CONNECTED,
+
+	/**
+	 * A peer has disconnected and is being removed.
+	 */
 	BANG_PEER_DISCONNECTED,
+
+	/**
+	 * Request all the peers a request.
+	 */
 	BANG_REQUEST_ALL,
 
 	/**

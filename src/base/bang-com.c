@@ -166,7 +166,7 @@ void clear_peer(int pos) {
 	pthread_cancel(peers[pos]->receive_thread);
 	pthread_cancel(peers[pos]->send_thread);
 	///TODO: find a way to stop this thread.
-	//pthread_join(peers[pos]->receive_thread,NULL);
+	
 	pthread_join(peers[pos]->send_thread,NULL);
 	free_BANG_requests(peers[pos]->requests);
 	close(peers[pos]->socket);
@@ -384,7 +384,7 @@ void* BANG_write_peer_thread(void *self_info) {
 	return NULL;
 }
 
-void BANG_peer_added(int signal, int sig_id, void *socket) {
+void BANG_catch_add_peer(int signal, int sig_id, void *socket) {
 	BANG_add_peer(*((int*)socket));
 	free(socket);
 }
@@ -400,20 +400,27 @@ void request_peer(peer *to_be_requested, BANG_request *request) {
 	sem_post(&(to_be_requested->requests->num_requests));
 }
 
-void BANG_request_all(int signal, int sig_id, void *vrequest) {
+void BANG_request_all(BANG_request *request) {
 	int i = 0;
-	BANG_request *to_request  = (BANG_request*) vrequest;
 	BANG_request *temp;
+
 	acquire_peers_read_lock();
+
 	for (; i < current_peers; ++i) {
 		temp = (BANG_request*) calloc(1,sizeof(BANG_request));
-		temp->length = to_request->length;
-		temp->request = calloc(to_request->length,1);
-		memcpy(temp->request,to_request->request,to_request->length);
+		temp->length = request->length;
+		temp->request = calloc(request->length,1);
+		memcpy(temp->request,request->request,request->length);
 		request_peer(peers[i],temp);
 
 	}
+
 	release_peers_read_lock();
+}
+
+void BANG_catch_request_all(int signal, int sig_id, void *vrequest) {
+	BANG_request *to_request  = (BANG_request*) vrequest;
+	BANG_request_all(to_request);
 }
 
 int BANG_get_key_with_peer_id(int peer_id) {
@@ -464,7 +471,7 @@ void BANG_add_peer(int socket) {
 	free(args.args);
 }
 
-void BANG_peer_removed(int signal,int sig_id,void *peer_id) {
+void BANG_catch_remove_peer(int signal,int sig_id,void *peer_id) {
 	BANG_remove_peer(*((int*)peer_id));
 	free(peer_id);
 }
@@ -507,9 +514,9 @@ void BANG_remove_peer(int peer_id) {
 }
 
 void BANG_com_init() {
-	BANG_install_sighandler(BANG_PEER_CONNECTED,&BANG_peer_added);
-	BANG_install_sighandler(BANG_PEER_DISCONNECTED,&BANG_peer_removed);
-	BANG_install_sighandler(BANG_REQUEST_ALL,&BANG_request_all);
+	BANG_install_sighandler(BANG_PEER_CONNECTED,&BANG_catch_add_peer);
+	BANG_install_sighandler(BANG_PEER_DISCONNECTED,&BANG_catch_remove_peer);
+	BANG_install_sighandler(BANG_REQUEST_ALL,&BANG_catch_request_all);
 	pthread_mutex_init(&peers_change_lock,NULL);
 	pthread_mutex_init(&peers_read_lock,NULL);
 }

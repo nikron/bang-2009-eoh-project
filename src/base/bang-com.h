@@ -13,9 +13,8 @@
  * peers list and corresponding structure.  There are two threads for each peer.  One to manage
  * incoming requests, and one to manage outgoing requests.
  */
-#include<poll.h>
-#include<pthread.h>
-#include<semaphore.h>
+#include"bang.h"
+
 /**
  * \brief Initializes the bang-com part of BANG.
  */
@@ -46,14 +45,14 @@ void* BANG_write_peer_thread(void *self_info);
  *
  * \brief Creates a slave thread using the socket gotten from the signal.
  */
-void BANG_peer_added(int signal, int sig_id, void *socket);
+void BANG_catch_add_peer(int signal, int sig_id, void *socket);
 
 /**
  * \param peer_id The peer to be remove
  *
  * \brief Catches BANG_PEER_TO_BE_REMOVED, and remove that peer, and emits
  */
-void BANG_peer_removed(int signal, int sig_id, void *peer_id);
+void BANG_catch_remove_peer(int signal, int sig_id, void *peer_id);
 
 /**
  *
@@ -67,15 +66,16 @@ int BANG_new_peer_id();
  *
  * \brief Adds a request to the peer_id peer.
  */
-///TODO: Figure out the structure for the request
-void BANG_add_request_to_peer(int peer_id, void *request);
+void BANG_request_peer_id(int peer_id, BANG_request *request);
 
 /**
  * \param request The request to add.
  *
  * \brief Adds request to all peers.
  */
-void BANG_add_request_all(void *request);
+void BANG_request_all(BANG_request *request);
+
+void BANG_catach_request_all(int signal, int signum, void *vrequest);
 
 /**
  * \param peer_id Peer to remove.

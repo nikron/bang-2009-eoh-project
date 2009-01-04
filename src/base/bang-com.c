@@ -382,6 +382,38 @@ unsigned int write_message(peer *self, void *message, unsigned int length) {
 	return written;
 }
 
+void send_module(peer *self, BANG_request request) {
+	FILE *fd = fopen((char*)request.request,"r");
+	if (fd == NULL) {
+		free(request.request);
+		return;
+	}
+
+	char chunk[UPDATE_SIZE];
+	size_t reading;
+	unsigned int i;
+
+	i = BANG_SEND_MODULE;
+	/* TODO: Error checking */
+	write_message(self,&i,LENGTH_OF_HEADER);
+
+	/* TODO: Error checking */
+	fseek(fd,0,SEEK_END);
+	i = (unsigned int) ftell(fd);
+	rewind(fd);
+	write_message(self,&i,LENGTH_OF_LENGTHS);
+
+	do {
+		/* TODO: Error checking */
+		reading = fread(chunk,UPDATE_SIZE,1,fd);
+		write_message(self,chunk,reading);
+
+	} while (reading >= UPDATE_SIZE);
+
+	fclose(fd);
+	free(request.request);
+}
+
 void* BANG_write_peer_thread(void *self_info) {
 	peer *self = (peer*)self_info;
 	request_node *current;
@@ -409,8 +441,10 @@ void* BANG_write_peer_thread(void *self_info) {
 				write_message(self,&header,LENGTH_OF_HEADER);
 				write_message(self,&(current->request.length),LENGTH_OF_LENGTHS);
 				write_message(self,&(current->request.request),current->request.length);
+				free(current->request.request);
 				break;
 			case BANG_SEND_MODULE_REQUEST:
+				send_module(self,current->request);
 				break;
 			default:
 				/*ERROR!*/

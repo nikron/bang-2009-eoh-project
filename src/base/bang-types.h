@@ -272,4 +272,10 @@ enum BANG_request_types {
 	BANG_SEND_MODULE_REQUEST,
 	BANG_NUM_REQUESTS
 } BANG_request_type;
+
+
+/**
+ * When reading from a file, you should do it incremently at 1k bytes at a time!
+ */
+#define UPDATE_SIZE 1024
 #endif

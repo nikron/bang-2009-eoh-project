@@ -430,13 +430,16 @@ void* BANG_write_peer_thread(void *self_info) {
 		 */
 		switch (current->request.type) {
 			case BANG_CLOSE_REQUEST:
+				header = BANG_BYE;
+				write_message(self,&header,LENGTH_OF_HEADER);
 				break;
 			case BANG_SUDDEN_CLOSE_REQUEST:
 				peer_self_close(self);
 				sending = 0;
 				break;
 			case BANG_DEBUG_REQUEST:
-				/* TODO: ADD ERROR CHECKING! */
+				/* TODO: ADD ERROR CHECKING!
+				 * possibily put in own method */
 				header = BANG_DEBUG_MESSAGE;
 				write_message(self,&header,LENGTH_OF_HEADER);
 				write_message(self,&(current->request.length),LENGTH_OF_LENGTHS);

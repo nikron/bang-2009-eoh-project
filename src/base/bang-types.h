@@ -73,44 +73,36 @@ enum BANG_signals {
 	 * The bang server has successfully bound.
 	 */
 	BANG_BIND_SUC = 0,
-
 	/**
 	 * A peer has been added and is now in active status.
 	 */
 	BANG_PEER_ADDED,
-
 	/**
 	 * A peer has been removed.
 	 */
 	BANG_PEER_REMOVED,
-
 	/**
 	 * A module is going to be run.
 	 * arg: the BANG_module being run.
 	 */
 	BANG_RUNNING_MODULE,
-
 	/**
 	 * The bang server has stopped.
 	 * arg: the server socket.
 	 */
 	BANG_SERVER_STARTED,
-
 	/**
 	 * The bang server has stopped.
 	 */
 	BANG_SERVER_STOPPED,
-
 	/**
 	 * The server's bind has failed.
 	 */
 	BANG_BIND_FAIL,
-
 	/**
 	 * The server could not get addrinfo.
 	 */
 	BANG_GADDRINFO_FAIL,
-
 	/**
 	 * The thread could not connect.
 	 */
@@ -120,33 +112,27 @@ enum BANG_signals {
 	 * The server could not listen.
 	 */
 	BANG_LISTEN_FAIL,
-
 	/**
 	 * There was an error loading the module.
 	 * arg: the output of dlerror
 	 */
 	BANG_MODULE_ERROR,
-
 	/**
 	 * A peer has connected and is being set up.
 	 */
 	BANG_PEER_CONNECTED,
-
 	/**
 	 * A peer has disconnected and is being removed.
 	 */
 	BANG_PEER_DISCONNECTED,
-
 	/**
 	 * Request all the peers a request.
 	 */
 	BANG_REQUEST_ALL,
-
 	/**
 	 * Don't know if we can (will) implement this signals
 	 */
 	BANG_CLOSE_ALL,
-
 	/**
 	 * The number of signals.  All new signals should be above this line.
 	 */
@@ -221,6 +207,8 @@ enum BANG_headers {
 	/**
 	 * message:
 	 * 	-BANG_BYE (unsigned 4 bytes)
+	 *
+	 * TODO: This will most defintely have more things involved.
 	 */
 	BANG_BYE,
 	/**

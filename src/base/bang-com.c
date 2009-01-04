@@ -83,7 +83,7 @@ void append_request(request_node **head, request_node *node);
  * \brief Frees resources used by a request list started at
  * head.
  */
-void free_requestList(request_node *head);
+void free_request_list(request_node *head);
 
 request_node* new_request_node();
 
@@ -92,7 +92,7 @@ request_node* new_request_node();
  *
  * \brief Frees a BANGRequests struct.
  */
-void free_BANGRequests(BANG_requests *requests);
+void free_BANG_requests(BANG_requests *requests);
 
 /*
  * \return Returns an initialized BANGRequest pointer.
@@ -161,7 +161,7 @@ void clear_peer(int pos) {
 	///TODO: find a way to stop this thread.
 	//pthread_join(peers[pos]->receive_thread,NULL);
 	pthread_join(peers[pos]->send_thread,NULL);
-	free_BANGRequests(peers[pos]->requests);
+	free_BANG_requests(peers[pos]->requests);
 	close(peers[pos]->socket);
 	free(peers[pos]);
 	peers[pos] = NULL;
@@ -190,10 +190,10 @@ void append_request(request_node **head, request_node *node) {
 	}
 }
 
-void free_requestList(request_node *head) {
+void free_request_list(request_node *head) {
 	if (head == NULL) return;
 	if (head->next != NULL)
-		free_requestList(head->next);
+		free_request_list(head->next);
 	free(head);
 }
 
@@ -211,10 +211,10 @@ BANG_requests* new_BANG_requests() {
 	return requests;
 }
 
-void free_BANGRequests(BANG_requests *requests) {
+void free_BANG_requests(BANG_requests *requests) {
 	pthread_mutex_destroy(&(requests->lock));
 	sem_destroy(&(requests->num_requests));
-	free_requestList(requests->head);
+	free_request_list(requests->head);
 }
 
 /**

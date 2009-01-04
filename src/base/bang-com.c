@@ -423,6 +423,14 @@ void BANG_catch_request_all(int signal, int sig_id, void *vrequest) {
 	BANG_request_all(to_request);
 }
 
+void BANG_request_peer_id(int peer_id, BANG_request *request) {
+	int id;
+	acquire_peers_read_lock();
+	id = BANG_get_key_with_peer_id(peer_id);
+	request_peer(peers[id],request);
+	release_peers_read_lock();
+}
+
 int BANG_get_key_with_peer_id(int peer_id) {
 	int i = 0;
 	for (i = 0; i < current_peers; ++i) {

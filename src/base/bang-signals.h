@@ -1,7 +1,7 @@
 /**
  * \file bang-signals.h
  * \author Nikhil Bysani
- * \date December 20, 2009
+ * \date December 20, 2008
  *
  * \brief Allows the library to send out signals, and for the applications to
  *	receive signals.

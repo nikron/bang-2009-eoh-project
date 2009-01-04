@@ -1,7 +1,7 @@
 /**
  * \file bang-net.h
  * \author Nikhil Bysani
- * \date December 20, 2009
+ * \date December 20, 2008
  *
  * \brief Public interface for the networking part of BANG.
  * */

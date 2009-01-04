@@ -1,7 +1,7 @@
 /**
  * \file bang-net.c
  * \author Nikhil Bysani
- * \date December 20, 2009
+ * \date December 20, 2008
  *
  * \brief Implementation of the networking behind the BANG project.
  */

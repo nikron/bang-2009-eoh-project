@@ -1,7 +1,7 @@
 /**
  * \file bang-com.c
  * \author Nikhil Bysani
- * \date December 20, 2009
+ * \date December 20, 2008
  *
  * \brief Implements "the master of slave peer threads" model.
  */

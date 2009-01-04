@@ -1,7 +1,7 @@
 /**
  * \file bang-com.h
  * \author Nikhil Bysani
- * \date December 20, 2009
+ * \date December 20, 2008
  *
  * \brief Functions to communicate between peers using a master slave system.
  * */

@@ -1,7 +1,7 @@
 /**
  * \file bang-types.h
  * \author Nikhil Bysani
- * \date December 20, 2009
+ * \date December 20, 2008
  *
  * \brief Defines commonly used types in the BANG library.
  */

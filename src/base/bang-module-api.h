@@ -1,7 +1,7 @@
 /**
  * \file bang-module-api.c
  * \author Nikhil Bysani
- * \date December 24, 2009
+ * \date December 24, 2008
  *
  * \brief An api for the modules so they can interface
  * with the program, and more importantly its peers.

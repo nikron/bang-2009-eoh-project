@@ -1,7 +1,7 @@
 /**
  * \file bang-module.c
  * \author Nikhil Bysani
- * \date December 21, 2009
+ * \date December 21, 2008
  *
  * \brief A interface to load modules into the program.
  */

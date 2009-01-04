@@ -40,9 +40,7 @@
  * Basic look of the application. menubar, tabbed views, statusbar.  Tabs included, but not limited to, listing of a
  * the peers and their status.  And then a tab for each module.
  */
-#include"../base/bang-signals.h"
-#include"../base/bang-module.h"
-#include"../base/bang-core.h"
+#include"../base/bang.h"
 #include"server-preferences.h"
 #include<stdio.h>
 #include<stdlib.h>

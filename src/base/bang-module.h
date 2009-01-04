@@ -1,7 +1,7 @@
 /**
  * \file bang-module.h
  * \author Nikhil Bysani
- * \date December 21, 2009
+ * \date December 21, 2008
  *
  * \brief A module gets loaded and run from this.  The module calls functions in this
  * to get things done.

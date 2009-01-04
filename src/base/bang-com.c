@@ -22,7 +22,7 @@
  * A linked list of requests of peer send threads.
  */
 typedef struct _request_node {
-	BANG_request *request;
+	BANG_request request;
 	/**
 	 * The next node in the request list.
 	 */
@@ -85,7 +85,18 @@ void append_request(request_node **head, request_node *node);
  */
 void free_request_list(request_node *head);
 
+/**
+ * \brief Allocates and returns a new request node.
+ */
 request_node* new_request_node();
+
+/**
+ * \param self The peer to be requested.
+ * \param request Request to be given to the peer.
+ * 
+ * \brief Adds a request to a peer structure.
+ */
+void request_peer(peer *self, BANG_request request);
 
 /*
  * \param requests The requests to be freed.
@@ -165,8 +176,11 @@ void clear_peer(int pos) {
 	///This should quickly make the two threads stop.
 	pthread_cancel(peers[pos]->receive_thread);
 	pthread_cancel(peers[pos]->send_thread);
-	///TODO: find a way to stop this thread.
-	
+	BANG_request request;
+	request.type = BANG_SUDDEN_CLOSE_REQUEST;
+	request.length = 0;
+	request.request = NULL;
+	request_peer(peers[pos],request);
 	pthread_join(peers[pos]->send_thread,NULL);
 	free_BANG_requests(peers[pos]->requests);
 	close(peers[pos]->socket);
@@ -362,7 +376,7 @@ void* BANG_write_peer_thread(void *self_info) {
 		/*
 		 * TODO: act on current request
 		 */
-		switch (current->request->type) {
+		switch (current->request.type) {
 			case BANG_CLOSE_REQUEST:
 				break;
 			case BANG_SUDDEN_CLOSE_REQUEST:
@@ -389,7 +403,7 @@ void BANG_catch_add_peer(int signal, int sig_id, void *socket) {
 	free(socket);
 }
 
-void request_peer(peer *to_be_requested, BANG_request *request) {
+void request_peer(peer *to_be_requested, BANG_request request) {
 	pthread_mutex_lock(&(to_be_requested->requests->lock));
 
 	request_node *temp = new_request_node();
@@ -400,19 +414,13 @@ void request_peer(peer *to_be_requested, BANG_request *request) {
 	sem_post(&(to_be_requested->requests->num_requests));
 }
 
-void BANG_request_all(BANG_request *request) {
+void BANG_request_all(BANG_request request) {
 	int i = 0;
-	BANG_request *temp;
 
 	acquire_peers_read_lock();
 
 	for (; i < current_peers; ++i) {
-		temp = (BANG_request*) calloc(1,sizeof(BANG_request));
-		temp->length = request->length;
-		temp->request = calloc(request->length,1);
-		memcpy(temp->request,request->request,request->length);
-		request_peer(peers[i],temp);
-
+		request_peer(peers[i],request);
 	}
 
 	release_peers_read_lock();
@@ -420,10 +428,11 @@ void BANG_request_all(BANG_request *request) {
 
 void BANG_catch_request_all(int signal, int sig_id, void *vrequest) {
 	BANG_request *to_request  = (BANG_request*) vrequest;
-	BANG_request_all(to_request);
+	BANG_request_all(*to_request);
+	free(to_request);
 }
 
-void BANG_request_peer_id(int peer_id, BANG_request *request) {
+void BANG_request_peer_id(int peer_id, BANG_request request) {
 	int id;
 	acquire_peers_read_lock();
 	id = BANG_get_key_with_peer_id(peer_id);

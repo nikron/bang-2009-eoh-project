@@ -69,12 +69,31 @@ typedef void (*BANGSignalHandler)(int,int,void*);
  * TODO: Detail all the signals, especially their arguments.
  */
 enum BANG_signals {
-	///Success signals.
+	/**
+	 * The bang server has successfully bound.
+	 */
 	BANG_BIND_SUC = 0,
+	/**
+	 * A peer has been added and is now in active status.
+	 */
 	BANG_PEER_ADDED,
+	/**
+	 * A peer has been removed.
+	 */
 	BANG_PEER_REMOVED,
+	/**
+	 * A module is going to be run.
+	 * arg: the BANG_module being run.
+	 */
 	BANG_RUNNING_MODULE,
+	/**
+	 * The bang server has stopped.
+	 * arg: the server socket.
+	 */
 	BANG_SERVER_STARTED,
+	/**
+	 * The bang server has stopped.
+	 */
 	BANG_SERVER_STOPPED,
 
 	///Error signals.

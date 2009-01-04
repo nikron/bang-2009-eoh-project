@@ -75,7 +75,14 @@ void BANG_request_peer_id(int peer_id, BANG_request request);
  */
 void BANG_request_all(BANG_request request);
 
-void BANG_catach_request_all(int signal, int signum, void *vrequest);
+/**
+ * \param signal Catches request all signals.
+ * \param signum Ooops, doesn't do anything.
+ * \param vrequest A BANG_request *request
+ * 
+ * \brief Catches a request all signal and send it to BANG_request_all
+ */
+void BANG_catch_request_all(int signal, int signum, void *vrequest);
 
 /**
  * \param peer_id Peer to remove.

@@ -17,7 +17,7 @@
 #include<sys/socket.h>
 #include<unistd.h>
 
-/*
+/**
  * TODO:  currently only one server can be run a time, good or bad?
  */
 

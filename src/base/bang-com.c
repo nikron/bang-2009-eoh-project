@@ -383,7 +383,7 @@ void* BANG_write_peer_thread(void *self_info) {
 				peer_self_close(self);
 				sending = 0;
 				break;
-			case BANG_DEBUG_REQUEST: 
+			case BANG_DEBUG_REQUEST:
 				break;
 			case BANG_SEND_MODULE_REQUEST:
 				break;
@@ -496,7 +496,7 @@ void BANG_catch_remove_peer(int signal,int sig_id,void *peer_id) {
 }
 
 void BANG_remove_peer(int peer_id) {
-	/* 
+	/*
 	 * this lock is needed when trying to change the
 	 * peers structure
 	 */

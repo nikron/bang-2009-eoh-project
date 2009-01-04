@@ -41,16 +41,20 @@ unsigned char* module_hash(char *path) {
 	int read = UPDATE_SIZE;
 
 	unsigned char *md = (unsigned char*) calloc(SHA_DIGEST_LENGTH,sizeof(unsigned char));
-	///This ctx creation should be done in an init
-	///function as it takes some time.
+	/*
+	 * This ctx creation should be done in an init
+	 * function as it takes some time.
+	 */
 	EVP_MD_CTX *ctx = EVP_MD_CTX_create();
 	EVP_MD_CTX_init(ctx);
 	///TODO: Error checking!
 	EVP_DigestInit_ex(ctx,EVP_sha1(),NULL);
 
 
-	///We don't really need to do this.
-	///(It'd be pretty interesting if we found a shared library bigger than memory.)
+	/*
+	 * We don't really need to do this.
+	 * It'd be pretty interesting if we found a shared library bigger than memory.)
+	 */
 	while (read < UPDATE_SIZE) {
 		read = fread(buf,sizeof(char),UPDATE_SIZE,fd);
 		EVP_DigestUpdate(ctx,buf,read);
@@ -58,6 +62,7 @@ unsigned char* module_hash(char *path) {
 
 	EVP_DigestFinal_ex(ctx,md,NULL);
 
+	EVP_MD_CTX_destroy(ctx);
 	return md;
 }
 
@@ -66,7 +71,7 @@ BANG_module* BANG_load_module(char *path) {
 	BANG_sigargs args;
 	args.args = dlerror();
 
-	///Make sure the dlopen worked.
+	/* Make sure the dlsym worked. */
 	if (args.args != NULL) {
 		args.length = strlen(args.args);
 		BANG_send_signal(BANG_MODULE_ERROR,args);
@@ -83,7 +88,7 @@ BANG_module* BANG_load_module(char *path) {
 
 	module->module_name = dlsym(handle,"BANG_module_name");
 
-	///Make sure the dlsym worked.
+	/* Make sure the dlsym worked. */
 	if ((args.args = dlerror()) != NULL) {
 		dlclose(handle);
 		free(module);
@@ -98,7 +103,7 @@ BANG_module* BANG_load_module(char *path) {
 
 	module->module_version = dlsym(handle,"BANG_module_version");
 
-	///Make sure the dlsym worked.
+	/* Make sure the dlsym worked. */
 	if ((args.args = dlerror()) != NULL) {
 		dlclose(handle);
 		free(module);
@@ -113,7 +118,7 @@ BANG_module* BANG_load_module(char *path) {
 
 	*(void **) (&(module->module_init)) = dlsym(handle,"BANG_module_init");
 
-	///Make sure the dlsym worked.
+	/* Make sure the dlsym worked. */
 	if ((args.args = dlerror()) != NULL) {
 		dlclose(handle);
 		free(module);
@@ -128,7 +133,7 @@ BANG_module* BANG_load_module(char *path) {
 
 	*(void **) (&(module->module_run)) = dlsym(handle,"BANG_module_run");
 
-	///Make sure the dlsym worked.
+	/* Make sure the dlsym worked. */
 	if ((args.args = dlerror()) != NULL) {
 		dlclose(handle);
 		free(module);
@@ -142,8 +147,10 @@ BANG_module* BANG_load_module(char *path) {
 	}
 
 	module->md = module_hash(path);
-	///The real question is, should I do a hash of the module handle?
-	///Then we need to know how long the module handle is.
+	/*
+	 * The real question is, should I do a hash of the module handle?
+	 * Then we need to know how long the module handle is.
+	 */
 	module->handle = handle;
 	module->path = path;
 

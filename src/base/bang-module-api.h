@@ -16,7 +16,13 @@
  */
 void BANG_debug_on_all_peers(char *message);
 
+/**
+ * The api for the modules to use.
+ */
 typedef struct {
+	/**
+	 * Refrence to BANG_debug_on_all_peers.
+	 */
 	void (*BANG_debug_on_all_peers) (char *message);
 } BANG_api;
 #endif

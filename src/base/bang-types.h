@@ -29,8 +29,19 @@ typedef struct _BANG_module {
 	 */
 	void (*module_run)();
 
+	/**
+	 * The hash of the module.
+	 */
 	unsigned char *md;
+	
+	/**
+	 * The actual handle of the module.
+	 */
 	void *handle;
+	
+	/**
+	 * The path to the module.
+	 */
 	char *path;
 } BANG_module;
 
@@ -166,9 +177,21 @@ enum BANG_headers {
 	BANG_NUM_HEADERS
 } BANG_header;
 
+/**
+ * A request to be made to a write peer thread.
+ */
 typedef struct {
+	/**
+	 * The type of request.
+	 */
 	char type;
+	/**
+	 * Information part of the request.
+	 */
 	void *request;
+	/**
+	 * Length of the information.
+	 */
 	unsigned int length;
 } BANG_request;
 

@@ -206,9 +206,9 @@ enum BANG_headers {
 	BANG_DEBUG_MESSAGE,
 	/**
 	 * message:
-	 *	-BANG_SEND_MODULE
-	 *	-length of module
-	 *	-module
+	 *	-BANG_SEND_MODULE (unsigned 4 bytes)
+	 *	-length of module (unsigned 4 bytes)
+	 *	-module (void*)
 	 * NOTE: The file, not the struct.
 	 */
 	BANG_SEND_MODULE,

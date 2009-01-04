@@ -363,10 +363,30 @@ void* BANG_read_peer_thread(void *self_info) {
 	return NULL;
 }
 
+unsigned int write_message(peer *self, void *message, unsigned int length) {
+	unsigned int written = 0;
+	int write_return = 0;
+	char writing = 1;
+	while (writing) {
+		write_return = write(self->socket,message,length);
+		if (write_return >= 0) {
+			written += write_return;
+			if (written >= length)
+				writing = 0;
+		} else {
+			writing = 0;
+			/* ERROR !*/
+		}
+	}
+
+	return written;
+}
+
 void* BANG_write_peer_thread(void *self_info) {
 	peer *self = (peer*)self_info;
 	request_node *current;
 	char sending = 1;
+	unsigned int header;
 	while (sending) {
 		sem_wait(&(self->requests->num_requests));
 		pthread_mutex_lock(&(self->requests->lock));
@@ -384,6 +404,11 @@ void* BANG_write_peer_thread(void *self_info) {
 				sending = 0;
 				break;
 			case BANG_DEBUG_REQUEST:
+				/* TODO: ADD ERROR CHECKING! */
+				header = BANG_DEBUG_MESSAGE;
+				write_message(self,&header,LENGTH_OF_HEADER);
+				write_message(self,&(current->request.length),LENGTH_OF_LENGTHS);
+				write_message(self,&(current->request.request),current->request.length);
 				break;
 			case BANG_SEND_MODULE_REQUEST:
 				break;

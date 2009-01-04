@@ -394,6 +394,8 @@ void* BANG_write_peer_thread(void *self_info) {
 #endif
 				break;
 		}
+
+		free(current);
 	}
 	return NULL;
 }

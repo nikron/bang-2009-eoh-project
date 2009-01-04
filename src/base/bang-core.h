@@ -1,13 +1,13 @@
 /**
- * \file core.h
+ * \file bang-core.h
  * \author Nikhil Bysani
  * \date December 20, 2009
  *
  * \brief This defines the main public high level interface to the BANG project.  This is mainly accomplished
  * through use of BANG_init and BANG_close.
  */
-#ifndef __CORE_H
-#define __CORE_H
+#ifndef __BANG_CORE_H
+#define __BANG_CORE_H
 
 #include"bang-net.h"
 #include"bang-types.h"

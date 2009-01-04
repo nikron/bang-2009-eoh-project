@@ -40,10 +40,9 @@
  * Basic look of the application. menubar, tabbed views, statusbar.  Tabs included, but not limited to, listing of a
  * the peers and their status.  And then a tab for each module.
  */
-#include"../base/core.h"
 #include"../base/bang-signals.h"
-#include"../base/bang-types.h"
 #include"../base/bang-module.h"
+#include"../base/bang-core.h"
 #include"server-preferences.h"
 #include<stdio.h>
 #include<stdlib.h>
@@ -82,6 +81,7 @@ GtkWidget *connect_peer;
  * \brief Updates the statusbar depending on what signals it catches.
  */
 void server_status(int signal, int sig_id, void *args) {
+	if (statusbar == NULL) return;
 	gdk_threads_enter();
 	guint context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar),"server_status");
 	gtk_statusbar_pop(GTK_STATUSBAR(statusbar),context_id);

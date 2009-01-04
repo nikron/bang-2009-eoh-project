@@ -144,6 +144,7 @@ void* threaded_send_signal(void *thread_args) {
 
 int BANG_send_signal(int signal, BANG_sigargs args) {
 	acquire_sig_lock(signal);
+
 #ifdef BDEBUG_1
 	fprintf(stderr,"Sending out the signal %d.\n",signal);
 	fprintf(stderr,"The signal_node is %p.\n",signal_handlers[signal]);
@@ -173,6 +174,7 @@ int BANG_send_signal(int signal, BANG_sigargs args) {
 
 		++i;
 	}
+
 	release_sig_lock(signal);
 	return 0;
 }

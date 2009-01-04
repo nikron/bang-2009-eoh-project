@@ -99,6 +99,13 @@ void free_BANG_requests(BANG_requests *requests);
  */
 BANG_requests* new_BANG_requests();
 
+/*
+ * \param self The peer to be closed.
+ *
+ * \brief A peer thread asks to close itself.
+ */
+void peer_self_close(peer *self);
+
 /**
  * This is a lock on readers
  */
@@ -345,7 +352,8 @@ void* BANG_read_peer_thread(void *self_info) {
 void* BANG_write_peer_thread(void *self_info) {
 	peer *self = (peer*)self_info;
 	request_node *current;
-	while (1) {
+	char sending = 1;
+	while (sending) {
 		sem_wait(&(self->requests->num_requests));
 		pthread_mutex_lock(&(self->requests->lock));
 		current = pop_request(&(self->requests->head));
@@ -354,6 +362,24 @@ void* BANG_write_peer_thread(void *self_info) {
 		/*
 		 * TODO: act on current request
 		 */
+		switch (current->request->type) {
+			case BANG_CLOSE_REQUEST:
+				break;
+			case BANG_SUDDEN_CLOSE_REQUEST:
+				peer_self_close(self);
+				sending = 0;
+				break;
+			case BANG_DEBUG_REQUEST: 
+				break;
+			case BANG_SEND_MODULE_REQUEST:
+				break;
+			default:
+				/*ERROR!*/
+#ifdef BDEBUG_1
+				fprintf(stderr,"BANG ERROR:\t%d is not not a request type!\n",current->type);
+#endif
+				break;
+		}
 	}
 	return NULL;
 }

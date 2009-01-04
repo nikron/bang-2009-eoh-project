@@ -55,6 +55,7 @@ typedef void (*BANGSignalHandler)(int,int,void*);
 
 /** 
  * The signals that can be sent by library.
+ * TODO: Detail all the signals, especially their arguments.
  */
 enum BANG_signals {
 	///Success signals.
@@ -112,8 +113,17 @@ enum BANG_signals {
  *
  */
 
+/**
+ * Length of the headers.
+ */
 #define LENGTH_OF_HEADER 4
+/**
+ * Length of any lengths sent.
+ */
 #define LENGTH_OF_LENGTHS 4
+/**
+ * Length of any versions sent.
+ */
 #define LENGTH_OF_VERSION 8
 
 enum BANG_headers {
@@ -132,6 +142,14 @@ enum BANG_headers {
 	 * 	-message (char*)
 	 */
 	BANG_DEBUG_MESSAGE,
+	/**
+	 * message:
+	 *	-BANG_SEND_MODULE
+	 *	-length of module
+	 *	-module
+	 * NOTE: The file, not the struct.
+	 */
+	BANG_SEND_MODULE,
 	/**
 	 * message:
 	 * 	-BANG_MISMATCH_VERSION (unsigned 4 bytes)
@@ -155,7 +173,28 @@ typedef struct {
 } BANG_request;
 
 enum BANG_request_types {
-	BANG_DEBUG_REQUEST = 0,
+	/**
+	 * Ask for the peer to start a sign off.
+	 */
+	BANG_CLOSE_REQUEST = 0,
+	/**
+	 * Just quit without doing anything.
+	 */
+	BANG_SUDDEN_CLOSE_REQUEST,
+	/**
+	 * do:
+	 * 	-send BANG_DEBUG_MESSAGE
+	 * 	-send length of message
+	 * 	-send message
+	 */
+	BANG_DEBUG_REQUEST,
+	/**
+	 * do:
+	 * 	-send BANG_SEND_MODULE
+	 * 	-send length of module
+	 * 	-send module
+	 * 	NOTE:  NOT THE struct, the actual file.
+	 */
 	BANG_SEND_MODULE_REQUEST,
 	BANG_NUM_REQUESTS
 } BANG_request_type;

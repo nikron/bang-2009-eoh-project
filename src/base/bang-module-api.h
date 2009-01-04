@@ -1,5 +1,5 @@
 /**
- * \file bang-module-api.c
+ * \file bang-module-api.h
  * \author Nikhil Bysani
  * \date December 24, 2008
  *

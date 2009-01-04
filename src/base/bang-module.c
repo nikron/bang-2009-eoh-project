@@ -27,7 +27,6 @@
  *  -BANG_module_run: runs the module
  */
 
-#define UPDATE_SIZE 1024
 
 /**
  * \param path Valid path to a file.

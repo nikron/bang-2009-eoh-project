@@ -382,6 +382,17 @@ unsigned int write_message(peer *self, void *message, unsigned int length) {
 	return written;
 }
 
+/**
+ * \param self The thread sending the module.
+ * \param request The module path to send.
+ *
+ * \brief Sends a module to a peer.
+ *
+ * Discussion:  Would it be better to keep the module in memory, so
+ * we don't have to read from disk everytime we send a module?  However,
+ * it may be possible that modules don't fit in memory though this seems
+ * _very_ unlikely.
+ */
 void send_module(peer *self, BANG_request request) {
 	FILE *fd = fopen((char*)request.request,"r");
 	if (fd == NULL) {

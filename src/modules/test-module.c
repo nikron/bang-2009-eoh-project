@@ -11,16 +11,24 @@
 #include"../base/bang-module-api.h"
 
 char BANG_module_name[5] = "test";
-double BANG_module_version = .1;
+unsigned char BANG_module_version[] = {0,0,1};
 BANG_api api;
 
 int BANG_module_init(BANG_api get_api) {
 	api = get_api;
-	fprintf(stderr,"TEST:\t Module with name %s is initializing with version %.1f.\n",BANG_module_name,BANG_module_version);
+	fprintf(stderr,"TEST:\t Module with name %s is initializing with version %d.%d.%d.\n",
+			BANG_module_name,
+			BANG_module_version[0],
+			BANG_module_version[1],
+			BANG_module_version[2]);
 	return 0;
 }
 
 void BANG_module_run() {
-	fprintf(stderr,"TEST:\t Module with name %s is running with version %.1f.\n",BANG_module_name,BANG_module_version);
+	fprintf(stderr,"TEST:\t Module with name %s is running with version %d.%d.%d.\n",
+			BANG_module_name,
+			BANG_module_version[0],
+			BANG_module_version[1],
+			BANG_module_version[2]);
 	api.BANG_debug_on_all_peers("TESTING ON ALL PEERS!\n");
 }

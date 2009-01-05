@@ -21,7 +21,10 @@ typedef struct {
 	 * The name of the module.
 	 */
 	char *module_name;
-	double *module_version;
+	/**
+	 * 3 is a magic number ~
+	 */
+	unsigned char *module_version;
 	/**
 	 * The module initialize method.
 	 */

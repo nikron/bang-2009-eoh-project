@@ -361,11 +361,15 @@ static char read_debug_message(peer *self) {
 
 }
 
+static char read_module_message(peer *self) {
+	return 0;
+}
+
 void* BANG_read_peer_thread(void *self_info) {
 	peer *self = (peer*)self_info;
 	memset(&(self->pfd),0,sizeof(struct pollfd));
 	self->pfd.fd = self->socket;
-	self->pfd.events = POLLIN | POLLERR | POLLHUP | POLLNVAL;
+	self->pfd.events = POLLIN  | POLLERR | POLLHUP | POLLNVAL;
 
 	unsigned int *header;
 
@@ -379,6 +383,10 @@ void* BANG_read_peer_thread(void *self_info) {
 					break;
 				case BANG_DEBUG_MESSAGE:
 					reading = read_debug_message(self);
+					break;
+				case BANG_SEND_MODULE:
+					/* I guess we'll take it... */
+					reading = read_module_message(self);
 					break;
 				case BANG_MISMATCH_VERSION:
 				case BANG_BYE:

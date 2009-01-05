@@ -9,7 +9,9 @@
 #define __BANG_TYPES_H
 #include"bang-module-api.h"
 
-#define BANG_VERSION .01
+#define BANG_MAJOR_VERSION 0
+#define BANG_MIDDLE_VERSION 1
+#define BANG_MINOR_VERSION 1
 
 /**
  * The structure that represents a module for the program.
@@ -172,7 +174,7 @@ enum BANG_signals {
 /**
  * Length of any versions sent.
  */
-#define LENGTH_OF_VERSION 8
+#define LENGTH_OF_VERSION 1
 
 enum BANG_headers {
 	/**
@@ -226,7 +228,7 @@ enum BANG_headers {
 	 * they are hanging up
 	 * message:
 	 * 	-BANG_MISMATCH_VERSION (unsigned 4 bytes)
-	 * 	-our version (8 bytes)
+	 * 	-our version (3 unsigned bytes)
 	 */
 	BANG_MISMATCH_VERSION,
 	/**

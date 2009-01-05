@@ -294,12 +294,27 @@ void* extract_message(peer *self, unsigned int length) {
 }
 
 char peer_respond_hello(peer *self) {
-	double *version = (double*) extract_message(self,LENGTH_OF_VERSION);
-	if (version == NULL || *version != BANG_VERSION) {
+	unsigned char *version = (unsigned char*) extract_message(self,LENGTH_OF_VERSION);
+	if (version == NULL || *version != BANG_MAJOR_VERSION) {
 		free(version);
 		return 0;
 	}
 	free(version);
+
+	version = (unsigned char*) extract_message(self,LENGTH_OF_VERSION);
+	if (version == NULL || *version != BANG_MIDDLE_VERSION) {
+		free(version);
+		return 0;
+	}
+	free(version);
+
+	version = (unsigned char*) extract_message(self,LENGTH_OF_VERSION);
+	if (version == NULL || *version != BANG_MIDDLE_VERSION) {
+		free(version);
+		return 0;
+	}
+	free(version);
+
 	unsigned int *length = (unsigned int*) extract_message(self,LENGTH_OF_LENGTHS);
 	if (length == NULL) {
 		return 0;

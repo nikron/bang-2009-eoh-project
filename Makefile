@@ -39,7 +39,7 @@ MODULES=test-module.so libbang.so
 
 all: $(EXENAME) $(LIBRARIES)
 
-$(EXENAME): $(LSRC) $(ASRC)
+$(EXENAME): $(LOBJS) $(AOBJS)
 	$(CC) $(COPTS) $(GTKOPTS) $^ -o $(EXENAME)
 
 $(AOBJS): $(ASRC)

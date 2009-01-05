@@ -184,6 +184,8 @@ enum BANG_headers {
 	 */
 	BANG_HELLO = 0,
 	/**
+	 * sends a debug message that should be printed out on the remote
+	 * end.
 	 * message:
 	 * 	-BANG_DEBUG_MESSAGE (unsigned 4 bytes)
 	 * 	-length of message (unsigned 4 bytes)
@@ -191,6 +193,9 @@ enum BANG_headers {
 	 */
 	BANG_DEBUG_MESSAGE,
 	/**
+	 * sends a module.  very rude to do this if you haven't
+	 * asked if they want it it, or if they have requested it.
+	 *
 	 * message:
 	 *	-BANG_SEND_MODULE (unsigned 4 bytes)
 	 *	-length of module (unsigned 4 bytes)
@@ -199,6 +204,24 @@ enum BANG_headers {
 	 */
 	BANG_SEND_MODULE,
 	/**
+	 * message:
+	 * 	-BANG_REQUEST_MODULE (unsigned 4 bytes)
+	 * 	-length of hash (unsigned 4 bytes)
+	 * 	-hash
+	 */
+	BANG_REQUEST_MODULE,
+	/**
+	 * Asks the remote end if they want a module, if yes
+	 * they'll respond with a request
+	 * message:
+	 * 	-BANG_WANT_MODULE (unsigned 4 bytes)
+	 * 	-length of hash (unsigned 4 bytes)
+	 * 	-hash
+	 */
+	BANG_WANT_MODULE,
+	/**
+	 * tells the remote end that version is wrong, and that
+	 * they are hanging up
 	 * message:
 	 * 	-BANG_MISMATCH_VERSION (unsigned 4 bytes)
 	 * 	-our version (8 bytes)

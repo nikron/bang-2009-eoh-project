@@ -18,6 +18,8 @@
 #include<sys/socket.h>
 #include<unistd.h>
 
+#define BDEBUG_1
+
 /**
  * A linked list of requests of peer send threads.
  */
@@ -99,9 +101,11 @@ static request_node* new_request_node();
 static void request_peer(peer *self, BANG_request request);
 
 /**
- * \brief Removes and clears a peer at pos in the peers array.
+ * \brief Removes and frees a peer and its resources.
  */
-static void clear_peer(int pos);
+static void free_peer(peer *p);
+
+static peer* new_peer();
 
 /*
  * \param requests The requests to be freed.
@@ -174,23 +178,29 @@ static void release_peers_read_lock() {
 	pthread_mutex_unlock(&peers_read_lock);
 }
 
-static void clear_peer(int pos) {
+static void free_peer(peer *p) {
 #ifdef BDEBUG_1
-	fprintf(stderr,"Clearing a peer at %d.\n",pos);
+	fprintf(stderr,"Freeing a peer with peer_id %d.\n",p->peer_id);
 #endif
-	///This should quickly make the two threads stop.
-	pthread_cancel(peers[pos]->receive_thread);
-	pthread_cancel(peers[pos]->send_thread);
+	pthread_cancel(p->receive_thread);
+
+	/* We need to close the receive thread in a more roundabout way, since it may be waiting
+	 * on a semaphore in which case it will never close */
 	BANG_request request;
+
 	request.type = BANG_SUDDEN_CLOSE_REQUEST;
 	request.length = 0;
 	request.request = NULL;
-	request_peer(peers[pos],request);
-	pthread_join(peers[pos]->send_thread,NULL);
-	free_BANG_requests(peers[pos]->requests);
-	close(peers[pos]->socket);
-	free(peers[pos]);
-	peers[pos] = NULL;
+
+	request_peer(p,request);
+
+	pthread_join(p->receive_thread,NULL);
+	pthread_join(p->send_thread,NULL);
+
+	free_BANG_requests(p->requests);
+
+	close(p->socket);
+	free(p);
 }
 
 static request_node* pop_request(request_node  **head) {
@@ -211,7 +221,7 @@ static void append_request(request_node **head, request_node *node) {
 		*head = node;
 	} else {
 		request_node *cur;
-		for (cur = *head; cur != NULL; cur = cur->next);
+		for (cur = *head; cur->next != NULL; cur = cur->next);
 		cur->next = node;
 	}
 }
@@ -243,12 +253,6 @@ static void free_BANG_requests(BANG_requests *requests) {
 	free_request_list(requests->head);
 }
 
-/**
- * \param self The current peer.
- *
- * \brief Closes one of the two peer threads, after the connection has formally stopped
- * and the mess has to been cleaned up..
- */
 static void peer_self_close(peer *self) {
 	BANG_sigargs args;
 	args.args = calloc(1,sizeof(int));
@@ -464,26 +468,30 @@ void* BANG_write_peer_thread(void *self_info) {
 				header = BANG_BYE;
 				write_message(self,&header,LENGTH_OF_HEADER);
 				break;
+
 			case BANG_SUDDEN_CLOSE_REQUEST:
-				peer_self_close(self);
+				free(current);
 				sending = 0;
 				break;
+
 			case BANG_DEBUG_REQUEST:
 				/* TODO: ADD ERROR CHECKING!
-				 * possibily put in own method */
+				 * possibly put in own method */
 				header = BANG_DEBUG_MESSAGE;
 				write_message(self,&header,LENGTH_OF_HEADER);
 				write_message(self,&(current->request.length),LENGTH_OF_LENGTHS);
 				write_message(self,&(current->request.request),current->request.length);
 				free(current->request.request);
 				break;
+
 			case BANG_SEND_MODULE_REQUEST:
 				send_module(self,current->request);
 				break;
+
 			default:
 				/*ERROR!*/
 #ifdef BDEBUG_1
-				fprintf(stderr,"BANG ERROR:\t%d is not not a request type!\n",current->type);
+				fprintf(stderr,"BANG ERROR:\t%d is not not a request type!\n",current->request.type);
 #endif
 				break;
 		}
@@ -546,6 +554,13 @@ int BANG_get_key_with_peer_id(int peer_id) {
 	return -1;
 }
 
+static peer* new_peer() {
+	peer *new;
+	new = (peer*)  calloc(1,sizeof(peer));
+	new->requests = new_BANG_requests();
+	return new;
+}
+
 void BANG_add_peer(int socket) {
 	pthread_mutex_lock(&peers_change_lock);
 
@@ -557,13 +572,12 @@ void BANG_add_peer(int socket) {
 	keys[current_key] = current_id;
 
 	peers = (peer**) realloc(peers,current_peers * sizeof(peer*));
-	peers[current_key] = (peer*) calloc(1,sizeof(peer));
+	peers[current_key] = new_peer();
 	peers[current_key]->peer_id = current_id;
 	peers[current_key]->socket = socket;
-	peers[current_key]->requests = new_BANG_requests();
 
 #ifdef BDEBUG_1
-	fprintf(stderr,"Threads being started at %d\n",current_key);
+	fprintf(stderr,"Threads being started at %d\n.",current_key);
 #endif
 	pthread_create(&(peers[current_key]->receive_thread),NULL,BANG_read_peer_thread,peers[current_key]);
 	pthread_create(&(peers[current_key]->send_thread),NULL,BANG_write_peer_thread,peers[current_key]);
@@ -602,7 +616,8 @@ void BANG_remove_peer(int peer_id) {
 	int pos = BANG_get_key_with_peer_id(peer_id);
 	if (pos == -1) return;
 
-	clear_peer(pos);
+	free_peer(peers[pos]);
+	peers[pos] = NULL;
 
 	for (;pos < current_peers - 1; ++pos) {
 		peers[pos] = peers[pos + 1];
@@ -643,10 +658,13 @@ void BANG_com_close() {
 	fprintf(stderr,"BANG com closing.\n");
 #endif
 	int i = 0;
-	pthread_mutex_unlock(&peers_change_lock);
+	pthread_mutex_lock(&peers_change_lock);
 	for (i = 0; i < current_peers; ++i) {
-		clear_peer(i);
+		free_peer(peers[i]);
 	}
+
+	pthread_mutex_unlock(&peers_change_lock);
+
 	pthread_mutex_destroy(&peers_change_lock);
 	pthread_mutex_destroy(&peers_read_lock);
 	free(peers);

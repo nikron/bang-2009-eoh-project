@@ -45,12 +45,14 @@ void* BANG_server_thread(void *not_used) {
 	/*
 	 * sets the hints of getaddrinfo so it know what kind of address we want
 	 * basic template of code from "man 2 getaddrinfo" section
+	 *
+	 * getaddrinfo is NOT C99, annoying to say the least.
 	 */
 	memset(&hints, 0, sizeof(struct addrinfo));
-	hints.ai_family = AF_UNSPEC;	//don't about ipv4 or ipv6
-	hints.ai_socktype = SOCK_STREAM;//tcp
-	hints.ai_flags = AI_PASSIVE;	//for wildcard IP address
-	hints.ai_protocol = 0;		//any protocol
+	hints.ai_family = AF_UNSPEC;	
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE;	
+	hints.ai_protocol = 0;		
 	hints.ai_canonname = NULL;
 	hints.ai_addr = NULL;
 	hints.ai_next = NULL;
@@ -88,7 +90,7 @@ void* BANG_server_thread(void *not_used) {
 		}
 	}
 
-	//check to see if we could bind to a socket
+	/* check to see if we could bind to a socket */
 	if (rp == NULL) {
 		close(sock);
 		args.args = NULL;
@@ -98,7 +100,7 @@ void* BANG_server_thread(void *not_used) {
 		return NULL;
 	}
 
-	//mark the socket for listening
+	/* mark the socket for listening */
 	if (listen(sock,MAX_BACKLOG) != 0) {
 		close(sock);
 		args.args = NULL;
@@ -111,7 +113,7 @@ void* BANG_server_thread(void *not_used) {
 	args.args = NULL;
 	args.length = 0;
 	BANG_send_signal(BANG_SERVER_STARTED,args);
-	//accepted client
+	/* accepted client */
 	args.length = sizeof(int);
 	int accptsock;
 	while (1) {
@@ -145,7 +147,7 @@ void* BANG_connect_thread(void *addr) {
 	hints.ai_addr = NULL;
 	hints.ai_next = NULL;
 
-	//check to see if we got available addresses
+	/* check to see if we got available addresses */
 	if (getaddrinfo(NULL,(char*)addr,&hints,&result) != 0) {
 		args.args = addr;
 		args.length = strlen(addr) * sizeof(char);

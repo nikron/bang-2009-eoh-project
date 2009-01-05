@@ -79,8 +79,13 @@ static GtkWidget *connect_peer;
  * \brief Updates the statusbar depending on what signals it catches.
  */
 static void server_status(int signal, int sig_id, void *args) {
-	if (statusbar == NULL) return;
+
 	gdk_threads_enter();
+	if (statusbar == NULL) {
+		gdk_threads_leave();
+		return;
+	}
+
 	guint context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar),"server_status");
 	gtk_statusbar_pop(GTK_STATUSBAR(statusbar),context_id);
 	if (signal == BANG_BIND_SUC) {
@@ -104,11 +109,16 @@ static void server_status(int signal, int sig_id, void *args) {
 	free(args);
 }
 
-//bang callback, gtk needs to be locked
+/* bang callback, gtk needs to be locked */
 static void client_con(int signal, int sig_id, void *args) {
-	///We could make this buffer smaller.
+
 	char buf[30];
 	gdk_threads_enter();
+	if (statusbar == NULL) {
+		gdk_threads_leave();
+		return;
+	}
+
 	guint context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar),"peer_status");
 	gtk_statusbar_pop(GTK_STATUSBAR(statusbar),context_id);
 	if (signal == BANG_PEER_CONNECTED) {
@@ -123,7 +133,7 @@ static void client_con(int signal, int sig_id, void *args) {
 }
 
 static void open_bang_module(GtkWidget *widget, gpointer data) {
-	///OMG THE LINE IS SO LONG,OH SHI--
+	/* OMG THE LINE IS SO LONG,OH SHI-- */
 	GtkWidget *get_module = gtk_file_chooser_dialog_new("Open Module", GTK_WINDOW(window), GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
 	if (gtk_dialog_run(GTK_DIALOG(get_module)) == GTK_RESPONSE_ACCEPT) {
 		char *filename;
@@ -180,7 +190,7 @@ int main(int argc, char **argv) {
 	BANG_install_sighandler(BANG_BIND_FAIL,&server_status);
 	BANG_install_sighandler(BANG_SERVER_STARTED,&server_status);
 	BANG_install_sighandler(BANG_SERVER_STOPPED,&server_status);
-	BANG_install_sighandler(BANG_PEER_CONNECTED,&client_con);
+	BANG_install_sighandler(BANG_PEER_ADDED,&client_con);
 	BANG_install_sighandler(BANG_PEER_REMOVED,&client_con);
 
 	///Note:  gtk expects that as a process, you do not need to free its memory

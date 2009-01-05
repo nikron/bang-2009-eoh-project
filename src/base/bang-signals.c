@@ -132,6 +132,7 @@ typedef struct {
 	 */
 	void *handler_args;
 } send_signal_args;
+
 /**
  * This is so that each signal can be sent in its own thread, and the signal caller
  * does not have to wait for handler to end.

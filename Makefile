@@ -37,10 +37,10 @@ MODULES=test-module.so libbang.so
 
 .PHONY: doc modules
 
-all: $(EXENAME) $(LIBRARIES)
+all: $(EXENAME) # $(LIBRARIES)
 
-$(EXENAME): $(LOBJS) $(AOBJS)
-	$(CC) $(COPTS) $(GTKOPTS) $^ -o $(EXENAME)
+$(EXENAME): $(LSRC) $(ASRC)
+	$(CC) $(COPTS) $(GTKOPTS) -fwhole-program $^ -o $(EXENAME)
 
 $(AOBJS): $(ASRC)
 	$(CC) $(COPTS) $(GTKOPTS) -c $^

@@ -33,7 +33,7 @@
  *
  * \brief Finds the sha1 hash of the file
  */
-unsigned char* module_hash(char *path) {
+static unsigned char* module_hash(char *path) {
 	FILE *fd = fopen(path,"r");
 	if (fd == NULL) return NULL;
 	char buf[UPDATE_SIZE];

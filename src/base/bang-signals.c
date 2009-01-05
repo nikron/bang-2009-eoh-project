@@ -27,7 +27,7 @@ typedef struct _signal_node signal_node;
  *
  * \brief Frees a signal node linked list.
  */
-void recursive_sig_free(signal_node *head) {
+static void recursive_sig_free(signal_node *head) {
 	if (head == NULL) return;
 	if (head->next != NULL) {
 		recursive_sig_free(head->next);
@@ -40,16 +40,17 @@ void recursive_sig_free(signal_node *head) {
  * \brief The handlers for each of the signals is kept in a linked list stored
  *  in an array which is index by the signal's number
  */
-signal_node **signal_handlers;
+static signal_node **signal_handlers;
+
 /**
  * Another read-writer problem, multiple threads can send out the same signal at the same time, but only one thread
  * should be allowed add a signal handler.
  */
-pthread_mutex_t send_sig_lock[BANG_NUM_SIGS];
-pthread_mutex_t add_handler_lock[BANG_NUM_SIGS];
-int sig_senders[BANG_NUM_SIGS];
+static pthread_mutex_t send_sig_lock[BANG_NUM_SIGS];
+static pthread_mutex_t add_handler_lock[BANG_NUM_SIGS];
+static int sig_senders[BANG_NUM_SIGS];
 
-void acquire_sig_lock(int signal) {
+static void acquire_sig_lock(int signal) {
 	pthread_mutex_lock(&send_sig_lock[signal]);
 	if (sig_senders[signal] == 0)
 		pthread_mutex_lock(&add_handler_lock[signal]);
@@ -57,7 +58,7 @@ void acquire_sig_lock(int signal) {
 	pthread_mutex_unlock(&send_sig_lock[signal]);
 }
 
-void release_sig_lock(int signal) {
+static void release_sig_lock(int signal) {
 	pthread_mutex_lock(&send_sig_lock[signal]);
 	--sig_senders[signal];
 	if (sig_senders[signal] == 0)
@@ -111,6 +112,7 @@ int BANG_install_sighandler(int signal, BANGSignalHandler handler) {
 	return -1;
 }
 
+
 /**
  * Each signal must be sent in its own thread, so BANG_send_signal creates this structure
  * in order to pass arguements to a thread_send_signal pthread
@@ -130,12 +132,11 @@ typedef struct {
 	 */
 	void *handler_args;
 } send_signal_args;
-
 /**
  * This is so that each signal can be sent in its own thread, and the signal caller
  * does not have to wait for handler to end.
  */
-void* threaded_send_signal(void *thread_args) {
+static void* threaded_send_signal(void *thread_args) {
 	send_signal_args *h = (send_signal_args*)thread_args;
 	h->handler(h->signal,h->sig_id,h->handler_args);
 	free(h);

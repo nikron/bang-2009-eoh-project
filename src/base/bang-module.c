@@ -44,7 +44,9 @@ unsigned char* module_hash(char *path) {
 	 * This ctx creation should be done in an init
 	 * function as it takes some time.
 	 */
-	EVP_MD_CTX *ctx = EVP_MD_CTX_create();
+	static EVP_MD_CTX *ctx = NULL; 
+	ctx = (ctx == NULL)  ? EVP_MD_CTX_create() : ctx;
+
 	EVP_MD_CTX_init(ctx);
 	///TODO: Error checking!
 	EVP_DigestInit_ex(ctx,EVP_sha1(),NULL);
@@ -61,7 +63,7 @@ unsigned char* module_hash(char *path) {
 
 	EVP_DigestFinal_ex(ctx,md,NULL);
 
-	EVP_MD_CTX_destroy(ctx);
+	/* EVP_MD_CTX_destroy(ctx); */
 	return md;
 }
 

@@ -67,7 +67,7 @@ typedef struct {
  *
  * \brief Pops off the head of the linked list.
  */
-request_node* pop_request(request_node **head);
+static request_node* pop_request(request_node **head);
 
 /**
  * \param node appends node to list started at head
@@ -75,7 +75,7 @@ request_node* pop_request(request_node **head);
  *
  * \brief Appends a node to the head linked list.
  */
-void append_request(request_node **head, request_node *node);
+static void append_request(request_node **head, request_node *node);
 
 /**
  * \param head The head of the list to be freed.
@@ -83,77 +83,82 @@ void append_request(request_node **head, request_node *node);
  * \brief Frees resources used by a request list started at
  * head.
  */
-void free_request_list(request_node *head);
+static void free_request_list(request_node *head);
 
 /**
  * \brief Allocates and returns a new request node.
  */
-request_node* new_request_node();
+static request_node* new_request_node();
 
 /**
  * \param self The peer to be requested.
  * \param request Request to be given to the peer.
- * 
+ *
  * \brief Adds a request to a peer structure.
  */
-void request_peer(peer *self, BANG_request request);
+static void request_peer(peer *self, BANG_request request);
+
+/**
+ * \brief Removes and clears a peer at pos in the peers array.
+ */
+static void clear_peer(int pos);
 
 /*
  * \param requests The requests to be freed.
  *
  * \brief Frees a BANGRequests struct.
  */
-void free_BANG_requests(BANG_requests *requests);
+static void free_BANG_requests(BANG_requests *requests);
 
 /*
  * \return Returns an initialized BANGRequest pointer.
  */
-BANG_requests* new_BANG_requests();
+static BANG_requests* new_BANG_requests();
 
 /*
  * \param self The peer to be closed.
  *
  * \brief A peer thread asks to close itself.
  */
-void peer_self_close(peer *self);
+static void peer_self_close(peer *self);
 
 /**
  * This is a lock on readers
  */
-pthread_mutex_t peers_read_lock;
+static pthread_mutex_t peers_read_lock;
 
 /**
  * The number of threads currently reading for the peers structure
  */
-int peers_readers = 0;
+static int peers_readers = 0;
 
 /**
  * A lock on changing the size of peers
  */
-pthread_mutex_t peers_change_lock;
+static pthread_mutex_t peers_change_lock;
 
 /**
  * The total number of peers we get through the length of the program.
  */
-unsigned int peer_count = 0;
+static unsigned int peer_count = 0;
 
 /**
  * The current number of peers connected to the program.
  */
-unsigned int current_peers = 0;
+static unsigned int current_peers = 0;
 
 /**
  * Information and threads for each peer connected to the program
  */
-peer **peers = NULL;
+static peer **peers = NULL;
 
 /**
  * TODO: make this structure not take linear time when sending a request
  * to a specific peer
  */
-int *keys = NULL;
+static int *keys = NULL;
 
-void acquire_peers_read_lock() {
+static void acquire_peers_read_lock() {
 	pthread_mutex_lock(&peers_read_lock);
 	if (peers_readers == 0)
 		pthread_mutex_lock(&peers_change_lock);
@@ -161,7 +166,7 @@ void acquire_peers_read_lock() {
 	pthread_mutex_unlock(&peers_read_lock);
 }
 
-void release_peers_read_lock() {
+static void release_peers_read_lock() {
 	pthread_mutex_lock(&peers_read_lock);
 	--peers_readers;
 	if (peers_readers == 0)
@@ -169,7 +174,7 @@ void release_peers_read_lock() {
 	pthread_mutex_unlock(&peers_read_lock);
 }
 
-void clear_peer(int pos) {
+static void clear_peer(int pos) {
 #ifdef BDEBUG_1
 	fprintf(stderr,"Clearing a peer at %d.\n",pos);
 #endif
@@ -188,7 +193,7 @@ void clear_peer(int pos) {
 	peers[pos] = NULL;
 }
 
-request_node* pop_request(request_node  **head) {
+static request_node* pop_request(request_node  **head) {
 	request_node *temp = *head;
 	if (temp->next == NULL) {
 		*head = NULL;
@@ -201,7 +206,7 @@ request_node* pop_request(request_node  **head) {
 	}
 }
 
-void append_request(request_node **head, request_node *node) {
+static void append_request(request_node **head, request_node *node) {
 	if (*head == NULL) {
 		*head = node;
 	} else {
@@ -211,20 +216,20 @@ void append_request(request_node **head, request_node *node) {
 	}
 }
 
-void free_request_list(request_node *head) {
+static void free_request_list(request_node *head) {
 	if (head == NULL) return;
 	if (head->next != NULL)
 		free_request_list(head->next);
 	free(head);
 }
 
-request_node* new_request_node() {
+static request_node* new_request_node() {
 	request_node *new_node = (request_node*) calloc(1,sizeof(request_node));
 	new_node->next = NULL;
 	return new_node;
 }
 
-BANG_requests* new_BANG_requests() {
+static BANG_requests* new_BANG_requests() {
 	BANG_requests *requests = (BANG_requests*) calloc(1,sizeof(BANG_requests));
 	requests->head = NULL;
 	pthread_mutex_init(&(requests->lock),NULL);
@@ -232,7 +237,7 @@ BANG_requests* new_BANG_requests() {
 	return requests;
 }
 
-void free_BANG_requests(BANG_requests *requests) {
+static void free_BANG_requests(BANG_requests *requests) {
 	pthread_mutex_destroy(&(requests->lock));
 	sem_destroy(&(requests->num_requests));
 	free_request_list(requests->head);
@@ -244,7 +249,7 @@ void free_BANG_requests(BANG_requests *requests) {
  * \brief Closes one of the two peer threads, after the connection has formally stopped
  * and the mess has to been cleaned up..
  */
-void peer_self_close(peer *self) {
+static void peer_self_close(peer *self) {
 	BANG_sigargs args;
 	args.args = calloc(1,sizeof(int));
 	*((int*)args.args) = self->peer_id;
@@ -265,7 +270,7 @@ void peer_self_close(peer *self) {
  *
  * \brief Extracts a message of length length.
  */
-void* extract_message(peer *self, unsigned int length) {
+static void* extract_message(peer *self, unsigned int length) {
 	void *message = (char*) calloc(length,1);
 	int check_read;
 	unsigned int have_read = 0;
@@ -293,7 +298,7 @@ void* extract_message(peer *self, unsigned int length) {
 	return message;
 }
 
-char peer_respond_hello(peer *self) {
+static char peer_respond_hello(peer *self) {
 	unsigned char *version = (unsigned char*) extract_message(self,LENGTH_OF_VERSION);
 	if (version == NULL || *version != BANG_MAJOR_VERSION) {
 		free(version);
@@ -324,7 +329,7 @@ char peer_respond_hello(peer *self) {
 	return 1;
 }
 
-char read_debug_message(peer *self) {
+static char read_debug_message(peer *self) {
 	unsigned int *length = (unsigned int*) extract_message(self,LENGTH_OF_LENGTHS);
 	if (length == NULL) {
 		return 0;
@@ -378,7 +383,7 @@ void* BANG_read_peer_thread(void *self_info) {
 	return NULL;
 }
 
-unsigned int write_message(peer *self, void *message, unsigned int length) {
+static unsigned int write_message(peer *self, void *message, unsigned int length) {
 	unsigned int written = 0;
 	int write_return = 0;
 	char writing = 1;
@@ -408,7 +413,7 @@ unsigned int write_message(peer *self, void *message, unsigned int length) {
  * it may be possible that modules don't fit in memory though this seems
  * _very_ unlikely.
  */
-void send_module(peer *self, BANG_request request) {
+static void send_module(peer *self, BANG_request request) {
 	FILE *fd = fopen((char*)request.request,"r");
 	if (fd == NULL) {
 		free(request.request);
@@ -493,7 +498,7 @@ void BANG_catch_add_peer(int signal, int sig_id, void *socket) {
 	free(socket);
 }
 
-void request_peer(peer *to_be_requested, BANG_request request) {
+static void request_peer(peer *to_be_requested, BANG_request request) {
 	pthread_mutex_lock(&(to_be_requested->requests->lock));
 
 	request_node *temp = new_request_node();

@@ -47,29 +47,29 @@
 #include<glib.h>
 #include<gtk/gtk.h>
 
-GtkWidget *window;
-GtkWidget *vbox;
-GtkWidget *notebook;
-GtkWidget *peers_page_label;
-GtkWidget *statusbar;
+static GtkWidget *window;
+static GtkWidget *vbox;
+static GtkWidget *notebook;
+static GtkWidget *peers_page_label;
+static GtkWidget *statusbar;
 
-GtkWidget *menubar;
+static GtkWidget *menubar;
 
-GtkWidget *file;
-GtkWidget *filemenu;
-GtkWidget *open_module;
+static GtkWidget *file;
+static GtkWidget *filemenu;
+static GtkWidget *open_module;
 
-GtkWidget *server;
-GtkWidget *servermenu;
+static GtkWidget *server;
+static GtkWidget *servermenu;
 /**
  * Start Stop Server
  */
-GtkWidget *ssserver;
-GtkWidget *server_pref;
+static GtkWidget *ssserver;
+static GtkWidget *server_pref;
 
-GtkWidget *peers_item;
-GtkWidget *peersmenu;
-GtkWidget *connect_peer;
+static GtkWidget *peers_item;
+static GtkWidget *peersmenu;
+static GtkWidget *connect_peer;
 
 /*
  * \param signal The signal from the BANG library.
@@ -78,7 +78,7 @@ GtkWidget *connect_peer;
  *
  * \brief Updates the statusbar depending on what signals it catches.
  */
-void server_status(int signal, int sig_id, void *args) {
+static void server_status(int signal, int sig_id, void *args) {
 	if (statusbar == NULL) return;
 	gdk_threads_enter();
 	guint context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar),"server_status");
@@ -105,7 +105,7 @@ void server_status(int signal, int sig_id, void *args) {
 }
 
 //bang callback, gtk needs to be locked
-void client_con(int signal, int sig_id, void *args) {
+static void client_con(int signal, int sig_id, void *args) {
 	///We could make this buffer smaller.
 	char buf[30];
 	gdk_threads_enter();

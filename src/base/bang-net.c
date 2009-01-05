@@ -25,12 +25,12 @@
 /**
  * The server thread.
  */
-pthread_t *server_thread = NULL;
-char *port = DEFAULT_PORT;
-int sock = -1;
-pthread_mutex_t server_status_lock;
+static pthread_t *server_thread = NULL;
+static char *port = DEFAULT_PORT;
+static int sock = -1;
+static pthread_mutex_t server_status_lock;
 
-void free_server_addrinfo(void *result) {
+static void free_server_addrinfo(void *result) {
 	freeaddrinfo((struct addrinfo*)result);
 }
 

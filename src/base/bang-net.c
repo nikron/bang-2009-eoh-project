@@ -7,11 +7,12 @@
  */
 #include"bang-net.h"
 #include"bang-signals.h"
-#include<stdio.h>
-#include<stdlib.h>
+#include<assert.h>
 #include<errno.h>
 #include<netdb.h>
 #include<pthread.h>
+#include<stdio.h>
+#include<stdlib.h>
 #include<string.h>
 #include<sys/types.h>
 #include<sys/socket.h>
@@ -34,6 +35,9 @@ void free_server_addrinfo(void *result) {
 }
 
 void* BANG_server_thread(void *not_used) {
+	assert(port != NULL);
+	assert(sock == -1);
+
 	struct addrinfo hints;
 	struct addrinfo *result, *rp;
 	BANG_sigargs args;

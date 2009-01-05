@@ -13,3 +13,14 @@
 void BANG_debug_on_all_peers(char *message) {
 	fprintf(stderr,message);
 }
+
+void BANG_get_me_peers() {
+}
+
+int BANG_number_of_active_peers() {
+	return 0;
+}
+
+int BANG_get_my_id() {
+	return -1;
+}

@@ -14,7 +14,7 @@
 /**
  * The structure that represents a module for the program.
  */
-typedef struct _BANG_module {
+typedef struct {
 	/**
 	 * The name of the module.
 	 */
@@ -23,7 +23,7 @@ typedef struct _BANG_module {
 	/**
 	 * The module initialize method.
 	 */
-	int (*module_init)(BANG_api*);
+	int (*module_init)(BANG_api);
 	/**
 	 * The module run method.
 	 */
@@ -208,6 +208,8 @@ enum BANG_headers {
 	 * 	-BANG_REQUEST_MODULE (unsigned 4 bytes)
 	 * 	-length of hash (unsigned 4 bytes)
 	 * 	-hash
+	 *
+	 * should these send a name and length?  I don't think so.
 	 */
 	BANG_REQUEST_MODULE,
 	/**

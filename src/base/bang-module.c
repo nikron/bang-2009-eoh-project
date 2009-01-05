@@ -169,11 +169,14 @@ void BANG_run_module(BANG_module *module) {
 	if (module != NULL) {
 		BANG_api api;
 		api.BANG_debug_on_all_peers = &BANG_debug_on_all_peers;
+		api.BANG_get_me_peers = &BANG_get_me_peers;
+		api.BANG_number_of_active_peers = &BANG_number_of_active_peers;
+		api.BANG_get_my_id = &BANG_get_my_id;
 		BANG_sigargs args;
 		args.args = module;
 		args.length = sizeof(BANG_module);
 		BANG_send_signal(BANG_RUNNING_MODULE,args);
-		if(!module->module_init(&api)) {;
+		if(!module->module_init(api)) {;
 			module->module_run();
 		}
 	}

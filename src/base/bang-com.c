@@ -124,7 +124,7 @@ static BANG_requests* new_BANG_requests();
  *
  * \brief A peer thread asks to close itself.
  */
-static void peer_self_close(peer *self);
+static void read_peer_thread_self_close(peer *self);
 
 /**
  * This is a lock on readers
@@ -174,7 +174,7 @@ static void release_peers_read_lock() {
 	pthread_mutex_lock(&peers_read_lock);
 	--peers_readers;
 	if (peers_readers == 0)
-		pthread_mutex_lock(&peers_change_lock);
+		pthread_mutex_unlock(&peers_change_lock);
 	pthread_mutex_unlock(&peers_read_lock);
 }
 
@@ -188,7 +188,7 @@ static void free_peer(peer *p) {
 	 * on a semaphore in which case it will never close */
 	BANG_request request;
 
-	request.type = BANG_SUDDEN_CLOSE_REQUEST;
+	request.type = BANG_CLOSE_REQUEST;
 	request.length = 0;
 	request.request = NULL;
 
@@ -253,7 +253,7 @@ static void free_BANG_requests(BANG_requests *requests) {
 	free_request_list(requests->head);
 }
 
-static void peer_self_close(peer *self) {
+static void read_peer_thread_self_close(peer *self) {
 	BANG_sigargs args;
 	args.args = calloc(1,sizeof(int));
 	*((int*)args.args) = self->peer_id;
@@ -375,6 +375,9 @@ void* BANG_read_peer_thread(void *self_info) {
 					/**
 					 * Protocol mismatch, hang up.
 					 */
+#ifdef BDEBUG_1
+					fprintf(stderr,"Protocol mismatch on peer read thread %d, hanging up.\n",self->peer_id);
+#endif
 					reading = 0;
 					break;
 			}
@@ -383,7 +386,12 @@ void* BANG_read_peer_thread(void *self_info) {
 			reading = 0;
 		}
 	}
-	peer_self_close(self);
+
+#ifdef BDEBUG_1
+	fprintf(stderr,"Peer read thread %d closing on self.\n",self->peer_id);
+#endif
+
+	read_peer_thread_self_close(self);
 	return NULL;
 }
 
@@ -413,7 +421,7 @@ static unsigned int write_message(peer *self, void *message, unsigned int length
  * \brief Sends a module to a peer.
  *
  * Discussion:  Would it be better to keep the module in memory, so
- * we don't have to read from disk everytime we send a module?  However,
+ * we don't have to read from disk every time we send a module?  However,
  * it may be possible that modules don't fit in memory though this seems
  * _very_ unlikely.
  */
@@ -467,10 +475,10 @@ void* BANG_write_peer_thread(void *self_info) {
 			case BANG_CLOSE_REQUEST:
 				header = BANG_BYE;
 				write_message(self,&header,LENGTH_OF_HEADER);
+				sending = 0;
 				break;
 
 			case BANG_SUDDEN_CLOSE_REQUEST:
-				free(current);
 				sending = 0;
 				break;
 
@@ -498,6 +506,10 @@ void* BANG_write_peer_thread(void *self_info) {
 
 		free(current);
 	}
+
+#ifdef BDEBUG_1
+	fprintf(stderr,"Write thread peer with peer_id %d is closing itself.\n",self->peer_id);
+#endif
 	return NULL;
 }
 
@@ -577,7 +589,7 @@ void BANG_add_peer(int socket) {
 	peers[current_key]->socket = socket;
 
 #ifdef BDEBUG_1
-	fprintf(stderr,"Threads being started at %d\n.",current_key);
+	fprintf(stderr,"Threads being started at %d.\n",current_key);
 #endif
 	pthread_create(&(peers[current_key]->receive_thread),NULL,BANG_read_peer_thread,peers[current_key]);
 	pthread_create(&(peers[current_key]->send_thread),NULL,BANG_write_peer_thread,peers[current_key]);

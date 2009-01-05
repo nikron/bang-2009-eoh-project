@@ -285,6 +285,10 @@ static void* extract_message(peer *self, unsigned int length) {
 			check_read = read(self->socket,message + have_read,length);
 
 			if (check_read <= 0) {
+#ifdef BDEBUG_1
+				fprintf(stderr,"Read on the socket has returned an error.\n");
+#endif
+
 				free(message);
 				message = NULL;
 				extracting = 0;
@@ -293,6 +297,15 @@ static void* extract_message(peer *self, unsigned int length) {
 				extracting = (have_read >= length) ? 0 : 1;
 			}
 		} else {
+#ifdef BDEBUG_1
+
+			fprintf(stderr,"POLLIN:\t%x.\n",POLLIN);
+			fprintf(stderr,"POLLOUT:\t%x.\n",POLLOUT);
+			fprintf(stderr,"POLLERR:\t%x.\n",POLLERR);
+			fprintf(stderr,"POLLHUP:\t%x.\n",POLLHUP);
+			fprintf(stderr,"POLLNVAL:\t%x.\n",POLLNVAL);
+			fprintf(stderr,"Something went wrong on poll, revents %x.\n",self->pfd.revents);
+#endif
 			free(message);
 			message = NULL;
 			extracting = 0;
@@ -352,7 +365,7 @@ void* BANG_read_peer_thread(void *self_info) {
 	peer *self = (peer*)self_info;
 	memset(&(self->pfd),0,sizeof(struct pollfd));
 	self->pfd.fd = self->socket;
-	self->pfd.events = POLLIN | POLLOUT | POLLERR | POLLHUP | POLLNVAL;
+	self->pfd.events = POLLIN | POLLERR | POLLHUP | POLLNVAL;
 
 	unsigned int *header;
 

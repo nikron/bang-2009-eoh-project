@@ -112,7 +112,6 @@ static void server_status(int signal, int sig_id, void *args) {
 /* bang callback, gtk needs to be locked */
 static void client_con(int signal, int sig_id, void *args) {
 
-	char buf[30];
 	gdk_threads_enter();
 	if (statusbar == NULL) {
 		gdk_threads_leave();
@@ -121,11 +120,10 @@ static void client_con(int signal, int sig_id, void *args) {
 
 	guint context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar),"peer_status");
 	gtk_statusbar_pop(GTK_STATUSBAR(statusbar),context_id);
-	if (signal == BANG_PEER_CONNECTED) {
-		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"A peer has connected.");
+	if (signal == BANG_PEER_ADDED) {
+		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"A peer has been added.");
 	} else {
-		sprintf(buf,"Peer %d has been removed.",*((int*)args));
-		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,buf);
+		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"A peer has been removed.");
 	}
 	gdk_flush();
 	gdk_threads_leave();
@@ -170,6 +168,7 @@ static gboolean delete_event(GtkWidget *widget, GdkEvent *event, gpointer data) 
 
 	/* Change TRUE to FALSE and the main window will be destroyed with
 	 * a "delete_event". */
+	BANG_close();
 	return FALSE;
 }
 
@@ -179,12 +178,11 @@ static gboolean delete_event(GtkWidget *widget, GdkEvent *event, gpointer data) 
  */
 static void destroy(GtkWidget *widget, gpointer data) {
 	gdk_flush();
-	BANG_close();
 	gtk_main_quit();
 }
 
 int main(int argc, char **argv) {
-	//Set up our library.
+	/* Set up our library. */
 	BANG_init(&argc,argv);
 	BANG_install_sighandler(BANG_BIND_SUC,&server_status);
 	BANG_install_sighandler(BANG_BIND_FAIL,&server_status);
@@ -193,13 +191,13 @@ int main(int argc, char **argv) {
 	BANG_install_sighandler(BANG_PEER_ADDED,&client_con);
 	BANG_install_sighandler(BANG_PEER_REMOVED,&client_con);
 
-	///Note:  gtk expects that as a process, you do not need to free its memory
-	///So, it lets the operating system free all memory when the process closes.
+	/* Note:  gtk expects that as a process, you do not need to free its memory
+	 So, it lets the operating system free all memory when the process closes. */
 	g_thread_init(NULL);
 	gdk_threads_init();
 	gtk_init(&argc,&argv);
 
-	///Set up the windwo
+	/* Set up the window */
 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_title(GTK_WINDOW(window), "!bang Machine");
 	g_signal_connect(G_OBJECT(window), "delete_event", G_CALLBACK(delete_event), NULL);
@@ -207,19 +205,19 @@ int main(int argc, char **argv) {
 
 	vbox = gtk_vbox_new(FALSE,0);
 
-	///Set up the netebook
+	/* Set up the netebook */
 	notebook = gtk_notebook_new();
 
 	peers_page_label = gtk_label_new("Peers");
-	///gtk_notebook_append_page(GTK_NOTEBOOK(notebook),peers_page_label,peers_page_label);
+	/* gtk_notebook_append_page(GTK_NOTEBOOK(notebook),peers_page_label,peers_page_label); */
 
 	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(notebook),TRUE);
 	gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook),TRUE);
 
-	///Set up the statusbar
+	/* Set up the statusbar */
 	statusbar = gtk_statusbar_new();
 
-	///Set up the menubar
+	/* Set up the menubar */
 	menubar = gtk_menu_bar_new();
 
 	file = gtk_menu_item_new_with_label("File");

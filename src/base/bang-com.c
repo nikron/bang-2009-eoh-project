@@ -317,21 +317,8 @@ static void* extract_message(peer *self, unsigned int length) {
 
 static char peer_respond_hello(peer *self) {
 	unsigned char *version = (unsigned char*) extract_message(self,LENGTH_OF_VERSION);
-	if (version == NULL || *version != BANG_MAJOR_VERSION) {
-		free(version);
-		return 0;
-	}
-	free(version);
-
-	version = (unsigned char*) extract_message(self,LENGTH_OF_VERSION);
-	if (version == NULL || *version != BANG_MIDDLE_VERSION) {
-		free(version);
-		return 0;
-	}
-	free(version);
-
-	version = (unsigned char*) extract_message(self,LENGTH_OF_VERSION);
-	if (version == NULL || *version != BANG_MIDDLE_VERSION) {
+	/* TODO: Make this more elegant =P */
+	if (version == NULL || version[0] != BANG_MAJOR_VERSION || version[1] != BANG_MIDDLE_VERSION || version[2] != BANG_MINOR_VERSION) {
 		free(version);
 		return 0;
 	}
@@ -405,6 +392,8 @@ void* BANG_read_peer_thread(void *self_info) {
 				case BANG_SEND_MODULE:
 					/* I guess we'll take it... */
 					reading = read_module_message(self);
+					break;
+				case BANG_WANT_MODULE:
 					break;
 				case BANG_MISMATCH_VERSION:
 				case BANG_BYE:

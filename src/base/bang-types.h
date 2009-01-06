@@ -168,6 +168,7 @@ enum BANG_signals {
  * ... any number of BANG_DEBUG_MESSAGE
  *
  * peer2: BANG_BYE
+ * peer1: BANG_BYE
  *
  */
 
@@ -182,7 +183,7 @@ enum BANG_signals {
 /**
  * Length of any versions sent.
  */
-#define LENGTH_OF_VERSION 1
+#define LENGTH_OF_VERSION 3
 
 enum BANG_headers {
 	/**
@@ -227,6 +228,9 @@ enum BANG_headers {
 	 * they'll respond with a request
 	 * message:
 	 * 	-BANG_WANT_MODULE (unsigned 4 bytes)
+	 * 	-length of name (unsigned 4 bytes)
+	 * 	-name (char*)
+	 *	-version	(unsigned 3 bytes)
 	 * 	-length of hash (unsigned 4 bytes)
 	 * 	-hash
 	 */

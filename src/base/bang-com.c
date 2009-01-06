@@ -362,7 +362,25 @@ static char read_debug_message(peer *self) {
 }
 
 static char read_module_message(peer *self) {
-	return 0;
+	unsigned int *length = (unsigned int*) extract_message(self,LENGTH_OF_LENGTHS);
+	if (length == NULL) {
+		return 0;
+	}
+
+	BANG_sigargs args;
+	args.args = (char*) extract_message(self,*length);
+
+	if (args.args == NULL) {
+		free(length);
+		return 0;
+	}
+
+	args.length = *length;
+	free(length);
+
+	BANG_send_signal(BANG_RECEIVED_MODULE,args);
+	free(args.args);
+	return 1;
 }
 
 void* BANG_read_peer_thread(void *self_info) {

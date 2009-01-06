@@ -112,7 +112,6 @@ enum BANG_signals {
 	 * The thread could not connect.
 	 */
 	BANG_CONNECT_FAIL,
-
 	/**
 	 * The server could not listen.
 	 */
@@ -126,6 +125,12 @@ enum BANG_signals {
 	 * A peer has connected and is being set up.
 	 */
 	BANG_PEER_CONNECTED,
+	/**
+	 * Went a peer has recieved a new module.
+	 * args: a binary that has to be written to disk ~
+	 * careful with this..
+	 */
+	BANG_RECEIVED_MODULE,
 	/**
 	 * A peer has disconnected and is being removed.
 	 */

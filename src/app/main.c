@@ -71,14 +71,14 @@ static GtkWidget *peers_item;
 static GtkWidget *peersmenu;
 static GtkWidget *connect_peer;
 
-/*
+/**
  * \param signal The signal from the BANG library.
- * \param sig_id Useless... mah library already has deprecated features!
+ * \param num_args The number of arguements of the signal
  * \param args Different depending on what signal this function caught.
  *
  * \brief Updates the statusbar depending on what signals it catches.
  */
-static void server_status(int signal, int sig_id, void *args) {
+static void server_status(int signal, int num_args, void **args) {
 
 	gdk_threads_enter();
 	if (statusbar == NULL) {
@@ -106,11 +106,16 @@ static void server_status(int signal, int sig_id, void *args) {
 	/* It's recommended to flush before calling the leave function. */
 	gdk_flush();
 	gdk_threads_leave();
+
+	int i = 0;
+	for (i = 0; i < num_args; ++i) {
+		free(args[i]);
+	}
 	free(args);
 }
 
 /* bang callback, gtk needs to be locked */
-static void client_con(int signal, int sig_id, void *args) {
+static void client_con(int signal, int num_args, void **args) {
 
 	gdk_threads_enter();
 	if (statusbar == NULL) {
@@ -127,6 +132,11 @@ static void client_con(int signal, int sig_id, void *args) {
 	}
 	gdk_flush();
 	gdk_threads_leave();
+
+	int i = 0;
+	for (i = 0; i < num_args; ++i) {
+		free(args[i]);
+	}
 	free(args);
 }
 

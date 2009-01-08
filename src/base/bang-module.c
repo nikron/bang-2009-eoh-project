@@ -75,7 +75,7 @@ BANG_module* BANG_load_module(char *path) {
 	/* Make sure the dlsym worked. */
 	if (args.args != NULL) {
 		args.length = strlen(args.args);
-		BANG_send_signal(BANG_MODULE_ERROR,args);
+		BANG_send_signal(BANG_MODULE_ERROR,&args,1);
 #ifdef BDEBUG_1
 		fprintf(stderr,"Could not find the module.\n");
 		fprintf(stderr,args.args);
@@ -94,7 +94,7 @@ BANG_module* BANG_load_module(char *path) {
 		dlclose(handle);
 		free(module);
 		args.length = strlen(args.args);
-		BANG_send_signal(BANG_MODULE_ERROR,args);
+		BANG_send_signal(BANG_MODULE_ERROR,&args,1);
 		free(args.args);
 #ifdef BDEBUG_1
 		fprintf(stderr,"Could not find the module name.\n");
@@ -109,7 +109,7 @@ BANG_module* BANG_load_module(char *path) {
 		dlclose(handle);
 		free(module);
 		args.length = strlen(args.args);
-		BANG_send_signal(BANG_MODULE_ERROR,args);
+		BANG_send_signal(BANG_MODULE_ERROR,&args,1);
 		free(args.args);
 #ifdef BDEBUG_1
 		fprintf(stderr,"Could not find the module version.\n");
@@ -124,7 +124,7 @@ BANG_module* BANG_load_module(char *path) {
 		dlclose(handle);
 		free(module);
 		args.length = strlen(args.args);
-		BANG_send_signal(BANG_MODULE_ERROR,args);
+		BANG_send_signal(BANG_MODULE_ERROR,&args,1);
 		free(args.args);
 #ifdef BDEBUG_1
 		fprintf(stderr,"Could not find the module init function.\n");
@@ -139,7 +139,7 @@ BANG_module* BANG_load_module(char *path) {
 		dlclose(handle);
 		free(module);
 		args.length = strlen(args.args);
-		BANG_send_signal(BANG_MODULE_ERROR,args);
+		BANG_send_signal(BANG_MODULE_ERROR,&args,1);
 		free(args.args);
 #ifdef BDEBUG_1
 		fprintf(stderr,"Could not find the module run function.\n");
@@ -177,7 +177,7 @@ void BANG_run_module(BANG_module *module) {
 		BANG_sigargs args;
 		args.args = module;
 		args.length = sizeof(BANG_module);
-		BANG_send_signal(BANG_RUNNING_MODULE,args);
+		BANG_send_signal(BANG_RUNNING_MODULE,&args,1);
 		if(!module->module_init(api)) {;
 			module->module_run();
 		}

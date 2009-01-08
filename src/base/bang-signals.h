@@ -38,7 +38,7 @@ int BANG_install_sighandler(int signal, BANGSignalHandler handler);
  *
  * \brief Calls the handlers of signal with args.
  */
-int BANG_send_signal(int signal, BANG_sigargs args);
+int BANG_send_signal(int signal, BANG_sigargs *args, int num_args);
 
 /**
  *

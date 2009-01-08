@@ -38,12 +38,12 @@ typedef struct {
 	 * The hash of the module.
 	 */
 	unsigned char *md;
-	
+
 	/**
 	 * The actual handle of the module.
 	 */
 	void *handle;
-	
+
 	/**
 	 * The path to the module.
 	 */
@@ -67,9 +67,9 @@ typedef struct {
 /**
  * A signal handler function, it receives the BANGSIGNUM, and arguments depending on the signal.
  */
-typedef void (*BANGSignalHandler)(int,int,void*);
+typedef void (*BANGSignalHandler)(int,int,void**);
 
-/** 
+/**
  * The signals that can be sent by library.
  * TODO: Detail all the signals, especially their arguments.
  */
@@ -133,6 +133,7 @@ enum BANG_signals {
 	BANG_RECEIVED_MODULE,
 	/**
 	 * A peer has disconnected and is being removed.
+	 * args:t5
 	 */
 	BANG_PEER_DISCONNECTED,
 	/**
@@ -161,7 +162,7 @@ enum BANG_signals {
  *
  *  Communications currently can be done by this:
  *  assuming peer1, peer2
- * 
+ *
  * peer1: BANG_HELLO
  * peer2: BANG_HELLO
  *
@@ -188,19 +189,19 @@ enum BANG_signals {
 enum BANG_headers {
 	/**
 	 * message:
-	 * 	-BANG_HELLO (unsigned 4 bytes)
-	 * 	-BANG_VERSION (8 bytes to a double)
-	 * 	-length of name (unsigned 4 bytes)
-	 * 	-peer name (char*)
+	 *	-BANG_HELLO (unsigned 4 bytes)
+	 *	-BANG_VERSION (8 bytes to a double)
+	 *	-length of name (unsigned 4 bytes)
+	 *	-peer name (char*)
 	 */
 	BANG_HELLO = 0,
 	/**
 	 * sends a debug message that should be printed out on the remote
 	 * end.
 	 * message:
-	 * 	-BANG_DEBUG_MESSAGE (unsigned 4 bytes)
-	 * 	-length of message (unsigned 4 bytes)
-	 * 	-message (char*)
+	 *	-BANG_DEBUG_MESSAGE (unsigned 4 bytes)
+	 *	-length of message (unsigned 4 bytes)
+	 *	-message (char*)
 	 */
 	BANG_DEBUG_MESSAGE,
 	/**
@@ -216,9 +217,9 @@ enum BANG_headers {
 	BANG_SEND_MODULE,
 	/**
 	 * message:
-	 * 	-BANG_REQUEST_MODULE (unsigned 4 bytes)
-	 * 	-length of hash (unsigned 4 bytes)
-	 * 	-hash
+	 *	-BANG_REQUEST_MODULE (unsigned 4 bytes)
+	 *	-length of hash (unsigned 4 bytes)
+	 *	-hash
 	 *
 	 * should these send a name and length?  I don't think so.
 	 */
@@ -227,25 +228,25 @@ enum BANG_headers {
 	 * Asks the remote end if they want a module, if yes
 	 * they'll respond with a request
 	 * message:
-	 * 	-BANG_WANT_MODULE (unsigned 4 bytes)
-	 * 	-length of name (unsigned 4 bytes)
-	 * 	-name (char*)
+	 *	-BANG_WANT_MODULE (unsigned 4 bytes)
+	 *	-length of name (unsigned 4 bytes)
+	 *	-name (char*)
 	 *	-version	(unsigned 3 bytes)
-	 * 	-length of hash (unsigned 4 bytes)
-	 * 	-hash
+	 *	-length of hash (unsigned 4 bytes)
+	 *	-hash
 	 */
 	BANG_WANT_MODULE,
 	/**
 	 * tells the remote end that version is wrong, and that
 	 * they are hanging up
 	 * message:
-	 * 	-BANG_MISMATCH_VERSION (unsigned 4 bytes)
-	 * 	-our version (3 unsigned bytes)
+	 *	-BANG_MISMATCH_VERSION (unsigned 4 bytes)
+	 *	-our version (3 unsigned bytes)
 	 */
 	BANG_MISMATCH_VERSION,
 	/**
 	 * message:
-	 * 	-BANG_BYE (unsigned 4 bytes)
+	 *	-BANG_BYE (unsigned 4 bytes)
 	 *
 	 * TODO: This will most defintely have more things involved.
 	 */
@@ -284,17 +285,17 @@ enum BANG_request_types {
 	BANG_SUDDEN_CLOSE_REQUEST,
 	/**
 	 * do:
-	 * 	-send BANG_DEBUG_MESSAGE
-	 * 	-send length of message
-	 * 	-send message
+	 *	-send BANG_DEBUG_MESSAGE
+	 *	-send length of message
+	 *	-send message
 	 */
 	BANG_DEBUG_REQUEST,
 	/**
 	 * do:
-	 * 	-send BANG_SEND_MODULE
-	 * 	-send length of module
-	 * 	-send module
-	 * 	NOTE:  NOT THE struct, the actual file.
+	 *	-send BANG_SEND_MODULE
+	 *	-send length of module
+	 *	-send module
+	 *	NOTE:  NOT THE struct, the actual file.
 	 */
 	BANG_SEND_MODULE_REQUEST,
 	BANG_NUM_REQUESTS

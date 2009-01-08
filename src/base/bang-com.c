@@ -260,7 +260,7 @@ static void read_peer_thread_self_close(peer *self) {
 	args.length = sizeof(int);
 
 	acquire_peers_read_lock();
-	BANG_send_signal(BANG_PEER_DISCONNECTED,args);
+	BANG_send_signal(BANG_PEER_DISCONNECTED,&args,1);
 	free(args.args);
 	release_peers_read_lock();
 
@@ -365,7 +365,7 @@ static char read_module_message(peer *self) {
 	args.length = *length;
 	free(length);
 
-	BANG_send_signal(BANG_RECEIVED_MODULE,args);
+	BANG_send_signal(BANG_RECEIVED_MODULE,&args,1);
 	free(args.args);
 	return 1;
 }
@@ -545,9 +545,11 @@ void* BANG_write_peer_thread(void *self_info) {
 	return NULL;
 }
 
-void BANG_catch_add_peer(int signal, int sig_id, void *socket) {
-	BANG_add_peer(*((int*)socket));
-	free(socket);
+static void catch_add_peer(int signal, int num_sockets, void **socket) {
+	int **sock = (int**) socket;
+	BANG_add_peer(sock[0][0]);
+	free(sock[0]);
+	free(sock);
 }
 
 static void request_peer(peer *to_be_requested, BANG_request request) {
@@ -573,9 +575,10 @@ void BANG_request_all(BANG_request request) {
 	release_peers_read_lock();
 }
 
-void BANG_catch_request_all(int signal, int sig_id, void *vrequest) {
-	BANG_request *to_request  = (BANG_request*) vrequest;
-	BANG_request_all(*to_request);
+static void catch_request_all(int signal, int num_requests, void **vrequest) {
+	BANG_request **to_request  = (BANG_request**) vrequest;
+	BANG_request_all(to_request[0][0]);
+	free(to_request[0]);
 	free(to_request);
 }
 
@@ -636,14 +639,16 @@ void BANG_add_peer(int socket) {
 	*((int*)args.args) = current_id;
 	args.length = sizeof(int);
 
-	BANG_send_signal(BANG_PEER_ADDED,args);
+	BANG_send_signal(BANG_PEER_ADDED,&args,1);
 
 	free(args.args);
 }
 
-void BANG_catch_remove_peer(int signal,int sig_id,void *peer_id) {
-	BANG_remove_peer(*((int*)peer_id));
-	free(peer_id);
+static void catch_remove_peer(int signal, int num_peer_ids, void **peer_id) {
+	int **id = (int**) peer_id;
+	BANG_remove_peer(id[0][0]);
+	free(id[0]);
+	free(id);
 }
 
 void BANG_remove_peer(int peer_id) {
@@ -680,14 +685,14 @@ void BANG_remove_peer(int peer_id) {
 	peer_send.args = calloc(1,sizeof(int));
 	*((int*)peer_send.args) = peer_id;
 	peer_send.length = sizeof(int);
-	BANG_send_signal(BANG_PEER_REMOVED,peer_send);
+	BANG_send_signal(BANG_PEER_REMOVED,&peer_send,1);
 	free(peer_send.args);
 }
 
 void BANG_com_init() {
-	BANG_install_sighandler(BANG_PEER_CONNECTED,&BANG_catch_add_peer);
-	BANG_install_sighandler(BANG_PEER_DISCONNECTED,&BANG_catch_remove_peer);
-	BANG_install_sighandler(BANG_REQUEST_ALL,&BANG_catch_request_all);
+	BANG_install_sighandler(BANG_PEER_CONNECTED,&catch_add_peer);
+	BANG_install_sighandler(BANG_PEER_DISCONNECTED,&catch_remove_peer);
+	BANG_install_sighandler(BANG_REQUEST_ALL,&catch_request_all);
 	pthread_mutex_init(&peers_change_lock,NULL);
 	pthread_mutex_init(&peers_read_lock,NULL);
 }

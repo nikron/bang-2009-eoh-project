@@ -59,9 +59,7 @@ void* BANG_server_thread(void *not_used) {
 
 	//check to see if we got available addresses
 	if (getaddrinfo(NULL,port,&hints,&result) != 0) {
-		args.args = NULL;
-		args.length = 0;
-		BANG_send_signal(BANG_GADDRINFO_FAIL,args);
+		BANG_send_signal(BANG_GADDRINFO_FAIL,NULL,0);
 		return NULL;
 	}
 
@@ -77,15 +75,11 @@ void* BANG_server_thread(void *not_used) {
 		sock = socket(rp->ai_family,rp->ai_socktype,rp->ai_protocol);
 
 		if (sock == -1) {
-			args.args = NULL;
-			args.length = 0;
-			///TODO: Send something more meaningful.
-			BANG_send_signal(BANG_BIND_FAIL,args);
+			/* TODO: Send something more meaningful */
+			BANG_send_signal(BANG_BIND_FAIL,NULL,0);
 		} else if (bind(sock,rp->ai_addr,rp->ai_addrlen) == 0) {
-			args.args = NULL;
-			args.length = 0;
-			///TODO: Send something more meaningful
-			BANG_send_signal(BANG_BIND_SUC,args);
+			/* TODO: Send something more meaningful */
+			BANG_send_signal(BANG_BIND_SUC,NULL,0);
 			break;
 		}
 	}
@@ -93,26 +87,20 @@ void* BANG_server_thread(void *not_used) {
 	/* check to see if we could bind to a socket */
 	if (rp == NULL) {
 		close(sock);
-		args.args = NULL;
-		args.length = 0;
-		///TODO: Send something more meaningful
-		BANG_send_signal(BANG_BIND_FAIL,args);
+		/* TODO: Send something more meaningful */
+		BANG_send_signal(BANG_BIND_FAIL,NULL,0);
 		return NULL;
 	}
 
 	/* mark the socket for listening */
 	if (listen(sock,MAX_BACKLOG) != 0) {
 		close(sock);
-		args.args = NULL;
-		args.length = 0;
-		///TODO: Send something more meaningful
-		BANG_send_signal(BANG_LISTEN_FAIL,args);
+		/* TODO: Send something more meaningful */
+		BANG_send_signal(BANG_LISTEN_FAIL,NULL,0);
 		return NULL;
 	}
 
-	args.args = NULL;
-	args.length = 0;
-	BANG_send_signal(BANG_SERVER_STARTED,args);
+	BANG_send_signal(BANG_SERVER_STARTED,NULL,0);
 	/* accepted client */
 	args.length = sizeof(int);
 	int accptsock;
@@ -120,7 +108,7 @@ void* BANG_server_thread(void *not_used) {
 		accptsock = accept(sock,rp->ai_addr,&rp->ai_addrlen);
 		args.args = calloc(1,sizeof(int));
 		*((int*)args.args) = accptsock;
-		BANG_send_signal(BANG_PEER_CONNECTED,args);
+		BANG_send_signal(BANG_PEER_CONNECTED,&args,1);
 		free(args.args);
 	}
 
@@ -154,7 +142,7 @@ void* BANG_connect_thread(void *addr) {
 		/*
 		 * TODO: Send something more meaningful
 		 */
-		BANG_send_signal(BANG_GADDRINFO_FAIL,args);
+		BANG_send_signal(BANG_GADDRINFO_FAIL,&args,1);
 		free(args.args);
 		return NULL;
 	}
@@ -172,7 +160,7 @@ void* BANG_connect_thread(void *addr) {
 			/*
 			 * TODO:Make this signal send out something more useful
 			 */
-			BANG_send_signal(BANG_CONNECT_FAIL,args);
+			BANG_send_signal(BANG_CONNECT_FAIL,&args,1);
 			free(args.args);
 
 		} else if (connect(*((int*)args.args),rp->ai_addr,rp->ai_addrlen) == 0) {
@@ -180,7 +168,7 @@ void* BANG_connect_thread(void *addr) {
 			/*
 			 * Sends out a signal of the peer with its socket.
 			 */
-			BANG_send_signal(BANG_PEER_CONNECTED,args);
+			BANG_send_signal(BANG_PEER_CONNECTED,&args,1);
 			free(args.args);
 			break;
 		}
@@ -194,7 +182,7 @@ void BANG_server_start(char *server_port) {
 	pthread_mutex_lock(&server_status_lock);
 	if (server_port != NULL) 
 		port = server_port;
-	
+
 	if (server_thread == NULL) {
 #ifdef BDEBUG_1
 		fprintf(stderr,"Starting server.\n");
@@ -233,10 +221,7 @@ void BANG_server_stop() {
 		}
 		free(server_thread);
 		server_thread = NULL;
-		BANG_sigargs args;
-		args.args = NULL;
-		args.length = 0;
-		BANG_send_signal(BANG_SERVER_STOPPED,args);
+		BANG_send_signal(BANG_SERVER_STOPPED,NULL,0);
 	}
 	pthread_mutex_unlock(&server_status_lock);
 }

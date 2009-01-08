@@ -41,20 +41,6 @@ void* BANG_read_peer_thread(void *self_info);
 void* BANG_write_peer_thread(void *self_info);
 
 /**
- * \param socket The slave client socket.
- *
- * \brief Creates a slave thread using the socket gotten from the signal.
- */
-void BANG_catch_add_peer(int signal, int sig_id, void *socket);
-
-/**
- * \param peer_id The peer to be remove
- *
- * \brief Catches BANG_PEER_TO_BE_REMOVED, and remove that peer, and emits
- */
-void BANG_catch_remove_peer(int signal, int sig_id, void *peer_id);
-
-/**
  *
  * \return A new unique peer id.
  */
@@ -74,15 +60,6 @@ void BANG_request_peer_id(int peer_id, BANG_request request);
  * \brief Adds request to all peers.
  */
 void BANG_request_all(BANG_request request);
-
-/**
- * \param signal Catches request all signals.
- * \param signum Ooops, doesn't do anything.
- * \param vrequest A BANG_request *request
- * 
- * \brief Catches a request all signal and send it to BANG_request_all
- */
-void BANG_catch_request_all(int signal, int signum, void *vrequest);
 
 /**
  * \param peer_id Peer to remove.

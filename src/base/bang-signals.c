@@ -126,11 +126,11 @@ typedef struct {
 	 * The signal being sent to the handler.
 	 */
 	int signal;
-	int sig_id;
 	/**
 	 * Arguements to the signal handler.
 	 */
-	void *handler_args;
+	void **handler_args;
+	int num_handler_args;
 } send_signal_args;
 
 /**
@@ -139,12 +139,12 @@ typedef struct {
  */
 static void* threaded_send_signal(void *thread_args) {
 	send_signal_args *h = (send_signal_args*)thread_args;
-	h->handler(h->signal,h->sig_id,h->handler_args);
+	h->handler(h->signal,h->num_handler_args,h->handler_args);
 	free(h);
 	return NULL;
 }
 
-int BANG_send_signal(int signal, BANG_sigargs args) {
+int BANG_send_signal(int signal, BANG_sigargs *args, int num_args) {
 	acquire_sig_lock(signal);
 
 #ifdef BDEBUG_1
@@ -160,21 +160,19 @@ int BANG_send_signal(int signal, BANG_sigargs args) {
 	for (cur = signal_handlers[signal]; cur != NULL; cur = cur->next) {
 		thread_args = (send_signal_args*) calloc(1,sizeof(send_signal_args));
 
-		if (args.args == NULL) {
-			thread_args->handler_args = NULL;
-		} else {
-			thread_args->handler_args = calloc(args.length,1);
-			memcpy(thread_args->handler_args,args.args,args.length);
+		thread_args->handler_args = calloc(num_args,sizeof(void*));
+
+		for (i = 0; i < num_args; ++i) {
+			thread_args->handler_args[i] = calloc(args[i].length,1);
+			memcpy(thread_args->handler_args[i],args[i].args,args[i].length);
 		}
 
-		thread_args->handler = cur->handler;
 		thread_args->signal = signal;
-		thread_args->sig_id = (signal << (sizeof(int) * 8 / 2));
+		thread_args->handler = cur->handler;
+		thread_args->num_handler_args = num_args;
 
 		pthread_create(&signal_thread,NULL,threaded_send_signal,(void*)thread_args);
 		pthread_detach(signal_thread);
-
-		++i;
 	}
 
 	release_sig_lock(signal);

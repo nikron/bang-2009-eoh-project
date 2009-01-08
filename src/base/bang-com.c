@@ -394,6 +394,10 @@ void* BANG_read_peer_thread(void *self_info) {
 					reading = read_module_message(self);
 					break;
 				case BANG_WANT_MODULE:
+					/* TODO: Someone is asking us if we want a module... send out a signal! */
+					break;
+				case BANG_REQUEST_MODULE:
+					/* TODO: This may be pretty hard to do. */
 					break;
 				case BANG_MISMATCH_VERSION:
 				case BANG_BYE:

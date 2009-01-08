@@ -9,6 +9,8 @@ The BANG protocol
 \section{Abstract}
 The BANG protocol is to enable peers to share the load of a program.
 
+Note:  This document is very unfinished.
+
 \section{Basic}
 The protocol tries to be mostly stateless, but some messages can only be sent if the connection is in a certain state.
 At the very least each message is an unsigned  4 byte header.  Each header should signify something and possibly have some information

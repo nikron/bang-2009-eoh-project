@@ -25,6 +25,14 @@ BANG_module* BANG_load_module(char *path);
 void BANG_unload_module(BANG_module *module);
 
 /**
+ * \param symbol The symbol you want to get.
+ *
+ * \brief Tries to fetch a symbol from the BANG_module, if
+ * unsuccessful, returns NULL
+ */
+void* BANG_get_symbol(BANG_module *module, char *symbol);
+
+/**
  * \brief Runs a module.
  */
 void BANG_run_module(BANG_module *module);

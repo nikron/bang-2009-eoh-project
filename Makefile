@@ -9,7 +9,8 @@ CC=gcc
 OBJEXT=.o
 SRCEXT=.c
 
-COPTS=-Wall -Wextra -Werror -g -D_REENTRANT -lpthread
+COPTS=	-Wall -Wextra -Werror -g -D_REENTRANT -lpthread
+
 GTKOPTS=`pkg-config --cflags --libs gtk+-2.0 --libs openssl ` -lgthread-2.0
 
 LOBJS=bang-com$(OBJEXT) \

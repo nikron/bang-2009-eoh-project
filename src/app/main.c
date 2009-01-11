@@ -48,6 +48,8 @@
 #include<gtk/gtk.h>
 #include<assert.h>
 
+typedef void (*GUI_module_init)(GtkWidget*);
+
 static GtkWidget *window;
 static GtkWidget *vbox;
 static GtkWidget *notebook;
@@ -141,6 +143,18 @@ static void client_con(int signal, int num_args, void **args) {
 	free(args);
 }
 
+/**
+ * \param module The module to register.
+ *
+ * \brief Registers a new module.
+ */
+static void register_new_module(BANG_module *module) {
+	GUI_module_init gui_init = BANG_get_symbol(module,"GUI_init");
+	/* If it has a gui method run it. */
+	if (gui_init) gui_init(NULL);
+	BANG_run_module(module);
+}
+
 static void open_bang_module() {
 	/* OMG THE LINE IS SO LONG,OH SHI-- */
 	GtkWidget *get_module = gtk_file_chooser_dialog_new("Open Module", GTK_WINDOW(window), GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
@@ -148,9 +162,7 @@ static void open_bang_module() {
 		char *filename;
 		filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(get_module));
 		BANG_module *module = BANG_load_module(filename);
-		BANG_run_module(module);
-		BANG_unload_module(module);
-		free(filename);
+		register_new_module(module);
 	}
 	gtk_widget_destroy(get_module);
 }

@@ -15,7 +15,7 @@
  * from the network binding, a client connecting, or a module getting loaded.
  *
  * Usage is simple, install a BANGSignalHandler to catch a signal defined in
- * bang-types.h.  If you are writing a library function, 
+ * bang-types.h.  If you are writing a library function,
  * use BANG_send_signal to send out a signal to
  * all of its handlers.  Be sure to document what its arguments are.
  */

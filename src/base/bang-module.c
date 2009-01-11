@@ -68,6 +68,9 @@ static unsigned char* module_hash(char *path) {
 }
 
 BANG_module* BANG_load_module(char *path) {
+	/* Get rid of any lingering errors. */
+	while (dlerror() != NULL) {}
+
 	void *handle = dlopen(path,RTLD_NOW);
 	BANG_sigargs args;
 	args.args = dlerror();
@@ -182,4 +185,19 @@ void BANG_run_module(BANG_module *module) {
 			module->module_run();
 		}
 	}
+}
+
+void* BANG_get_symbol(BANG_module *module, char *symbol) {
+	if (module != NULL) {
+		/* Get rid of any lingering errors. */
+		while (dlerror() != NULL) {}
+
+		void* sym_to_get =  dlsym(module->handle,symbol);
+
+		if (dlerror() == NULL)
+			return sym_to_get;
+		else
+			return NULL;
+	} else
+		return NULL;
 }

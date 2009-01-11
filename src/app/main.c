@@ -48,7 +48,7 @@
 #include<gtk/gtk.h>
 #include<assert.h>
 
-typedef void (*GUI_module_init)(GtkWidget*);
+typedef void (*GUI_module_init)(GtkWidget**,GtkWidget**);
 
 static GtkWidget *window;
 static GtkWidget *vbox;
@@ -151,7 +151,13 @@ static void client_con(int signal, int num_args, void **args) {
 static void register_new_module(BANG_module *module) {
 	GUI_module_init gui_init = BANG_get_symbol(module,"GUI_init");
 	/* If it has a gui method run it. */
-	if (gui_init) gui_init(NULL);
+	if (gui_init) {
+		GtkWidget *page = NULL,*label = NULL;
+
+		gui_init(&page,&label);
+
+		gtk_notebook_append_page(GTK_NOTEBOOK(notebook),page,label);
+	}
 	BANG_run_module(module);
 }
 

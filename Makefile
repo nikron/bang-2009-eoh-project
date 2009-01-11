@@ -34,7 +34,7 @@ ASRC=src/app/server-preferences$(SRCEXT) \
       src/app/main$(SRCEXT)
 
 LIBRARIES=libbang.so $(MODULES)
-MODULES=test-module.so libbang.so
+MODULES=test-module.so matrix-mult-module.so
 
 .PHONY: doc modules
 
@@ -55,7 +55,10 @@ $(LOBJS): $(LSRC)
 modules: $(MODULES)
 
 test-module.so: src/modules/test-module.c
-	$(CC) -shared -Wl,-soname,$@  $(COPTS) $^ -o $@
+	$(CC) -shared -Wl,-soname,$@ $(COPTS) $^ -o $@
+
+matrix-mult-module.so: src/modules/matrix-mult-module.c
+	$(CC) -shared -Wl,-soname,$@ $(COPTS) $(GTKOPTS) $^ -o $@
 
 doc:
 	cd doc && doxygen Doxygen

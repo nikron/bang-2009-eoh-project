@@ -18,8 +18,6 @@
 #include<sys/socket.h>
 #include<unistd.h>
 
-#define BDEBUG_1
-
 /**
  * A linked list of requests of peer send threads.
  */
@@ -55,12 +53,34 @@ typedef struct {
  * size at once.
  */
 typedef struct {
+	/**
+	 * The unique id of a peer that the client library will use.
+	 */
 	int peer_id;
+	/**
+	 * The name supplied by the peer.
+	 */
 	char *peername;
+	/**
+	 * The actual socket of the peer.
+	 */
 	int socket;
+	/**
+	 * The thread that is reading in from the peer.
+	 */
 	pthread_t receive_thread;
+	/**
+	 * The list of requests that the send thread will execute.
+	 */
 	BANG_requests *requests;
+	/**
+	 * Performs the requests in the requests list.
+	 */
 	pthread_t send_thread;
+	/**
+	 * Poll set up so that the peer wont have to reconstruct it at every step
+	 * note: perhaps pass this around rather than put it in global space.
+	 */
 	struct pollfd pfd;
 } peer;
 
@@ -105,6 +125,9 @@ static void request_peer(peer *self, BANG_request request);
  */
 static void free_peer(peer *p);
 
+/**
+ * \brief Allocates and returns a new peer.
+ */
 static peer* new_peer();
 
 /*
@@ -546,10 +569,15 @@ void* BANG_write_peer_thread(void *self_info) {
 }
 
 static void catch_add_peer(int signal, int num_sockets, void **socket) {
-	int **sock = (int**) socket;
-	BANG_add_peer(sock[0][0]);
-	free(sock[0]);
-	free(sock);
+	if (signal == BANG_PEER_CONNECTED) {
+		int **sock = (int**) socket;
+		int i = 0;
+		for (; i < num_sockets; ++i) {
+			BANG_add_peer(*(sock[i]));
+			free(sock[i]);
+		}
+		free(sock);
+	}
 }
 
 static void request_peer(peer *to_be_requested, BANG_request request) {
@@ -564,7 +592,7 @@ static void request_peer(peer *to_be_requested, BANG_request request) {
 }
 
 void BANG_request_all(BANG_request request) {
-	int i = 0;
+	unsigned int i = 0;
 
 	acquire_peers_read_lock();
 
@@ -576,10 +604,15 @@ void BANG_request_all(BANG_request request) {
 }
 
 static void catch_request_all(int signal, int num_requests, void **vrequest) {
-	BANG_request **to_request  = (BANG_request**) vrequest;
-	BANG_request_all(to_request[0][0]);
-	free(to_request[0]);
-	free(to_request);
+	if (signal == BANG_REQUEST_ALL) {
+		BANG_request **to_request  = (BANG_request**) vrequest;
+		int i = 0;
+		for (; i < num_requests; ++i) {
+			BANG_request_all(*(to_request[i]));
+			free(to_request[i]);
+		}
+		free(to_request);
+	}
 }
 
 void BANG_request_peer_id(int peer_id, BANG_request request) {
@@ -591,7 +624,7 @@ void BANG_request_peer_id(int peer_id, BANG_request request) {
 }
 
 int BANG_get_key_with_peer_id(int peer_id) {
-	int i = 0;
+	unsigned int i = 0;
 	for (i = 0; i < current_peers; ++i) {
 		if (peers[i]->peer_id == peer_id) {
 			return i;
@@ -645,10 +678,15 @@ void BANG_add_peer(int socket) {
 }
 
 static void catch_remove_peer(int signal, int num_peer_ids, void **peer_id) {
-	int **id = (int**) peer_id;
-	BANG_remove_peer(id[0][0]);
-	free(id[0]);
-	free(id);
+	if (signal == BANG_PEER_DISCONNECTED) {
+		int **id = (int**) peer_id;
+		int i = 0;
+		for (; i < num_peer_ids; ++i) {
+			BANG_remove_peer(*(id[i]));
+			free(id[i]);
+		}
+		free(id);
+	}
 }
 
 void BANG_remove_peer(int peer_id) {
@@ -668,7 +706,7 @@ void BANG_remove_peer(int peer_id) {
 	free_peer(peers[pos]);
 	peers[pos] = NULL;
 
-	for (;pos < current_peers - 1; ++pos) {
+	for (;((unsigned int)pos) < current_peers - 1; ++pos) {
 		peers[pos] = peers[pos + 1];
 		keys[pos] = keys[pos + 1];
 	}
@@ -706,7 +744,7 @@ void BANG_com_close() {
 #ifdef BDEBUG_1
 	fprintf(stderr,"BANG com closing.\n");
 #endif
-	int i = 0;
+	unsigned int i = 0;
 	pthread_mutex_lock(&peers_change_lock);
 	for (i = 0; i < current_peers; ++i) {
 		free_peer(peers[i]);

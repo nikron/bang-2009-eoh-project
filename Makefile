@@ -9,7 +9,7 @@ CC=gcc
 OBJEXT=.o
 SRCEXT=.c
 
-COPTS=-Wall -Werror -g -D_REENTRANT -lpthread
+COPTS=-Wall -Wextra -Werror -g -D_REENTRANT -lpthread
 GTKOPTS=`pkg-config --cflags --libs gtk+-2.0 --libs openssl ` -lgthread-2.0
 
 LOBJS=bang-com$(OBJEXT) \
@@ -40,7 +40,7 @@ MODULES=test-module.so libbang.so
 all: $(EXENAME) $(LIBRARIES)
 
 $(EXENAME): $(LSRC) $(ASRC)
-	$(CC) $(COPTS) $(GTKOPTS) -fwhole-program $^ -o $(EXENAME)
+	$(CC) $(COPTS) $(GTKOPTS) $^ -o $(EXENAME)
 
 $(AOBJS): $(ASRC)
 	$(CC) $(COPTS) $(GTKOPTS) -c $^

@@ -46,6 +46,7 @@
 #include<stdlib.h>
 #include<glib.h>
 #include<gtk/gtk.h>
+#include<assert.h>
 
 static GtkWidget *window;
 static GtkWidget *vbox;
@@ -140,7 +141,7 @@ static void client_con(int signal, int num_args, void **args) {
 	free(args);
 }
 
-static void open_bang_module(GtkWidget *widget, gpointer data) {
+static void open_bang_module() {
 	/* OMG THE LINE IS SO LONG,OH SHI-- */
 	GtkWidget *get_module = gtk_file_chooser_dialog_new("Open Module", GTK_WINDOW(window), GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
 	if (gtk_dialog_run(GTK_DIALOG(get_module)) == GTK_RESPONSE_ACCEPT) {
@@ -154,7 +155,7 @@ static void open_bang_module(GtkWidget *widget, gpointer data) {
 	gtk_widget_destroy(get_module);
 }
 
-static void change_server_status(GtkWidget *widget, gpointer data) {
+static void change_server_status(GtkWidget *widget) {
 	///Just make the stop button inactive.  We'll make it active when we get the signal.
 	if(BANG_is_server_running()) {
 		BANG_server_stop();
@@ -169,7 +170,7 @@ static void change_server_status(GtkWidget *widget, gpointer data) {
  * GTK callback when the window is about to be deleted, does not to be locked as that comes
  * automagically with all GTK functions.
  */
-static gboolean delete_event(GtkWidget *widget, GdkEvent *event, gpointer data) {
+static gboolean delete_event() {
 	/* If you return FALSE in the "delete_event" signal handler,
 	 * GTK will emit the "destroy" signal. Returning TRUE means
 	 * you don't want the window to be destroyed.
@@ -186,7 +187,7 @@ static gboolean delete_event(GtkWidget *widget, GdkEvent *event, gpointer data) 
  * GTK callback when the window is destroyed, does not to be locked as that comes
  * automagically with all GTK functions.
  */
-static void destroy(GtkWidget *widget, gpointer data) {
+static void destroy() {
 	gdk_flush();
 	gtk_main_quit();
 }

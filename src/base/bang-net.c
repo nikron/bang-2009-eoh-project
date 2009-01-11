@@ -30,11 +30,15 @@ static char *port = DEFAULT_PORT;
 static int sock = -1;
 static pthread_mutex_t server_status_lock;
 
+/*
+ * Not being used because cleanup doesn't pass warnigns for some reason.
 static void free_server_addrinfo(void *result) {
 	freeaddrinfo((struct addrinfo*)result);
 }
+*/
 
 void* BANG_server_thread(void *not_used) {
+	not_used = NULL;
 	assert(port != NULL);
 	assert(sock == -1);
 
@@ -49,10 +53,10 @@ void* BANG_server_thread(void *not_used) {
 	 * getaddrinfo is NOT C99, annoying to say the least.
 	 */
 	memset(&hints, 0, sizeof(struct addrinfo));
-	hints.ai_family = AF_UNSPEC;	
+	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE;	
-	hints.ai_protocol = 0;		
+	hints.ai_flags = AI_PASSIVE;
+	hints.ai_protocol = 0;
 	hints.ai_canonname = NULL;
 	hints.ai_addr = NULL;
 	hints.ai_next = NULL;
@@ -69,7 +73,7 @@ void* BANG_server_thread(void *not_used) {
 	 * Third of all, it means that anything between those two lines is
 	 * in a big do{}while(0).  Seriously. god damn.
 	 */
-	pthread_cleanup_push(free_server_addrinfo,result);
+	/*pthread_cleanup_push(free_server_addrinfo,result);*/
 
 	for (rp = result; rp != NULL; rp = rp->ai_next) {
 		sock = socket(rp->ai_family,rp->ai_socktype,rp->ai_protocol);
@@ -112,7 +116,8 @@ void* BANG_server_thread(void *not_used) {
 		free(args.args);
 	}
 
-	pthread_cleanup_pop(1);
+
+	/*pthread_cleanup_pop(1);*/
 	close(sock);
 	return NULL;
 }

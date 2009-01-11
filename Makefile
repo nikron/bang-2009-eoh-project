@@ -61,7 +61,5 @@ doc:
 	cd doc && doxygen Doxygen
 
 clean:
-	rm -f $(EXENAME)
-	rm -f *.o
-	rm -f *.so
+	rm -f $(EXENAME) $(LOBJS) $(AOBJS) $(LIBRARIES)
 	rm -Rf doc/dox

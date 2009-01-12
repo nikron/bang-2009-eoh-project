@@ -12,7 +12,18 @@
 
 const char BANG_module_name[] = "matrix multiplication";
 const unsigned char BANG_module_version[] = {0,0,1};
-
+/**
+ * Our id
+ */
+static int id;
+/**
+ * Our 'window' to the user.
+ */
+static GtkWidget *window;
+/**
+ * The label to to our 'window'.
+ */
+static GtkWidget *label;
 
 static BANG_api api;
 
@@ -64,11 +75,12 @@ static matrix_multi_job extract_multi_job(BANG_job job) {
 }
 
 void GUI_init(GtkWidget **page, GtkWidget **page_label) {
-	fprintf(stderr,"run...\n");
 	*page_label = gtk_label_new("Module of Matrix Multiplication");
 	*page = gtk_vbox_new(FALSE,0);
-	gtk_widget_show(*page_label);
-	gtk_widget_show(*page);
+
+	/* The user can't interact with us until the module is running. */
+	window = *page;
+	label = *page_label;
 }
 
 
@@ -86,4 +98,10 @@ BANG_callbacks BANG_module_init(BANG_api get_api) {
 }
 
 void BANG_module_run() {
+	/* This should not change, however ids are only avialable when the program is run. */
+	id = api.BANG_get_my_id();
+
+
+	gtk_widget_show(window);
+	gtk_widget_show(label);
 }

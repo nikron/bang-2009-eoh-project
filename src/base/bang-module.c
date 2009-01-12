@@ -41,10 +41,7 @@ static unsigned char* module_hash(char *path) {
 	int read = UPDATE_SIZE;
 
 	unsigned char *md = (unsigned char*) calloc(SHA_DIGEST_LENGTH,sizeof(unsigned char));
-	/*
-	 * This ctx creation should be done in an init
-	 * function as it takes some time.
-	 */
+
 	static EVP_MD_CTX *ctx = NULL; 
 	ctx = (ctx == NULL)  ? EVP_MD_CTX_create() : ctx;
 
@@ -66,6 +63,35 @@ static unsigned char* module_hash(char *path) {
 
 	/* EVP_MD_CTX_destroy(ctx); */
 	return md;
+}
+
+/**
+ * \return An api.
+ */
+static BANG_api get_BANG_api() {
+	static int completed = 0;
+
+	static BANG_api api;
+
+	if (!completed) {
+		/*If we forget to do something in this function, this will force
+		 * the program to segfault when a module calls a function
+		 * we were susposed to give them. */
+		memset(&api,0,sizeof(BANG_api));
+
+		api.BANG_debug_on_all_peers = &BANG_debug_on_all_peers;
+		api.BANG_get_me_peers = &BANG_get_me_peers;
+		api.BANG_number_of_active_peers = &BANG_number_of_active_peers;
+		api.BANG_get_my_id = &BANG_get_my_id;
+		api.BANG_assert_authority = &BANG_assert_authority;
+		api.BANG_request_job = &BANG_request_job;
+		api.BANG_finished_request = &BANG_finished_request;
+		api.BANG_send_job = &BANG_send_job;
+	}
+
+	completed = 1;
+
+	return api;
 }
 
 BANG_module* BANG_load_module(char *path) {
@@ -161,14 +187,7 @@ BANG_module* BANG_load_module(char *path) {
 	module->handle = handle;
 	module->path = path;
 
-	BANG_api api;
-	memset(&api,0,sizeof(BANG_api));
-	api.BANG_debug_on_all_peers = &BANG_debug_on_all_peers;
-	api.BANG_get_me_peers = &BANG_get_me_peers;
-	api.BANG_number_of_active_peers = &BANG_number_of_active_peers;
-	api.BANG_get_my_id = &BANG_get_my_id;
-
-	module->module_init(api);
+	module->module_init(get_BANG_api());
 
 	return module;
 }

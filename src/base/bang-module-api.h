@@ -81,7 +81,7 @@ BANG_job* BANG_request_job(int id, char blocking);
  * \brief Sends the job to the peer.  If the peer is you,
  * it will send it to your callback method.
  */
-int BANG_finished_request(BANG_job job);
+void BANG_finished_request(BANG_job job);
 
 /**
  * \param The peer to send your the job to.
@@ -103,7 +103,7 @@ typedef struct {
 	int (*BANG_get_my_id) ();
 	void (*BANG_assert_authority) (int id);
 	BANG_job* (*BANG_request_job) (int id, char blocking);
-	int (*BANG_finished_request) (BANG_job job);
+	void (*BANG_finished_request) (BANG_job job);
 	void (*BANG_send_job) (int id, BANG_job job);
 } BANG_api;
 #endif

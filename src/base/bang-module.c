@@ -25,6 +25,9 @@
  *  -BANG_module_version: version of the module
  *  -BANG_module_init: initialize the module
  *  -BANG_module_run: runs the module
+ *
+ *  How should the GUI interact with the module?  Using their owns symbols in the module
+ *  such as "GUI_init".
  */
 
 #define BDEBUG_1

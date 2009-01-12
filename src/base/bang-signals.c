@@ -23,6 +23,20 @@ struct _signal_node {
 typedef struct _signal_node signal_node;
 
 /**
+ * Another read-writer problem, multiple threads can send out the same signal at the same time, but only one thread
+ * should be allowed add a signal handler.
+ */
+static pthread_mutex_t send_sig_lock[BANG_NUM_SIGS];
+static pthread_mutex_t add_handler_lock[BANG_NUM_SIGS];
+static int sig_senders[BANG_NUM_SIGS];
+
+/**
+ * \brief The handlers for each of the signals is kept in a linked list stored
+ *  in an array which is index by the signal's number
+ */
+static signal_node **signal_handlers;
+
+/**
  * \param head The head of the signal_node list.
  *
  * \brief Frees a signal node linked list.
@@ -35,20 +49,6 @@ static void recursive_sig_free(signal_node *head) {
 	free(head);
 	head = NULL;
 }
-
-/**
- * \brief The handlers for each of the signals is kept in a linked list stored
- *  in an array which is index by the signal's number
- */
-static signal_node **signal_handlers;
-
-/**
- * Another read-writer problem, multiple threads can send out the same signal at the same time, but only one thread
- * should be allowed add a signal handler.
- */
-static pthread_mutex_t send_sig_lock[BANG_NUM_SIGS];
-static pthread_mutex_t add_handler_lock[BANG_NUM_SIGS];
-static int sig_senders[BANG_NUM_SIGS];
 
 static void acquire_sig_lock(int signal) {
 	pthread_mutex_lock(&send_sig_lock[signal]);

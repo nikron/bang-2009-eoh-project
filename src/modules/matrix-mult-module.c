@@ -101,7 +101,6 @@ void BANG_module_run() {
 	/* This should not change, however ids are only avialable when the program is run. */
 	id = api.BANG_get_my_id();
 
-
 	gtk_widget_show(window);
 	gtk_widget_show(label);
 }

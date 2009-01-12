@@ -45,7 +45,7 @@ void BANG_debug_on_all_peers(char *message);
 void BANG_get_me_peers();
 
 /**
- * \return Retuns the number of peers currently active. (Peers being peers
+ * \return Returns the number of peers currently active. (Peers being peers
  * who are running your module.
  */
 int BANG_number_of_active_peers();
@@ -84,7 +84,7 @@ void BANG_send_job(int id, BANG_job job);
  */
 typedef struct {
 	/**
-	 * Refrence to BANG_debug_on_all_peers.
+	 * Reference to BANG_debug_on_all_peers.
 	 */
 	void (*BANG_debug_on_all_peers) (char *message);
 	void (*BANG_get_me_peers) ();
@@ -92,5 +92,7 @@ typedef struct {
 	int (*BANG_get_my_id) ();
 	void (*BANG_assert_authority) (int id);
 	BANG_job* (*BANG_request_job) (int id, char blocking);
+	int (*BANG_finished_request) (BANG_job job);
+	void (*BANG_send_job) (int id, BANG_job job);
 } BANG_api;
 #endif

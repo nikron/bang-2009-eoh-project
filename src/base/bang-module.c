@@ -27,6 +27,7 @@
  *  -BANG_module_run: runs the module
  */
 
+#define BDEBUG_1
 
 /**
  * \param path Valid path to a file.
@@ -69,7 +70,9 @@ static unsigned char* module_hash(char *path) {
 
 BANG_module* BANG_load_module(char *path) {
 	/* Get rid of any lingering errors. */
-	while (dlerror() != NULL) {}
+	/* while (dlerror() != NULL) {} 
+	 * Never mind, this apprently causes segfaults
+	 */
 
 	void *handle = dlopen(path,RTLD_NOW);
 	BANG_sigargs args;
@@ -120,7 +123,7 @@ BANG_module* BANG_load_module(char *path) {
 		return NULL;
 	}
 
-	*(void **) (&(module->module_init)) = dlsym(handle,"BANG_module_init");
+	module->module_init = dlsym(handle,"BANG_module_init");
 
 	/* Make sure the dlsym worked. */
 	if ((args.args = dlerror()) != NULL) {
@@ -135,7 +138,7 @@ BANG_module* BANG_load_module(char *path) {
 		return NULL;
 	}
 
-	*(void **) (&(module->module_run)) = dlsym(handle,"BANG_module_run");
+	module->module_run = dlsym(handle,"BANG_module_run");
 
 	/* Make sure the dlsym worked. */
 	if ((args.args = dlerror()) != NULL) {
@@ -158,6 +161,15 @@ BANG_module* BANG_load_module(char *path) {
 	module->handle = handle;
 	module->path = path;
 
+	BANG_api api;
+	memset(&api,0,sizeof(BANG_api));
+	api.BANG_debug_on_all_peers = &BANG_debug_on_all_peers;
+	api.BANG_get_me_peers = &BANG_get_me_peers;
+	api.BANG_number_of_active_peers = &BANG_number_of_active_peers;
+	api.BANG_get_my_id = &BANG_get_my_id;
+
+	module->module_init(api);
+
 	return module;
 }
 
@@ -172,18 +184,11 @@ void BANG_unload_module(BANG_module *module) {
 
 void BANG_run_module(BANG_module *module) {
 	if (module != NULL) {
-		BANG_api api;
-		api.BANG_debug_on_all_peers = &BANG_debug_on_all_peers;
-		api.BANG_get_me_peers = &BANG_get_me_peers;
-		api.BANG_number_of_active_peers = &BANG_number_of_active_peers;
-		api.BANG_get_my_id = &BANG_get_my_id;
 		BANG_sigargs args;
 		args.args = module;
 		args.length = sizeof(BANG_module);
 		BANG_send_signal(BANG_RUNNING_MODULE,&args,1);
-		if(!module->module_init(api)) {;
-			module->module_run();
-		}
+		module->module_run();
 	}
 }
 

@@ -9,7 +9,7 @@ CC=gcc
 OBJEXT=.o
 SRCEXT=.c
 
-COPTS=	-Wall -Wextra -Werror -g -D_REENTRANT -lpthread
+COPTS=-Wall -Wextra -Werror -O3 -g -D_REENTRANT -lpthread
 
 GTKOPTS=`pkg-config --cflags --libs gtk+-2.0 --libs openssl ` -lgthread-2.0
 
@@ -40,7 +40,7 @@ MODULES=test-module.so matrix-mult-module.so
 
 all: $(EXENAME) $(LIBRARIES)
 
-$(EXENAME): $(LSRC) $(ASRC)
+$(EXENAME): $(LOBJS) $(AOBJS)
 	$(CC) $(COPTS) $(GTKOPTS) $^ -o $(EXENAME)
 
 $(AOBJS): $(ASRC)

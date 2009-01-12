@@ -28,7 +28,7 @@ typedef struct {
 	/**
 	 * The module initialize method.
 	 */
-	int (*module_init)(BANG_api);
+	BANG_callbacks (*module_init)(BANG_api);
 	/**
 	 * The module run method.
 	 */

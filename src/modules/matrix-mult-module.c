@@ -37,7 +37,7 @@ static void job_callback(BANG_job job) {
 	/* This is pretty flimsy, but I'm pretty sure that double doesn't
 	 * change size across platforms. */
 	job.length = sizeof(double);
-	BANG_finished_request(job);
+	api.BANG_finished_request(job);
 }
 
 static double multiply_row(double *row, double *column, unsigned int length) {
@@ -64,6 +64,7 @@ static matrix_multi_job extract_multi_job(BANG_job job) {
 }
 
 void GUI_init(GtkWidget **page, GtkWidget **page_label) {
+	fprintf(stderr,"run...\n");
 	*page_label = gtk_label_new("Module of Matrix Multiplication");
 	*page = gtk_vbox_new(FALSE,0);
 	gtk_widget_show(*page_label);

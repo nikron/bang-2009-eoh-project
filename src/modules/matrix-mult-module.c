@@ -36,10 +36,9 @@ typedef struct {
 	double **matrix;
 	GIOChannel *fd;
 	/**
-	 * This is of size ([the side we are loading into memory] / 4) + 1
+	 * This is of size ([height] / 4) + 1
 	 */
 	unsigned char *bitmap;
-	enum orientation orient;
 
 	unsigned int width;
 	unsigned int height;
@@ -86,53 +85,54 @@ static matrix_multi_job extract_multi_job(BANG_job job);
 
 static double multiply_row_using_job(matrix_multi_job job);
 
-static void matrix_file_open(GtkFileChooserButton *button, gpointer d);
+static void matrix_file_callback(GtkFileChooserButton *button, gpointer d);
 
 static void matrices_do_multiply(GtkButton *button, gpointer m);
 
 static matrix* convert_to_matrix(GIOChannel *fd);
 
-static matrix* new_matrix(int width, int height, GIOChannel *fd);
+static matrix* new_matrix(GIOChannel *fd);
 
-/*
-static matrix* new_matrix_with_orientation(int width, int height, GIOChannel *fd, enum orientation orient);
+static matrix* new_matrix_with_dimensions(int width, int height, GIOChannel *fd);
 
 static void free_matrix(matrix *mat);
-*/
 
-static matrix* new_matrix(int width, int height, GIOChannel *fd) {
-	matrix *mat = g_malloc(sizeof(matrix));
-
-	mat->width = width;
-	mat->height = height;
+static matrix* new_matrix(GIOChannel *fd) {
+	matrix *mat = g_malloc0(sizeof(matrix));
 	mat->fd = fd;
-
-	/* Guess which orientation might be better */
-	if (mat->width < mat->height) {
-		mat->orient = LOAD_ROWS;
-		mat->bitmap = calloc(1,mat->height / sizeof(char) + 1);
-	} else {
-		mat->orient = LOAD_COLUMNS;
-		mat->bitmap = calloc(1,mat->width / sizeof(char) + 1);
-	}
-	mat->matrix = NULL;
 
 	return mat;
 }
 
-/*
-static matrix* new_matrix_with_orientation(int width, int height, GIOChannel *fd, enum orientation orient) {
-	matrix *mat = g_malloc(sizeof(matrix));
-
+static void matrix_set_dimensions(matrix *mat, int width, int height) {
 	mat->width = width;
 	mat->height = height;
-	mat->fd = fd;
-	mat->orient = orient;
-	mat->matrix = NULL;
+
+	if (mat->bitmap != NULL)
+		g_free(mat->bitmap);
+
+	mat->bitmap = g_malloc0((height / 4) + 1);
+}
+
+static matrix* new_matrix_with_dimensions(int width, int height, GIOChannel *fd) {
+	matrix *mat = new_matrix(fd);
+
+	matrix_set_dimensions(mat,width,height);
 
 	return mat;
 }
-*/
+
+static void free_matrix(matrix *mat) {
+	g_free(mat->matrix);
+	mat->matrix = NULL;
+
+	g_free(mat->bitmap);
+	mat->bitmap = NULL;
+	mat->width = 0;
+	mat->height = 0;
+
+	g_free(mat);
+}
 
 static void job_callback(BANG_job job) {
 	double result = multiply_row_using_job(extract_multi_job(job));
@@ -184,7 +184,7 @@ static matrix* convert_to_matrix(GIOChannel *fd) {
 	guint i, width, height;
 
 	g_io_channel_read_line(fd,&line,&length,NULL,&err);
-	if (err == NULL) {
+	if (err == NULL && length > 0) {
 		ret_val = sscanf(line,"%u,%u",&width,&height);
 		g_free(line);
 
@@ -202,7 +202,7 @@ static matrix* convert_to_matrix(GIOChannel *fd) {
 		}
 
 		/* matrix seems to be okay, fill it out, and return it */
-		mat = new_matrix(width,height,fd);
+		mat = new_matrix_with_dimensions(width,height,fd);
 
 		return mat;
 
@@ -218,31 +218,46 @@ static void matrices_do_multiply(GtkButton *button, gpointer m) {
 	matrices[PRODUCT_MATRIX] = ((matrix**)m)[2];
 }
 
-static void matrix_file_open(GtkFileChooserButton *button, gpointer d) {
+static void matrix_file_callback(GtkFileChooserButton *button, gpointer d) {
 	file_chooser_data *data = (file_chooser_data*)d;
 	gchar *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(button));
+	if (filename == NULL) return;
+
+	int  matrix_number;
+	char *file_permissions;
 
 	GError *error = NULL;
-	GIOChannel *fd = g_io_channel_new_file(filename,"r",&error);
 
-	if (error == NULL) {
-		matrix *mat = convert_to_matrix(fd);
+	if (!strcmp(FIRST_MATRIX_FILE_TITLE,gtk_file_chooser_button_get_title(button))) {
+		matrix_number = 0;
+	} else if (!strcmp(SECOND_MATRIX_FILE_TITLE,gtk_file_chooser_button_get_title(button))) {
+		matrix_number = 1;
 
-		/* long line and it's not even nessaary! */
-		data->matrices[(strcmp(FIRST_MATRIX_FILE_TITLE,gtk_file_chooser_button_get_title(button))) ? 1 : 0] = mat;
-
-		/* Make sure the matrices are multiplicable. */
-		if (	data->matrices[0] && 
-			data->matrices[1] && 
-			data->matrices[2] &&
-			data->matrices[0]->height && data->matrices[1]->width) {
-
-			gtk_widget_set_sensitive(GTK_WIDGET(data->multiply_button),TRUE);
-		} else {
-			gtk_widget_set_sensitive(GTK_WIDGET(data->multiply_button),FALSE);
-		}
 	} else {
-		fprintf(stderr,"%s",error->message);
+		matrix_number = 2;
+	}
+
+	file_permissions = (matrix_number == 2) ? "w" : "r";
+
+	GIOChannel *fd = g_io_channel_new_file(filename,file_permissions,&error);
+
+	if (error == NULL && fd) {
+		if (data->matrices[matrix_number]) {
+			free_matrix(data->matrices[matrix_number]);
+		}
+
+		data->matrices[matrix_number] = (matrix_number == 2) ? new_matrix(fd) : convert_to_matrix(fd);
+	}
+
+	/* Make sure the matrices are multiplicable. */
+	if (	data->matrices[0] && 
+		data->matrices[1] && 
+		data->matrices[2] &&
+		data->matrices[0]->height == data->matrices[1]->width) {
+
+		gtk_widget_set_sensitive(GTK_WIDGET(data->multiply_button),TRUE);
+	} else {
+		gtk_widget_set_sensitive(GTK_WIDGET(data->multiply_button),FALSE);
 	}
 }
 
@@ -261,15 +276,15 @@ void GUI_init(GtkWidget **page, GtkWidget **page_label) {
 
 	GtkWidget *mone_label = gtk_label_new("First Matrix File:");
 	GtkWidget *matrix_one = gtk_file_chooser_button_new(FIRST_MATRIX_FILE_TITLE,GTK_FILE_CHOOSER_ACTION_OPEN);
-	g_signal_connect(G_OBJECT(matrix_one),"file-set",G_CALLBACK(matrix_file_open),&data);
+	g_signal_connect(G_OBJECT(matrix_one),"file-set",G_CALLBACK(matrix_file_callback),&data);
 
 	GtkWidget *mtwo_label = gtk_label_new("Second Matrix File:");
 	GtkWidget *matrix_two = gtk_file_chooser_button_new(SECOND_MATRIX_FILE_TITLE,GTK_FILE_CHOOSER_ACTION_OPEN);
-	g_signal_connect(G_OBJECT(matrix_two),"file-set",G_CALLBACK(matrix_file_open),&data);
+	g_signal_connect(G_OBJECT(matrix_two),"file-set",G_CALLBACK(matrix_file_callback),&data);
 
 	GtkWidget *mpro_label = gtk_label_new("Resultant Matrix File:");
 	GtkWidget *product_matrix = gtk_file_chooser_button_new(SECOND_MATRIX_FILE_TITLE,GTK_FILE_CHOOSER_ACTION_OPEN);
-	g_signal_connect(G_OBJECT(matrix_two),"file-set",G_CALLBACK(matrix_file_open),&data);
+	g_signal_connect(G_OBJECT(matrix_two),"file-set",G_CALLBACK(matrix_file_callback),&data);
 
 
 	gtk_box_pack_start(GTK_BOX(window),mone_label,TRUE,TRUE,0);

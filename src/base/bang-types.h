@@ -148,7 +148,7 @@ enum BANG_signals {
 	 * The number of signals.  All new signals should be above this line.
 	 */
 	BANG_NUM_SIGS
-} BANG_signal;
+};
 
 /**
  *
@@ -254,7 +254,7 @@ enum BANG_headers {
 	/**
 	 * Number of headers.*/
 	BANG_NUM_HEADERS
-} BANG_header;
+};
 
 /**
  * A request to be made to a write peer thread.
@@ -299,7 +299,7 @@ enum BANG_request_types {
 	 */
 	BANG_SEND_MODULE_REQUEST,
 	BANG_NUM_REQUESTS
-} BANG_request_type;
+};
 
 
 /**

@@ -13,6 +13,18 @@
 
 #define FIRST_MATRIX_FILE_TITLE "Open first matrix file"
 #define SECOND_MATRIX_FILE_TITLE "Open second matrix file"
+#define PRODUCT_MATRIX_FILE_TITLE "Save product matrix"
+
+#define FIRST_MATRIX 0
+#define SECOND_MATRIX 1
+#define PRODUCT_MATRIX 2
+
+#define NUM_MATRICES
+
+enum orientation {
+	LOAD_ROWS = 0,
+	LOAD_COLUMNS = 1
+};
 
 /**
  * The matrix the user wants.  This matrix might be _very_ large, so
@@ -27,20 +39,23 @@ typedef struct {
 	 * This is of size ([the side we are loading into memory] / 4) + 1
 	 */
 	unsigned char *bitmap;
-	/**
-	 * if true, rows are loaded into memory
-	 * if false, columns are loaded into memory
-	 */
-	char bitmap_of_height;
+	enum orientation orient;
 
 	unsigned int width;
 	unsigned int height;
 } matrix;
 
 typedef struct {
+	double *row;
+	double *column;
+	unsigned int length;
+} matrix_multi_job;
+
+typedef struct {
 	GtkButton *multiply_button;
-	matrix *(matrices[2]);
+	matrix *(matrices[3]);
 } file_chooser_data;
+
 
 const char BANG_module_name[] = "matrix multiplication";
 const unsigned char BANG_module_version[] = {0,0,1};
@@ -57,17 +72,15 @@ static GtkWidget *window = NULL;
  */
 static GtkWidget *label = NULL;
 
-static BANG_api api;
+static matrix *(matrices[NUM_MATRICES]) = { NULL, NULL, NULL };
 
-typedef struct {
-	double *row;
-	double *column;
-	unsigned int length;
-} matrix_multi_job;
+static BANG_api api;
 
 static double multiply_row(double *column, double *row, unsigned int length);
 
 static void job_callback(BANG_job job);
+
+static void jobs_available(int id);
 
 static matrix_multi_job extract_multi_job(BANG_job job);
 
@@ -75,9 +88,51 @@ static double multiply_row_using_job(matrix_multi_job job);
 
 static void matrix_file_open(GtkFileChooserButton *button, gpointer d);
 
-static void matrix_do_multiply(GtkButton *button, gpointer m);
+static void matrices_do_multiply(GtkButton *button, gpointer m);
 
 static matrix* convert_to_matrix(GIOChannel *fd);
+
+static matrix* new_matrix(int width, int height, GIOChannel *fd);
+
+/*
+static matrix* new_matrix_with_orientation(int width, int height, GIOChannel *fd, enum orientation orient);
+
+static void free_matrix(matrix *mat);
+*/
+
+static matrix* new_matrix(int width, int height, GIOChannel *fd) {
+	matrix *mat = g_malloc(sizeof(matrix));
+
+	mat->width = width;
+	mat->height = height;
+	mat->fd = fd;
+
+	/* Guess which orientation might be better */
+	if (mat->width < mat->height) {
+		mat->orient = LOAD_ROWS;
+		mat->bitmap = calloc(1,mat->height / sizeof(char) + 1);
+	} else {
+		mat->orient = LOAD_COLUMNS;
+		mat->bitmap = calloc(1,mat->width / sizeof(char) + 1);
+	}
+	mat->matrix = NULL;
+
+	return mat;
+}
+
+/*
+static matrix* new_matrix_with_orientation(int width, int height, GIOChannel *fd, enum orientation orient) {
+	matrix *mat = g_malloc(sizeof(matrix));
+
+	mat->width = width;
+	mat->height = height;
+	mat->fd = fd;
+	mat->orient = orient;
+	mat->matrix = NULL;
+
+	return mat;
+}
+*/
 
 static void job_callback(BANG_job job) {
 	double result = multiply_row_using_job(extract_multi_job(job));
@@ -87,6 +142,11 @@ static void job_callback(BANG_job job) {
 	 * change size across platforms. */
 	job.length = sizeof(double);
 	api.BANG_finished_request(job);
+}
+
+static void jobs_available(int id) {
+	/* We'll accept all incoming jobs, and tell them to use the callback. */
+	api.BANG_request_job(id,0);
 }
 
 static double multiply_row(double *row, double *column, unsigned int length) {
@@ -121,42 +181,28 @@ static matrix* convert_to_matrix(GIOChannel *fd) {
 	gchar *line;
 	gsize length;
 	gint ret_val;
-	guint i;
+	guint i, width, height;
 
 	g_io_channel_read_line(fd,&line,&length,NULL,&err);
 	if (err == NULL) {
-		mat = (matrix*) g_malloc(sizeof(matrix));
-		ret_val = sscanf(line,"%u,%u",&(mat->width),&(mat->height));
+		ret_val = sscanf(line,"%u,%u",&width,&height);
 		g_free(line);
 
 		if (ret_val != 2) {
-			g_free(mat);
 			return NULL;
 		}
 
-		/* integerity check on the file to make sure it is valid. */
-		for (i = 0; i < mat->height; ++i) {
+		/* file check to make sure it is valid. */
+		for (i = 0; i < height; ++i) {
 			status = g_io_channel_read_line(fd,&line,&length,NULL,&err);
 			g_free(line);
 			if (err != NULL || status != G_IO_STATUS_NORMAL) {
-				g_free(mat);
 				return NULL;
 			}
 		}
 
 		/* matrix seems to be okay, fill it out, and return it */
-
-		mat->matrix = NULL;
-
-		if (mat->width < mat->height) {
-			mat->bitmap_of_height = 1;
-			mat->bitmap = calloc(1,mat->height / sizeof(char) + 1);
-		} else {
-			mat->bitmap_of_height = 0;
-			mat->bitmap = calloc(1,mat->width / sizeof(char) + 1);
-		}
-
-		mat->fd = fd;
+		mat = new_matrix(width,height,fd);
 
 		return mat;
 
@@ -167,6 +213,9 @@ static matrix* convert_to_matrix(GIOChannel *fd) {
 
 static void matrices_do_multiply(GtkButton *button, gpointer m) {
 	gtk_widget_set_sensitive(GTK_WIDGET(button),FALSE);
+	matrices[FIRST_MATRIX] = ((matrix**)m)[0];
+	matrices[SECOND_MATRIX] = ((matrix**)m)[1];
+	matrices[PRODUCT_MATRIX] = ((matrix**)m)[2];
 }
 
 static void matrix_file_open(GtkFileChooserButton *button, gpointer d) {
@@ -182,7 +231,12 @@ static void matrix_file_open(GtkFileChooserButton *button, gpointer d) {
 		/* long line and it's not even nessaary! */
 		data->matrices[(strcmp(FIRST_MATRIX_FILE_TITLE,gtk_file_chooser_button_get_title(button))) ? 1 : 0] = mat;
 
-		if (data->matrices[0] && data->matrices[1]) {
+		/* Make sure the matrices are multiplicable. */
+		if (	data->matrices[0] && 
+			data->matrices[1] && 
+			data->matrices[2] &&
+			data->matrices[0]->height && data->matrices[1]->width) {
+
 			gtk_widget_set_sensitive(GTK_WIDGET(data->multiply_button),TRUE);
 		} else {
 			gtk_widget_set_sensitive(GTK_WIDGET(data->multiply_button),FALSE);
@@ -205,15 +259,25 @@ void GUI_init(GtkWidget **page, GtkWidget **page_label) {
 	gtk_widget_set_sensitive(GTK_WIDGET(data.multiply_button),FALSE);
 	g_signal_connect(G_OBJECT(data.multiply_button),"clicked",G_CALLBACK(matrices_do_multiply),&(data.matrices));
 
+	GtkWidget *mone_label = gtk_label_new("First Matrix File:");
 	GtkWidget *matrix_one = gtk_file_chooser_button_new(FIRST_MATRIX_FILE_TITLE,GTK_FILE_CHOOSER_ACTION_OPEN);
 	g_signal_connect(G_OBJECT(matrix_one),"file-set",G_CALLBACK(matrix_file_open),&data);
 
+	GtkWidget *mtwo_label = gtk_label_new("Second Matrix File:");
 	GtkWidget *matrix_two = gtk_file_chooser_button_new(SECOND_MATRIX_FILE_TITLE,GTK_FILE_CHOOSER_ACTION_OPEN);
 	g_signal_connect(G_OBJECT(matrix_two),"file-set",G_CALLBACK(matrix_file_open),&data);
 
+	GtkWidget *mpro_label = gtk_label_new("Resultant Matrix File:");
+	GtkWidget *product_matrix = gtk_file_chooser_button_new(SECOND_MATRIX_FILE_TITLE,GTK_FILE_CHOOSER_ACTION_OPEN);
+	g_signal_connect(G_OBJECT(matrix_two),"file-set",G_CALLBACK(matrix_file_open),&data);
 
+
+	gtk_box_pack_start(GTK_BOX(window),mone_label,TRUE,TRUE,0);
 	gtk_box_pack_start(GTK_BOX(window),matrix_one,TRUE,TRUE,0);
+	gtk_box_pack_start(GTK_BOX(window),mtwo_label,TRUE,TRUE,0);
 	gtk_box_pack_start(GTK_BOX(window),matrix_two,TRUE,TRUE,0);
+	gtk_box_pack_start(GTK_BOX(window),mpro_label,TRUE,TRUE,0);
+	gtk_box_pack_start(GTK_BOX(window),product_matrix,TRUE,TRUE,0);
 	gtk_box_pack_start(GTK_BOX(window),GTK_WIDGET(data.multiply_button),FALSE,FALSE,0);
 
 	/* The user can't interact with us until the module is running. */
@@ -225,6 +289,7 @@ BANG_callbacks BANG_module_init(BANG_api get_api) {
 
 	/*TODO: Make callbacks and finish this */
 	BANG_callbacks callbacks;
+	callbacks.jobs_available = &jobs_available;
 	callbacks.incoming_job = &job_callback;
 	callbacks.outgoing_job = NULL;
 	callbacks.peer_added = NULL;

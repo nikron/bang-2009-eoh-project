@@ -26,6 +26,7 @@ typedef struct {
  * Returned from the module init function.
  */
 typedef struct {
+	void (*jobs_available) (int);
 	void (*outgoing_job) (int);
 	void (*incoming_job) (BANG_job);
 	void (*peer_added) (int);
@@ -65,7 +66,7 @@ void BANG_assert_authority(int id);
 
 /**
  * \param id The peer to get a job from.
- * \param blocking If true, the callback will be used instead.
+ * \param blocking If false, the callback will be used instead.
  *
  * \return A job for you to act upon.
  *

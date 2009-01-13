@@ -224,10 +224,11 @@ static void matrices_do_multiply(GtkButton *button, gpointer m) {
 	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
 		gchar *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
 		fd = g_io_channel_new_file(filename,"w",&err);
+		g_free(filename);
 	}
+	gtk_widget_destroy(dialog);
 	
 	if (fd && err == NULL) {
-		fprintf(stderr,"entered\n");
 		gtk_widget_set_sensitive(GTK_WIDGET(button),FALSE);
 		matrices[FIRST_MATRIX] = ((matrix**)m)[0];
 		matrices[SECOND_MATRIX] = ((matrix**)m)[1];
@@ -272,6 +273,8 @@ static void matrix_file_callback(GtkFileChooserButton *button, gpointer d) {
 	} else {
 		gtk_widget_set_sensitive(GTK_WIDGET(data->multiply_button),FALSE);
 	}
+
+	g_free(filename);
 }
 
 void GUI_init(GtkWidget **page, GtkWidget **page_label) {

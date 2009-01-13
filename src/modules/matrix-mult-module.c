@@ -52,6 +52,8 @@ typedef struct {
 
 typedef struct {
 	GtkButton *multiply_button;
+	GtkWidget *mone;
+	GtkWidget *mtwo;
 	matrix *(matrices[2]);
 } file_chooser_data;
 
@@ -211,7 +213,8 @@ static matrix* convert_to_matrix(GIOChannel *fd) {
 	}
 }
 
-static void matrices_do_multiply(GtkButton *button, gpointer m) {
+static void matrices_do_multiply(GtkButton *button, gpointer d) {
+	file_chooser_data *data = d;
 	GtkWidget *dialog = gtk_file_chooser_dialog_new (RESULTANT_MATRIX_FILE_TITLE,
 			NULL,
 			GTK_FILE_CHOOSER_ACTION_SAVE,
@@ -230,9 +233,14 @@ static void matrices_do_multiply(GtkButton *button, gpointer m) {
 	
 	if (fd && err == NULL) {
 		gtk_widget_set_sensitive(GTK_WIDGET(button),FALSE);
-		matrices[FIRST_MATRIX] = ((matrix**)m)[0];
-		matrices[SECOND_MATRIX] = ((matrix**)m)[1];
-		matrices[PRODUCT_MATRIX] = new_matrix(fd);
+		gtk_widget_set_sensitive(data->mone,FALSE);
+		gtk_widget_set_sensitive(data->mtwo,FALSE);
+
+		matrices[FIRST_MATRIX] = data->matrices[0];
+		matrices[SECOND_MATRIX] = data->matrices[1];
+		matrices[PRODUCT_MATRIX] = new_matrix_with_dimensions(data->matrices[0]->width,
+				data->matrices[1]->height,
+				fd);
 	}
 }
 
@@ -286,20 +294,20 @@ void GUI_init(GtkWidget **page, GtkWidget **page_label) {
 
 	data->multiply_button = GTK_BUTTON(gtk_button_new_with_label("Multiply Matrices"));
 	gtk_widget_set_sensitive(GTK_WIDGET(data->multiply_button),FALSE);
-	g_signal_connect(G_OBJECT(data->multiply_button),"clicked",G_CALLBACK(matrices_do_multiply),data->matrices);
+	g_signal_connect(G_OBJECT(data->multiply_button),"clicked",G_CALLBACK(matrices_do_multiply),data);
 
 	GtkWidget *mone_label = gtk_label_new("First Matrix File:");
-	GtkWidget *matrix_one = gtk_file_chooser_button_new(FIRST_MATRIX_FILE_TITLE,GTK_FILE_CHOOSER_ACTION_OPEN);
-	g_signal_connect(G_OBJECT(matrix_one),"file-set",G_CALLBACK(matrix_file_callback),data);
+	data->mone = gtk_file_chooser_button_new(FIRST_MATRIX_FILE_TITLE,GTK_FILE_CHOOSER_ACTION_OPEN);
+	g_signal_connect(G_OBJECT(data->mone),"file-set",G_CALLBACK(matrix_file_callback),data);
 
 	GtkWidget *mtwo_label = gtk_label_new("Second Matrix File:");
-	GtkWidget *matrix_two = gtk_file_chooser_button_new(SECOND_MATRIX_FILE_TITLE,GTK_FILE_CHOOSER_ACTION_OPEN);
-	g_signal_connect(G_OBJECT(matrix_two),"file-set",G_CALLBACK(matrix_file_callback),data);
+	data->mtwo = gtk_file_chooser_button_new(SECOND_MATRIX_FILE_TITLE,GTK_FILE_CHOOSER_ACTION_OPEN);
+	g_signal_connect(G_OBJECT(data->mtwo),"file-set",G_CALLBACK(matrix_file_callback),data);
 
 	gtk_box_pack_start(GTK_BOX(window),mone_label,TRUE,TRUE,0);
-	gtk_box_pack_start(GTK_BOX(window),matrix_one,TRUE,TRUE,0);
+	gtk_box_pack_start(GTK_BOX(window),data->mone,TRUE,TRUE,0);
 	gtk_box_pack_start(GTK_BOX(window),mtwo_label,TRUE,TRUE,0);
-	gtk_box_pack_start(GTK_BOX(window),matrix_two,TRUE,TRUE,0);
+	gtk_box_pack_start(GTK_BOX(window),data->mtwo,TRUE,TRUE,0);
 	gtk_box_pack_start(GTK_BOX(window),GTK_WIDGET(data->multiply_button),FALSE,FALSE,0);
 
 	/* The user can't interact with us until the module is running. */

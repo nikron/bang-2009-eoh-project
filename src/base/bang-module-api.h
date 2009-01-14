@@ -26,10 +26,35 @@ typedef struct {
  * Returned from the module init function.
  */
 typedef struct {
+	/**
+	 * Callback for when jobs are available for you to request
+	 * \param int The id of the peer with jobs available.
+	 */
 	void (*jobs_available) (int);
+	/**
+	 * Callback for when a finished job is sent to you.
+	 * \param BANG_job* The job that has been finished.
+	 */
+	void (*jobs_done) (BANG_job*);
+	/**
+	 * Callback for when a peer requests you a job from you.
+	 * \param int The id of peer requesting a job.
+	 */
 	void (*outgoing_job) (int);
-	void (*incoming_job) (BANG_job);
+	/**
+	 * Callback for when a job is sent to you.
+	 * \param BANG_job* the job that is sent to you.
+	 */
+	void (*incoming_job) (BANG_job*);
+	/**
+	 * Callback for when a peer is added.
+	 * \param int The id of the added peer.
+	 */
 	void (*peer_added) (int);
+	/**
+	 * Callback for when a peer is removed.
+	 * \param int The id of the removed peer.
+	 */
 	void (*peer_removed) (int);
 } BANG_callbacks;
 
@@ -64,6 +89,8 @@ int BANG_get_my_id();
  */
 void BANG_assert_authority(int id);
 
+void BANG_assert_authority_to_peer(int id);
+
 /**
  * \param id The peer to get a job from.
  * \param blocking If false, the callback will be used instead.
@@ -82,14 +109,14 @@ BANG_job* BANG_request_job(int id, char blocking);
  * \brief Sends the job to the peer.  If the peer is you,
  * it will send it to your callback method.
  */
-void BANG_finished_request(BANG_job job);
+void BANG_finished_request(BANG_job *job);
 
 /**
  * \param The peer to send your the job to.
  *
  * \brief Sends a job to a peer.
  */
-void BANG_send_job(int id, BANG_job job);
+void BANG_send_job(int id, BANG_job *job);
 
 /**
  * The api for the modules to use.
@@ -103,8 +130,9 @@ typedef struct {
 	int (*BANG_number_of_active_peers) ();
 	int (*BANG_get_my_id) ();
 	void (*BANG_assert_authority) (int id);
+	void (*BANG_assert_authority_to_peer) (int id);
 	BANG_job* (*BANG_request_job) (int id, char blocking);
-	void (*BANG_finished_request) (BANG_job job);
-	void (*BANG_send_job) (int id, BANG_job job);
+	void (*BANG_finished_request) (BANG_job *job);
+	void (*BANG_send_job) (int id, BANG_job *job);
 } BANG_api;
 #endif

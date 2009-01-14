@@ -75,15 +75,34 @@ static GtkWidget *label = NULL;
 
 static matrix *(matrices[NUM_MATRICES]) = { NULL, NULL, NULL };
 
+#define JOBS_ABANDONED -1
+#define JOB_DONE -2
+
+static int *jobs = NULL;
+static int current = -1;
+static int jobs_being_worked_on = -1;
+
 static BANG_api api;
 
 static double multiply_row(double *column, double *row, unsigned int length);
 
-static void job_callback(BANG_job job);
+static void job_incoming_callback(BANG_job *job);
 
-static void jobs_available(int id);
+static void job_outgoing_callback(int id);
 
-static matrix_multi_job extract_multi_job(BANG_job job);
+static void jobs_available_callback(int id);
+
+static void peer_added_callback(int id);
+
+static void peer_removed_callback(int id);
+
+static BANG_job* extract_job();
+
+static BANG_job* extract_job_num(int id);
+
+static void free_jobs_held_by(int id);
+
+static matrix_multi_job extract_multi_job(BANG_job *job);
 
 static double multiply_row_using_job(matrix_multi_job job);
 
@@ -124,6 +143,31 @@ static matrix* new_matrix_with_dimensions(int width, int height, GIOChannel *fd)
 	return mat;
 }
 
+static BANG_job* extract_job_num(int id) {
+}
+
+static BANG_job* extract_job() {
+	/* TODO: use locks! */
+	int i;
+	for (i = current; i < current + jobs_being_worked_on; ++i) {
+		if (jobs[i] == JOBS_ABANDONED)
+			return extract_job_num(i);
+	}
+	++jobs_being_worked_on;
+	extract_job_num(jobs_being_worked_on);
+	return  NULL;
+}
+
+static void free_jobs_held_by(int id) {
+	/* TODO: uses locks! */
+	int i;
+	for (i = current; i < current + jobs_being_worked_on; ++i) {
+		if (id == jobs[i]) {
+			jobs[i] = JOBS_ABANDONED; 
+		}
+	}
+}
+
 static void free_matrix(matrix *mat) {
 	g_free(mat->matrix);
 	mat->matrix = NULL;
@@ -136,19 +180,35 @@ static void free_matrix(matrix *mat) {
 	g_free(mat);
 }
 
-static void job_callback(BANG_job job) {
-	double result = multiply_row_using_job(extract_multi_job(job));
-	free(job.data);
-	job.data = &result;
+static void job_incoming_callback(BANG_job *job) {
+	double *result = g_malloc(sizeof(double));
+	*result = multiply_row_using_job(extract_multi_job(job));
+	free(job->data);
+	job->data = result;
 	/* This is pretty flimsy, but I'm pretty sure that double doesn't
 	 * change size across platforms. */
-	job.length = sizeof(double);
+	job->length = sizeof(double);
 	api.BANG_finished_request(job);
 }
 
-static void jobs_available(int id) {
+static void job_outgoing_callback(int id) {
+	BANG_job *job = extract_job();
+	api.BANG_send_job(id,job);
+}
+
+static void jobs_available_callback(int id) {
 	/* We'll accept all incoming jobs, and tell them to use the callback. */
 	api.BANG_request_job(id,0);
+}
+
+static void peer_added_callback(int id) {
+	if (jobs) {
+		api.BANG_assert_authority_to_peer(id);
+	}
+}
+
+static void peer_removed_callback(int id) {
+	free_jobs_held_by(id);
 }
 
 static double multiply_row(double *row, double *column, unsigned int length) {
@@ -164,12 +224,12 @@ static double multiply_row_using_job(matrix_multi_job job) {
 	return multiply_row(job.row,job.column,job.length);
 }
 
-static matrix_multi_job extract_multi_job(BANG_job job) {
+static matrix_multi_job extract_multi_job(BANG_job *job) {
 	matrix_multi_job mjob;
 	/* job.length should always be 2n because this module creates it */
-	mjob.length = job.length / 2;
-	mjob.row = (double*) job.data;
-	mjob.column = ((double*) job.data) + mjob.length;
+	mjob.length = job->length / 2;
+	mjob.row = (double*) job->data;
+	mjob.column = ((double*) job->data) + mjob.length;
 
 	return mjob;
 }
@@ -241,6 +301,12 @@ static void matrices_do_multiply(GtkButton *button, gpointer d) {
 		matrices[PRODUCT_MATRIX] = new_matrix_with_dimensions(data->matrices[0]->width,
 				data->matrices[1]->height,
 				fd);
+
+		/* Keep track of the jobs sent out by an array of ids for each job. */
+		jobs = g_malloc(matrices[PRODUCT_MATRIX]->width * matrices[PRODUCT_MATRIX]->height * sizeof(int));
+		current = 0;
+
+		api.BANG_assert_authority(id);
 	}
 }
 
@@ -319,11 +385,11 @@ BANG_callbacks BANG_module_init(BANG_api get_api) {
 
 	/*TODO: Make callbacks and finish this */
 	BANG_callbacks callbacks;
-	callbacks.jobs_available = &jobs_available;
-	callbacks.incoming_job = &job_callback;
-	callbacks.outgoing_job = NULL;
-	callbacks.peer_added = NULL;
-	callbacks.peer_removed = NULL;
+	callbacks.jobs_available = &jobs_available_callback;
+	callbacks.incoming_job = &job_incoming_callback;
+	callbacks.outgoing_job = &job_outgoing_callback;
+	callbacks.peer_added = &peer_added_callback;
+	callbacks.peer_removed = &peer_removed_callback;
 
 	return callbacks;
 }

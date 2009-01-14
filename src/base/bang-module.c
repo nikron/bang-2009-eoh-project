@@ -87,6 +87,7 @@ static BANG_api get_BANG_api() {
 		api.BANG_number_of_active_peers = &BANG_number_of_active_peers;
 		api.BANG_get_my_id = &BANG_get_my_id;
 		api.BANG_assert_authority = &BANG_assert_authority;
+		api.BANG_assert_authority_to_peer = &BANG_assert_authority_to_peer;
 		api.BANG_request_job = &BANG_request_job;
 		api.BANG_finished_request = &BANG_finished_request;
 		api.BANG_send_job = &BANG_send_job;

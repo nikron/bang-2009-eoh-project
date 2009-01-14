@@ -27,10 +27,8 @@ enum orientation {
 };
 
 /**
- * The matrix the user wants.  This matrix might be _very_ large, so
- * this matrix is _lazy_.  So, a file descriptor along with a bitmap
- * on which rows have been read into memory, is needed to make sure
- * we know exactly what in the file we have.
+ * The matrix the user wants.   Later, we should implement this
+ * so that the matrix can be lazy.
  */
 typedef struct {
 	double **matrix;
@@ -121,6 +119,8 @@ static matrix* new_matrix_with_dimensions(int width, int height, GIOChannel *fd)
 
 static void free_matrix(matrix *mat);
 
+static void *read_in_row(matrix *mat, unsigned int row);
+
 static double* get_row_matrix(matrix *mat, unsigned int row);
 
 static double* get_col_matrix(matrix *mat, unsigned int col);
@@ -141,15 +141,30 @@ static matrix* new_matrix(GIOChannel *fd) {
 }
 
 static void matrix_set_dimensions(matrix *mat, int width, int height) {
+	int i, j;
+	gchar *buf;
+	GError *err;
+
 	mat->width = width;
 	mat->height = height;
+	char reading;
 
 	if (mat->matrix != NULL)
 		g_free(mat->matrix);
 
-	/* TODO: READ IN ACTUAL INFORMATION NOW */
-
 	mat->matrix = g_malloc0(height * sizeof(double*));
+
+	g_io_channel_seek_position(mat->fd,0,G_SEEK_SET,&err);
+
+	for (i = 0; i < height; ++i) {
+		read_in_row(mat,i);
+	}
+}
+
+static void read_in_row(matrix *mat, unsigned int row) {
+	mat->matrix[row] = g_malloc(mat->with * sizeof(double));
+	/* TODO: Actually read in!*/
+	return mat;
 }
 
 static matrix* new_matrix_with_dimensions(int width, int height, GIOChannel *fd) {

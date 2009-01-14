@@ -147,6 +147,8 @@ static void matrix_set_dimensions(matrix *mat, int width, int height) {
 	if (mat->matrix != NULL)
 		g_free(mat->matrix);
 
+	/* TODO: READ IN ACTUAL INFORMATION NOW */
+
 	mat->matrix = g_malloc0(height * sizeof(double*));
 }
 

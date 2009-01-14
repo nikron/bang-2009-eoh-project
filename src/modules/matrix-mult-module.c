@@ -38,8 +38,6 @@ typedef struct {
 	/**
 	 * This is of size ([height] / 4) + 1
 	 */
-	unsigned char *bitmap;
-
 	unsigned int width;
 	unsigned int height;
 } matrix;
@@ -146,10 +144,10 @@ static void matrix_set_dimensions(matrix *mat, int width, int height) {
 	mat->width = width;
 	mat->height = height;
 
-	if (mat->bitmap != NULL)
-		g_free(mat->bitmap);
+	if (mat->matrix != NULL)
+		g_free(mat->matrix);
 
-	mat->bitmap = g_malloc0((height / 4) + 1);
+	mat->matrix = g_malloc0(height * sizeof(double*));
 }
 
 static matrix* new_matrix_with_dimensions(int width, int height, GIOChannel *fd) {
@@ -160,13 +158,13 @@ static matrix* new_matrix_with_dimensions(int width, int height, GIOChannel *fd)
 	return mat;
 }
 
-static BANG_job* new_BANG_job_with_job_num(int peer, int job_num) {
+static BANG_job* new_BANG_job_with_num(int peer, int job_num) {
 	BANG_job *job = g_malloc0(sizeof(BANG_job));
 	job->job_number = job_num;
 	job->peer = peer;
 	job->authority = my_id;
 
-	unsigned int row_num, col_num, length;
+	unsigned int row_num, col_num;
 	double *row, *col;
 
 	row_num = get_row_num_with_job_number(matrices[PRODUCT_MATRIX],job_num);
@@ -175,7 +173,15 @@ static BANG_job* new_BANG_job_with_job_num(int peer, int job_num) {
 	row = get_row_matrix(matrices[FIRST_MATRIX],row_num);
 	col = get_col_matrix(matrices[SECOND_MATRIX],col_num);
 
-	length = matrices[FIRST_MATRIX]->height;
+	/* Size of the information we are gonna send. */
+	job->length = matrices[FIRST_MATRIX]->height * 2 * sizeof(double);
+
+	job->data = g_malloc(job->length);
+	memcpy(job->data,row,job->length / 2);
+	memcpy(job->data + job->length / 2,col,job->length / 2);
+
+	g_free(row);
+	g_free(col);
 
 	return job;
 }
@@ -205,25 +211,50 @@ static void free_jobs_held_by(int peer) {
 }
 
 static void free_matrix(matrix *mat) {
+	unsigned int i = 0;
+	for (i = 0; i < mat->height; ++i) {
+		free(mat->matrix[i]);
+	}
 	g_free(mat->matrix);
 	mat->matrix = NULL;
 
-	g_free(mat->bitmap);
-	mat->bitmap = NULL;
 	mat->width = 0;
 	mat->height = 0;
 
 	g_free(mat);
 }
 static int get_row_num_with_job_number(matrix *mat, int job_num) {
-	return -1;
+	return mat->height % job_num;
 }
 
 static int get_col_num_with_job_number(matrix *mat,int job_num) {
-	return -1;
+	return mat->height / job_num;
 }
 
-static void set_cell_matrix(matrix *mat, double value, unsigned int width, unsigned int height) {
+static void set_cell_matrix(matrix *mat, double value, unsigned int col, unsigned int row) {
+	/* TODO: locks! */
+	if (mat->matrix[row] == NULL) {
+		mat->matrix[row]= g_malloc(mat->height * sizeof(double));
+	}
+
+	mat->matrix[row][col] = value;
+}
+
+static double* get_row_matrix(matrix *mat, unsigned int row_num) {
+	double* row = g_malloc(mat->width * sizeof(double));
+	memcpy(row,mat->matrix[row_num],mat->width * sizeof(double));
+	return row;
+}
+
+static double* get_col_matrix(matrix *mat, unsigned int col_num) {
+	unsigned int i = 0;
+	double *col = g_malloc(mat->height * sizeof(double));
+
+	for (i = 0; i < mat->height; ++i) {
+		col[i] = mat->matrix[i][col_num];
+	}
+
+	return col;
 }
 
 static void set_cell_matrix_with_job(BANG_job *job) {

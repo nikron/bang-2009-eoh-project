@@ -127,11 +127,11 @@ static double* get_row_matrix(matrix *mat, unsigned int row);
 
 static double* get_col_matrix(matrix *mat, unsigned int col);
 
-static double* get_row_from_job_number(matrix *mat,int job_num);
+static int get_row_num_with_job_number(matrix *mat,int job_num);
 
-static double* get_column_from_job_number(matrix *mat,int job_num);
+static int get_col_num_with_job_number(matrix *mat,int job_num);
 
-static void set_cell_matrix(matrix *mat,unsigned int width,unsigned int height);
+static void set_cell_matrix(matrix *mat, double value, unsigned int width, unsigned int height);
 
 static void set_cell_matrix_with_job(BANG_job *job);
 
@@ -166,11 +166,14 @@ static BANG_job* new_BANG_job_with_job_num(int peer, int job_num) {
 	job->peer = peer;
 	job->authority = my_id;
 
-	double*t row_num, col_num; 
-	unsigned int length;
+	unsigned int row_num, col_num, length;
+	double *row, *col;
 
-	row = get_row_from_job_number(matrices[PRODUCT_MATRIX],job_num);
-	col = get_column_from_job_number(matrices[PRODUCT_MATRIX],job_num);
+	row_num = get_row_num_with_job_number(matrices[PRODUCT_MATRIX],job_num);
+	col_num = get_col_num_with_job_number(matrices[PRODUCT_MATRIX],job_num);
+
+	row = get_row_matrix(matrices[FIRST_MATRIX],row_num);
+	col = get_col_matrix(matrices[SECOND_MATRIX],col_num);
 
 	length = matrices[FIRST_MATRIX]->height;
 
@@ -212,24 +215,25 @@ static void free_matrix(matrix *mat) {
 
 	g_free(mat);
 }
-
-static int get_row_from_job_number(matrix *mat,int job_num) {
+static int get_row_num_with_job_number(matrix *mat, int job_num) {
 	return -1;
 }
 
-static int get_column_from_job_number(matrix *mat,int job_num) {
+static int get_col_num_with_job_number(matrix *mat,int job_num) {
 	return -1;
 }
 
-static void set_cell_matrix(matrix *mat,unsigned int width,unsigned int height) {
+static void set_cell_matrix(matrix *mat, double value, unsigned int width, unsigned int height) {
 }
 
 static void set_cell_matrix_with_job(BANG_job *job) {
 	int width, height;
-	width = get_row_from_job_number(matrices[PRODUCT_MATRIX],job->job_number);
-	height = get_column_from_job_number(matrices[PRODUCT_MATRIX],job->job_number);
+	width = get_row_num_with_job_number(matrices[PRODUCT_MATRIX],job->job_number);
+	height = get_col_num_with_job_number(matrices[PRODUCT_MATRIX],job->job_number);
+	double cell = *((double*)job->data);
+
 	if (width != -1 && height != -1) {
-		set_cell_matrix(matrices[PRODUCT_MATRIX],width,height);
+		set_cell_matrix(matrices[PRODUCT_MATRIX],cell,width,height);
 	}
 }
 

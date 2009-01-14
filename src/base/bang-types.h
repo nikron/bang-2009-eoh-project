@@ -50,6 +50,21 @@ typedef struct {
 	char *path;
 } BANG_module;
 
+typedef struct {
+	int *peer_ids;
+	unsigned int num_peers; 
+} BANG_module_peerset;
+
+typedef struct {
+	BANG_module *module;
+	BANG_module_peerset *peers;
+} BANG_module_register;
+
+typedef struct {
+	BANG_module_register *registery;
+	unsigned int length;
+} BANG_module_registery;
+
 /**
  * This is the structure that is sent to each signal handler.
  */

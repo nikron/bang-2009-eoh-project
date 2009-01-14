@@ -14,6 +14,15 @@ typedef struct {
 	void *data;
 	unsigned int length;
 	/**
+	 * For use by the module, if it wants
+	 * this.
+	 */
+	int job_number;
+	/**
+	 * The peer doing the work.
+	 */
+	int peer;
+	/**
 	 * The id of the peer who gave you this job.
 	 */
 	int authority;
@@ -89,7 +98,7 @@ int BANG_get_my_id();
  */
 void BANG_assert_authority(int id);
 
-void BANG_assert_authority_to_peer(int id);
+void BANG_assert_authority_to_peer(int authority, int peer);
 
 /**
  * \param id The peer to get a job from.
@@ -116,7 +125,7 @@ void BANG_finished_request(BANG_job *job);
  *
  * \brief Sends a job to a peer.
  */
-void BANG_send_job(int id, BANG_job *job);
+void BANG_send_job(BANG_job *job);
 
 /**
  * The api for the modules to use.
@@ -130,9 +139,9 @@ typedef struct {
 	int (*BANG_number_of_active_peers) ();
 	int (*BANG_get_my_id) ();
 	void (*BANG_assert_authority) (int id);
-	void (*BANG_assert_authority_to_peer) (int id);
+	void (*BANG_assert_authority_to_peer) (int authority, int peer);
 	BANG_job* (*BANG_request_job) (int id, char blocking);
 	void (*BANG_finished_request) (BANG_job *job);
-	void (*BANG_send_job) (int id, BANG_job *job);
+	void (*BANG_send_job) (BANG_job *job);
 } BANG_api;
 #endif

@@ -63,7 +63,7 @@ const unsigned char BANG_module_version[] = {0,0,1};
 /**
  * Our id
  */
-static int id = -1;
+static int my_id = -1;
 /**
  * Our 'window' to the user.
  */
@@ -75,8 +75,11 @@ static GtkWidget *label = NULL;
 
 static matrix *(matrices[NUM_MATRICES]) = { NULL, NULL, NULL };
 
-#define JOBS_ABANDONED -1
-#define JOB_DONE -2
+enum job_status {
+	JOB_ABANDONED = -1,
+	JOB_BEING_WORKED_ON  = -2,
+	JOB_DONE = -3
+};
 
 static int *jobs = NULL;
 static int current = -1;
@@ -85,6 +88,8 @@ static int jobs_being_worked_on = -1;
 static BANG_api api;
 
 static double multiply_row(double *column, double *row, unsigned int length);
+
+static void jobs_done_callback(BANG_job *job);
 
 static void job_incoming_callback(BANG_job *job);
 
@@ -96,9 +101,9 @@ static void peer_added_callback(int id);
 
 static void peer_removed_callback(int id);
 
-static BANG_job* extract_job();
+static BANG_job* new_BANG_job();
 
-static BANG_job* extract_job_num(int id);
+static BANG_job* new_BANG_job_with_num(int peer, int job_num);
 
 static void free_jobs_held_by(int id);
 
@@ -117,6 +122,18 @@ static matrix* new_matrix(GIOChannel *fd);
 static matrix* new_matrix_with_dimensions(int width, int height, GIOChannel *fd);
 
 static void free_matrix(matrix *mat);
+
+static double* get_row_matrix(matrix *mat, unsigned int row);
+
+static double* get_col_matrix(matrix *mat, unsigned int col);
+
+static double* get_row_from_job_number(matrix *mat,int job_num);
+
+static double* get_column_from_job_number(matrix *mat,int job_num);
+
+static void set_cell_matrix(matrix *mat,unsigned int width,unsigned int height);
+
+static void set_cell_matrix_with_job(BANG_job *job);
 
 static matrix* new_matrix(GIOChannel *fd) {
 	matrix *mat = g_malloc0(sizeof(matrix));
@@ -143,27 +160,43 @@ static matrix* new_matrix_with_dimensions(int width, int height, GIOChannel *fd)
 	return mat;
 }
 
-static BANG_job* extract_job_num(int id) {
+static BANG_job* new_BANG_job_with_job_num(int peer, int job_num) {
+	BANG_job *job = g_malloc0(sizeof(BANG_job));
+	job->job_number = job_num;
+	job->peer = peer;
+	job->authority = my_id;
+
+	double*t row_num, col_num; 
+	unsigned int length;
+
+	row = get_row_from_job_number(matrices[PRODUCT_MATRIX],job_num);
+	col = get_column_from_job_number(matrices[PRODUCT_MATRIX],job_num);
+
+	length = matrices[FIRST_MATRIX]->height;
+
+	return job;
 }
 
-static BANG_job* extract_job() {
+static BANG_job* new_BANG_job(int peer) {
 	/* TODO: use locks! */
 	int i;
 	for (i = current; i < current + jobs_being_worked_on; ++i) {
-		if (jobs[i] == JOBS_ABANDONED)
-			return extract_job_num(i);
+		if (jobs[i] == JOB_ABANDONED) {
+			jobs[i] = JOB_BEING_WORKED_ON;
+			return new_BANG_job_with_num(peer,i);
+		}
 	}
 	++jobs_being_worked_on;
-	extract_job_num(jobs_being_worked_on);
-	return  NULL;
+	jobs[jobs_being_worked_on] = JOB_BEING_WORKED_ON;
+	return new_BANG_job_with_num(peer,jobs_being_worked_on);
 }
 
-static void free_jobs_held_by(int id) {
+static void free_jobs_held_by(int peer) {
 	/* TODO: uses locks! */
 	int i;
 	for (i = current; i < current + jobs_being_worked_on; ++i) {
-		if (id == jobs[i]) {
-			jobs[i] = JOBS_ABANDONED; 
+		if (peer == jobs[i]) {
+			jobs[i] = JOB_ABANDONED;
 		}
 	}
 }
@@ -180,6 +213,33 @@ static void free_matrix(matrix *mat) {
 	g_free(mat);
 }
 
+static int get_row_from_job_number(matrix *mat,int job_num) {
+	return -1;
+}
+
+static int get_column_from_job_number(matrix *mat,int job_num) {
+	return -1;
+}
+
+static void set_cell_matrix(matrix *mat,unsigned int width,unsigned int height) {
+}
+
+static void set_cell_matrix_with_job(BANG_job *job) {
+	int width, height;
+	width = get_row_from_job_number(matrices[PRODUCT_MATRIX],job->job_number);
+	height = get_column_from_job_number(matrices[PRODUCT_MATRIX],job->job_number);
+	if (width != -1 && height != -1) {
+		set_cell_matrix(matrices[PRODUCT_MATRIX],width,height);
+	}
+}
+
+static void jobs_done_callback(BANG_job *job) {
+	if (jobs[job->job_number] != JOB_DONE) {
+		jobs[job->job_number] = JOB_DONE;
+		set_cell_matrix_with_job(job);
+	}
+}
+
 static void job_incoming_callback(BANG_job *job) {
 	double *result = g_malloc(sizeof(double));
 	*result = multiply_row_using_job(extract_multi_job(job));
@@ -191,9 +251,9 @@ static void job_incoming_callback(BANG_job *job) {
 	api.BANG_finished_request(job);
 }
 
-static void job_outgoing_callback(int id) {
-	BANG_job *job = extract_job();
-	api.BANG_send_job(id,job);
+static void job_outgoing_callback(int peer) {
+	BANG_job *job = new_BANG_job(peer);
+	api.BANG_send_job(job);
 }
 
 static void jobs_available_callback(int id) {
@@ -203,7 +263,7 @@ static void jobs_available_callback(int id) {
 
 static void peer_added_callback(int id) {
 	if (jobs) {
-		api.BANG_assert_authority_to_peer(id);
+		api.BANG_assert_authority_to_peer(my_id,id);
 	}
 }
 
@@ -234,7 +294,7 @@ static matrix_multi_job extract_multi_job(BANG_job *job) {
 	return mjob;
 }
 
-/* everything in here is so gggg! 
+/* everything in here is so gggg!
  * TODO: Use a GError to return errors. */
 static matrix* convert_to_matrix(GIOChannel *fd) {
 	GError *err = NULL;
@@ -290,7 +350,7 @@ static void matrices_do_multiply(GtkButton *button, gpointer d) {
 		g_free(filename);
 	}
 	gtk_widget_destroy(dialog);
-	
+
 	if (fd && err == NULL) {
 		gtk_widget_set_sensitive(GTK_WIDGET(button),FALSE);
 		gtk_widget_set_sensitive(data->mone,FALSE);
@@ -298,15 +358,15 @@ static void matrices_do_multiply(GtkButton *button, gpointer d) {
 
 		matrices[FIRST_MATRIX] = data->matrices[0];
 		matrices[SECOND_MATRIX] = data->matrices[1];
-		matrices[PRODUCT_MATRIX] = new_matrix_with_dimensions(data->matrices[0]->width,
-				data->matrices[1]->height,
+		matrices[PRODUCT_MATRIX] = new_matrix_with_dimensions(data->matrices[0]->height,
+				data->matrices[1]->width,
 				fd);
 
 		/* Keep track of the jobs sent out by an array of ids for each job. */
-		jobs = g_malloc(matrices[PRODUCT_MATRIX]->width * matrices[PRODUCT_MATRIX]->height * sizeof(int));
+		jobs = g_malloc(matrices[PRODUCT_MATRIX]->height * matrices[PRODUCT_MATRIX]->width * sizeof(int));
 		current = 0;
 
-		api.BANG_assert_authority(id);
+		api.BANG_assert_authority(my_id);
 	}
 }
 
@@ -326,7 +386,7 @@ static void matrix_file_callback(GtkFileChooserButton *button, gpointer d) {
 	} else {
 		matrix_number = 1;
 
-	} 
+	}
 
 	GIOChannel *fd = g_io_channel_new_file(filename,file_permissions,&error);
 
@@ -339,9 +399,9 @@ static void matrix_file_callback(GtkFileChooserButton *button, gpointer d) {
 	}
 
 	/* Make sure the matrices are multiplicable. */
-	if (data->matrices[0] && 
-			data->matrices[1] && 
-			data->matrices[0]->height == data->matrices[1]->width) {
+	if (data->matrices[0] &&
+			data->matrices[1] &&
+			data->matrices[0]->width == data->matrices[1]->height) {
 
 		gtk_widget_set_sensitive(GTK_WIDGET(data->multiply_button),TRUE);
 	} else {
@@ -385,6 +445,7 @@ BANG_callbacks BANG_module_init(BANG_api get_api) {
 
 	/*TODO: Make callbacks and finish this */
 	BANG_callbacks callbacks;
+	callbacks.jobs_done = &jobs_done_callback;
 	callbacks.jobs_available = &jobs_available_callback;
 	callbacks.incoming_job = &job_incoming_callback;
 	callbacks.outgoing_job = &job_outgoing_callback;
@@ -396,7 +457,7 @@ BANG_callbacks BANG_module_init(BANG_api get_api) {
 
 void BANG_module_run() {
 	/* This should not change, however ids are only avialable when the program is run. */
-	id = api.BANG_get_my_id();
+	my_id = api.BANG_get_my_id();
 
 	gtk_widget_show_all(window);
 	gtk_widget_show(label);

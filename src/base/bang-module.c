@@ -6,9 +6,8 @@
  * \brief A interface to load modules into the program.
  */
 #include"bang-module.h"
-#include"bang-module-api.h"
+#include"bang-com.h"
 #include"bang-signals.h"
-#include"bang-types.h"
 #include"bang-types.h"
 #include<dlfcn.h>
 #include<openssl/sha.h>
@@ -96,6 +95,25 @@ static BANG_api get_BANG_api() {
 	completed = 1;
 
 	return api;
+}
+
+BANG_module_info* new_BANG_module_info(BANG_module *module) {
+	int name_size = strlen(module->module_name) + 1;
+	BANG_request request;
+	request.type = BANG_MODULE_PEER_REQUEST;
+	request.request = malloc(LENGTH_OF_VERSION + name_size);
+	memcpy(request.request,module->module_name,name_size);
+	memcpy(request.request + name_size,module->module_version,LENGTH_OF_VERSION);
+	request.length = LENGTH_OF_VERSION + name_size;
+	BANG_request_all(request);
+	
+	BANG_module_info *info = calloc(1,sizeof(BANG_module_info));
+
+	/* Currently id's are not global they are relative to each other. */
+	info->peer_number = 0;
+	info->my_id = 0;
+
+	return info;
 }
 
 BANG_module* BANG_load_module(char *path) {
@@ -206,7 +224,8 @@ void BANG_run_module(BANG_module *module) {
 		args.args = module;
 		args.length = sizeof(BANG_module);
 		BANG_send_signal(BANG_RUNNING_MODULE,&args,1);
-		module->module_run();
+		BANG_module_info *info = new_BANG_module_info(module);
+		module->module_run(info);
 	}
 }
 

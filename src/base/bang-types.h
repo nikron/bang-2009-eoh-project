@@ -32,7 +32,7 @@ typedef struct {
 	/**
 	 * The module run method.
 	 */
-	void (*module_run)(BANG_module_info);
+	void (*module_run)(BANG_module_info*);
 
 	/**
 	 * The hash of the module.
@@ -218,7 +218,7 @@ enum BANG_headers {
 	/**
 	 * message:
 	 *	-BANG_REQUEST_MODULE (unsigned 4 bytes)
-	 *	-length of hash (unsigned 4 bytes)
+	 *	-length of hash' (unsigned 4 bytes)
 	 *	-hash
 	 *
 	 * should these send a name and length?  I don't think so.
@@ -229,11 +229,9 @@ enum BANG_headers {
 	 * they'll respond with a request
 	 * message:
 	 *	-BANG_WANT_MODULE (unsigned 4 bytes)
-	 *	-length of name (unsigned 4 bytes)
 	 *	-name (char*)
+	 *	-'\0'
 	 *	-version	(unsigned 3 bytes)
-	 *	-length of hash (unsigned 4 bytes)
-	 *	-hash
 	 */
 	BANG_WANT_MODULE,
 	/**
@@ -290,6 +288,14 @@ enum BANG_request_types {
 	 *	-send message
 	 */
 	BANG_DEBUG_REQUEST,
+	/**
+	 * BANG_request.type == BANG_MODULE_PEER_REQUEST
+	 * BANG_request.request:
+	 * |  module_name | '\0' | 3 bytes module version|
+	 * BANG_request.length == length of name + 3 bytes
+	 * do:
+	 */
+	BANG_MODULE_PEER_REQUEST,
 	/**
 	 * do:
 	 *	-send BANG_SEND_MODULE

@@ -10,6 +10,8 @@
 #ifndef __BANG_MODULE_API_H
 #define __BANG_MODULE_API_H
 
+#include"bang-module-api.h"
+
 typedef struct {
 	int *peers;
 	int peer_number;

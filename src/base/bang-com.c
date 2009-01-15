@@ -512,6 +512,13 @@ static void send_module(peer *self, BANG_request request) {
 	free(request.request);
 }
 
+static void send_module_peer(peer *self, BANG_request request) {
+	unsigned int header = BANG_WANT_MODULE;
+	write_message(self,&header,LENGTH_OF_LENGTHS);
+	write_message(self,&(request.request),request.length);
+	free(request.request);
+}
+
 void* BANG_write_peer_thread(void *self_info) {
 	peer *self = (peer*)self_info;
 	request_node *current;
@@ -550,6 +557,9 @@ void* BANG_write_peer_thread(void *self_info) {
 			case BANG_SEND_MODULE_REQUEST:
 				send_module(self,current->request);
 				break;
+
+			case BANG_MODULE_PEER_REQUEST:
+				send_module_peer_request(self,current->request);
 
 			default:
 				/*ERROR!*/

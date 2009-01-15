@@ -12,9 +12,27 @@
 
 #include"bang-module-api.h"
 
+/**
+ * Information about a module's peers.  A module needs
+ * to call its api functions with this to work properly.
+ * The module should *not* touch this structure even
+ * though it is fairly transparent.
+ */
 typedef struct {
+	/**
+	 * Peers of the module.  They are known to the
+	 * module as their index + 1.  The actual contents
+	 * of the int is a peer_id
+	 */
 	int *peers;
+	/**
+	 * The number of peers that this module has.
+	 */
 	int peer_number;
+	/**
+	 * The id of module running.  Currently is always
+	 * 0, but modules shouldn't depend on that.
+	 */
 	int my_id;
 } BANG_module_info;
 

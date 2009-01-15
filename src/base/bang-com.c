@@ -512,7 +512,7 @@ static void send_module(peer *self, BANG_request request) {
 	free(request.request);
 }
 
-static void send_module_peer(peer *self, BANG_request request) {
+static void send_module_peer_request(peer *self, BANG_request request) {
 	unsigned int header = BANG_WANT_MODULE;
 	write_message(self,&header,LENGTH_OF_LENGTHS);
 	write_message(self,&(request.request),request.length);

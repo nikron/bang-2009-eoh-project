@@ -7,14 +7,28 @@
  */
 
 #include<stdio.h>
+#include<string.h>
 #include"bang-module-api.h"
+#include"bang-com.h"
 
 /* TODO: Implement this.  Well, this is basically what are our app is all about. */
 void BANG_debug_on_all_peers(BANG_module_info *info, char *message) {
+	/* Might as well print it out ourself */
 	fprintf(stderr,message);
+
+	BANG_request request;
+	request.type = BANG_DEBUG_REQUEST;
+	request.request = message;
+	request.length = strlen(message) + 1;
+
+	int i = 0;
+	for (i = 0; i < info->peer_number; ++i) {
+		BANG_request_peer(info->peers[i],request);
+	}
 }
 
 void BANG_get_me_peers(BANG_module_info *info) {
+	BANG_request request; 
 }
 
 int BANG_number_of_active_peers(BANG_module_info *info) {

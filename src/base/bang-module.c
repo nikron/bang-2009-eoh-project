@@ -99,11 +99,19 @@ static BANG_api get_BANG_api() {
 
 BANG_module_info* new_BANG_module_info(BANG_module *module) {
 	int name_size = strlen(module->module_name) + 1;
+	char buf[name_size + LENGTH_OF_VERSION];
+	memcpy(buf,module->module_name,name_size);
+	memcpy(buf + name_size,module->module_version,LENGTH_OF_VERSION);
+
 	BANG_request request;
+	request.type = BANG_MODULE_REGISTER_REQUEST;
+	request.request = &buf;
+	request.length = sizeof(&buf);
+	BANG_request_all(request);
+
 	request.type = BANG_MODULE_PEER_REQUEST;
 	request.request = malloc(LENGTH_OF_VERSION + name_size);
-	memcpy(request.request,module->module_name,name_size);
-	memcpy(request.request + name_size,module->module_version,LENGTH_OF_VERSION);
+	memcpy(request.request,buf,name_size + LENGTH_OF_VERSION);
 	request.length = LENGTH_OF_VERSION + name_size;
 	BANG_request_all(request);
 	

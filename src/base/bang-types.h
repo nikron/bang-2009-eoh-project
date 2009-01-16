@@ -289,6 +289,13 @@ enum BANG_request_types {
 	 */
 	BANG_DEBUG_REQUEST,
 	/**
+	 * BANG_request.type == BANG_MODULE_REGISTER_REQUEST
+	 * BANG_request.request:
+	 * | pointer to *char with |
+	 * | module_name | '\0' | module_version |
+	 */
+	BANG_MODULE_REGISTER_REQUEST,
+	/**
 	 * BANG_request.type == BANG_MODULE_PEER_REQUEST
 	 * BANG_request.request:
 	 * |  module_name | '\0' | 3 bytes module version|

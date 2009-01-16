@@ -18,14 +18,16 @@ LOBJS=bang-com$(OBJEXT) \
       bang-signals$(OBJEXT) \
       bang-module$(OBJEXT) \
       bang-module-api$(OBJEXT) \
-      bang-core$(OBJEXT)
+      bang-core$(OBJEXT) \
+      bang-utils$(OBJEXT) \
 
 LSRC=src/base/bang-com$(SRCEXT) \
      src/base/bang-net$(SRCEXT) \
      src/base/bang-signals$(SRCEXT) \
      src/base/bang-module$(SRCEXT) \
      src/base/bang-module-api$(SRCEXT) \
-     src/base/bang-core$(SRCEXT)
+     src/base/bang-core$(SRCEXT) \
+     src/base/bang-utils$(SRCEXT) \
 
 AOBJS=server-preferences$(OBJEXT) \
       main$(OBJEXT)

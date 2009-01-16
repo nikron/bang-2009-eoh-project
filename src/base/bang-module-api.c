@@ -23,7 +23,7 @@ void BANG_debug_on_all_peers(BANG_module_info *info, char *message) {
 
 	int i = 0;
 	for (i = 0; i < info->peer_number; ++i) {
-		BANG_request_peer(info->peers[i],request);
+		BANG_request_peer_id(info->peers[i],request);
 	}
 }
 

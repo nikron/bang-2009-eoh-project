@@ -216,20 +216,8 @@ static void free_peer(peer *p) {
 
 	free_BANG_requests(p->requests);
 
-	if (p->remote_modules) {
-		for (i = 0; p->remote_modules[i]; ++i) {
-			free(p->remote_modules[i]);
-		}
-		free(p->my_modules);
-	}
-
-
 	close(p->socket);
 
-	pthread_mutex_unlock(&(p->my_modules_lock));
-	pthread_mutex_unlock(&(p->remote_modules_lock));
-	pthread_mutex_destroy(&(p->my_modules_lock));
-	pthread_mutex_destroy(&(p->remote_modules_lock));
 	free(p);
 }
 
@@ -526,30 +514,6 @@ static void send_module_peer_request(peer *self, BANG_request request) {
 	free(request.request);
 }
 
-static void register_module_name(peer *self, BANG_request request) {
-	/* TODO: READER LOCKS? */
-	unsigned int i = 0;
-	char found = 0;
-
-	pthread_mutex_lock(&(self->my_modules_lock));
-
-	for (; i < self->my_modules_len; ++i) {
-		found = (self->my_modules[i] == (BANG_module*) request.request) ? 1 : 0;
-	}
-
-	if (found == 0) {
-		self->my_modules = realloc(self->my_modules, self->my_modules_len++ * sizeof(BANG_module*) + 1);
-		self->my_modules[self->my_modules_len - 1] = request.request;
-		self->my_modules[self->my_modules_len] = NULL;
-	}
-
-	pthread_mutex_unlock(&(self->my_modules_lock));
-
-	free(request.request);
-
-	/* Should we send something to the remote end? */
-}
-
 void* BANG_write_peer_thread(void *self_info) {
 	peer *self = (peer*)self_info;
 	request_node *current;
@@ -591,10 +555,6 @@ void* BANG_write_peer_thread(void *self_info) {
 
 			case BANG_MODULE_PEER_REQUEST:
 				send_module_peer_request(self,current->request);
-				break;
-
-			case BANG_MODULE_REGISTER_REQUEST:
-				register_module_name(self,current->request);
 				break;
 
 			default:

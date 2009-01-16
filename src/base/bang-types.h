@@ -222,10 +222,10 @@ enum BANG_headers {
 	/**
 	 * message:
 	 *	-BANG_REQUEST_MODULE (unsigned 4 bytes)
-	 *	-length of hash' (unsigned 4 bytes)
-	 *	-hash
-	 *
-	 * should these send a name and length?  I don't think so.
+	 *	-length
+	 *	-module_name
+	 *	-'\0'
+	 *	-version (unsigned 3 bytes)
 	 */
 	BANG_REQUEST_MODULE,
 	/**
@@ -238,6 +238,15 @@ enum BANG_headers {
 	 *	-version	(unsigned 3 bytes)
 	 */
 	BANG_WANT_MODULE,
+	/**
+	 * Send a job to a uuid.  The read thread passes the data
+	 * off to a router after constructing a job.
+	 * message:
+	 * 	-BANG_SEND_JOB
+	 * 	-uuid (16 bytes)
+	 * 	-job stuff
+	 */
+	BANG_SEND_JOB,
 	/**
 	 * tells the remote end that version is wrong, and that
 	 * they are hanging up
@@ -298,14 +307,6 @@ enum BANG_request_types {
 	 */
 	BANG_DEBUG_REQUEST,
 	/**
-	 * BANG_request.type == BANG_MODULE_REGISTER_REQUEST
-	 * BANG_request.request:
-	 * | pointer to *BANG_module |
-	 * do:
-	 * 	-Register module internally on peer
-	 */
-	BANG_MODULE_REGISTER_REQUEST,
-	/**
 	 * BANG_request.type == BANG_MODULE_PEER_REQUEST
 	 * BANG_request.request:
 	 * |  module_name | '\0' | 3 bytes module version|
@@ -315,9 +316,12 @@ enum BANG_request_types {
 	 */
 	BANG_MODULE_PEER_REQUEST,
 	/**
+	 * BANG_request.type == BANG_JOB_SEND_REQUEST
+	 * BAND_request.request:
+	 * | uuid_t | job stuff ~ |
 	 *
 	 */
-	BANG_JOB_WAITING_REQUEST,
+	BANG_JOB_SEND_REQUEST,
 	/**
 	 * do:
 	 *	-send BANG_SEND_MODULE

@@ -85,10 +85,12 @@ typedef struct {
 	struct pollfd pfd;
 	/**
 	 * Modules that this peer is aware that are running.
-	 * memory: char* is not the responsibility of the peer.
+	 * notes:
+	 * 	-need whole module for things like callbacks
+	 * 	-memory: is not the responsibility of the peer.
 	 */
 	pthread_mutex_t my_modules_lock;
-	char **my_modules;
+	BANG_module **my_modules;
 	unsigned int my_modules_len;
 	/**
 	 * Modules that the remote is running.
@@ -539,12 +541,26 @@ static void send_module_peer_request(peer *self, BANG_request request) {
 	free(request.request);
 }
 
-static void register_module_name(peer *self, char *my_module_name) {
+static void register_module_name(peer *self, BANG_request request) {
 	/* TODO: READER LOCKS? */
+	unsigned int i = 0;
+	char found = 0;
+
 	pthread_mutex_lock(&(self->my_modules_lock));
-	self->my_modules = realloc(self->my_modules, self->my_modules_len++ * sizeof(char*) + 1);
-	self->my_modules[self->my_modules_len - 1] = my_module_name;
-	self->my_modules[self->my_modules_len] = NULL;
+
+	for (; i < self->my_modules_len; ++i) {
+		found = (self->my_modules[i] == (BANG_module*) request.request) ? 1 : 0;
+	}
+
+	if (found == 0) {
+		self->my_modules = realloc(self->my_modules, self->my_modules_len++ * sizeof(BANG_module*) + 1);
+		self->my_modules[self->my_modules_len - 1] = request.request;
+		self->my_modules[self->my_modules_len] = NULL;
+	}
+
+	pthread_mutex_unlock(&(self->my_modules_lock));
+
+	free(request.request);
 
 	/* Should we send something to the remote end? */
 }
@@ -593,8 +609,7 @@ void* BANG_write_peer_thread(void *self_info) {
 				break;
 
 			case BANG_MODULE_REGISTER_REQUEST:
-				register_module_name(self,(char*)current->request.request);
-				free(current->request.request);
+				register_module_name(self,current->request);
 				break;
 
 			default:

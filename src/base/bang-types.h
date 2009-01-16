@@ -294,6 +294,7 @@ enum BANG_request_types {
 	 * |  module_name | '\0' | 3 bytes module version|
 	 * BANG_request.length == length of name + 3 bytes
 	 * do:
+	 * 
 	 */
 	BANG_MODULE_PEER_REQUEST,
 	/**

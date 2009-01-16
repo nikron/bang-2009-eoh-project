@@ -82,6 +82,15 @@ typedef struct {
 	 * note: perhaps pass this around rather than put it in global space.
 	 */
 	struct pollfd pfd;
+	/**
+	 * Modules that this peer is aware that are running.
+	 * memory: char* is not the responsibility of the peer.
+	 */
+	char **my_modules;
+	/**
+	 * Modules that the remote is running.
+	 */
+	char **remote_modules;
 } peer;
 
 /**
@@ -205,6 +214,7 @@ static void free_peer(peer *p) {
 #ifdef BDEBUG_1
 	fprintf(stderr,"Freeing a peer with peer_id %d.\n",p->peer_id);
 #endif
+	int i;
 	pthread_cancel(p->receive_thread);
 
 	/* We need to close the receive thread in a more roundabout way, since it may be waiting
@@ -221,6 +231,13 @@ static void free_peer(peer *p) {
 	pthread_join(p->send_thread,NULL);
 
 	free_BANG_requests(p->requests);
+
+	if (p->remote_modules) {
+		for (i = 0; p->remote_modules[i]; ++i) {
+			free(p->remote_modules[i]);
+		}
+		free(p->my_modules);
+	}
 
 	close(p->socket);
 	free(p);

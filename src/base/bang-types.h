@@ -286,6 +286,11 @@ enum BANG_request_types {
 	 */
 	BANG_SUDDEN_CLOSE_REQUEST,
 	/**
+	 * BANG_request.request:
+	 * | char* | '\0'|
+	 * BANG_request.length:
+	 * strlen(char*) + 1
+	 *
 	 * do:
 	 *	-send BANG_DEBUG_MESSAGE
 	 *	-send length of message
@@ -295,8 +300,9 @@ enum BANG_request_types {
 	/**
 	 * BANG_request.type == BANG_MODULE_REGISTER_REQUEST
 	 * BANG_request.request:
-	 * | pointer to *char with |
-	 * | module_name | '\0' | module_version |
+	 * | pointer to *BANG_module |
+	 * do:
+	 * 	-Register module internally on peer
 	 */
 	BANG_MODULE_REGISTER_REQUEST,
 	/**
@@ -308,6 +314,10 @@ enum BANG_request_types {
 	 * 
 	 */
 	BANG_MODULE_PEER_REQUEST,
+	/**
+	 *
+	 */
+	BANG_JOB_WAITING_REQUEST,
 	/**
 	 * do:
 	 *	-send BANG_SEND_MODULE

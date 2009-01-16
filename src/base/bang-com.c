@@ -83,21 +83,6 @@ typedef struct {
 	 * note: perhaps pass this around rather than put it in global space.
 	 */
 	struct pollfd pfd;
-	/**
-	 * Modules that this peer is aware that are running.
-	 * notes:
-	 * 	-need whole module for things like callbacks
-	 * 	-memory: is not the responsibility of the peer.
-	 */
-	pthread_mutex_t my_modules_lock;
-	BANG_module **my_modules;
-	unsigned int my_modules_len;
-	/**
-	 * Modules that the remote is running.
-	 */
-	pthread_mutex_t remote_modules_lock;
-	char **remote_modules;
-	unsigned int remote_modules_len;
 } peer;
 
 /**

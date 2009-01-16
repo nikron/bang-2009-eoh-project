@@ -1,8 +1,10 @@
 #include"bang-utils.h"
+#include<string.h>
+
 int BANG_module_name_cmp(const char *m1, const char *m2) {
 	int cmp = strcmp(m1,m2);
 	int length = strlen(m1),
-	    length2 = strlent(m2);
+	    length2 = strlen(m2);
 	cmp += m1[length + 1] - m2[length2  + 1];
 	cmp += m1[length + 2] - m2[length2  + 2];
 	cmp += m1[length + 3] - m2[length2  + 3];

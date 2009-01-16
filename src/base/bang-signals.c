@@ -7,6 +7,7 @@
  * no particular order.
  */
 #include"bang-signals.h"
+#include"bang-utils.h"
 #include"bang-types.h"
 #include<errno.h>
 #include<pthread.h>
@@ -51,19 +52,11 @@ static void recursive_sig_free(signal_node *head) {
 }
 
 static void acquire_sig_lock(int signal) {
-	pthread_mutex_lock(&send_sig_lock[signal]);
-	if (sig_senders[signal] == 0)
-		pthread_mutex_lock(&add_handler_lock[signal]);
-	++sig_senders[signal];
-	pthread_mutex_unlock(&send_sig_lock[signal]);
+	BANG_acquire_read_lock(&(sig_senders[signal]),&(send_sig_lock[signal]),&(add_handler_lock[signal]));
 }
 
 static void release_sig_lock(int signal) {
-	pthread_mutex_lock(&send_sig_lock[signal]);
-	--sig_senders[signal];
-	if (sig_senders[signal] == 0)
-		pthread_mutex_unlock(&add_handler_lock[signal]);
-	pthread_mutex_unlock(&send_sig_lock[signal]);
+	BANG_release_read_lock(&(sig_senders[signal]),&(send_sig_lock[signal]),&(add_handler_lock[signal]));
 }
 
 void BANG_sig_init() {

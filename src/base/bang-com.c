@@ -200,11 +200,11 @@ static peer **peers = NULL;
 static int *keys = NULL;
 
 static void acquire_peers_read_lock() {
-	BANG_acquire_read_lock(&peer_readers,&peers_read_lock,&peers_change_lock);
+	BANG_acquire_read_lock(&peers_readers,&peers_read_lock,&peers_change_lock);
 }
 
 static void release_peers_read_lock() {
-	BANG_release_read_lock(&peer_readers,&peers_read_lock,&peers_change_lock);
+	BANG_release_read_lock(&peers_readers,&peers_read_lock,&peers_change_lock);
 }
 
 static void free_peer(peer *p) {
@@ -536,9 +536,9 @@ static void send_module_peer_request(peer *self, BANG_request request) {
 static void register_module_name(peer *self, char *my_module_name) {
 	/* TODO: LOCKS */
 	pthread_mutex_lock(&(self->my_modules_lock));
-	self->my_modules = realloc(self->my_modules_len++ * sizeof(char*) + 1);
-	modules->my_modules[self->my_modules_len - 1] = my_module_name;
-	modules->my_modules[self->my_modules_len] = NULL;
+	self->my_modules = realloc(self->my_modules, self->my_modules_len++ * sizeof(char*) + 1);
+	self->my_modules[self->my_modules_len - 1] = my_module_name;
+	self->my_modules[self->my_modules_len] = NULL;
 }
 
 void* BANG_write_peer_thread(void *self_info) {
@@ -585,8 +585,8 @@ void* BANG_write_peer_thread(void *self_info) {
 				break;
 
 			case BANG_MODULE_REGISTER_REQUEST:
-				register_module_name(self,*((char*)current->request.request));
-				free(request.request);
+				register_module_name(self,(char*)current->request.request);
+				free(current->request.request);
 				break;
 
 			default:
@@ -678,8 +678,8 @@ static peer* new_peer() {
 	new->requests = new_BANG_requests();
 	new->my_modules_len = 0;
 	new->remote_modules_len = 0;
-	pthread_mutex_init(&(new->remote_modules_lock));
-	pthread_mutex_init(&(new->my_modules_lock));
+	pthread_mutex_init(&(new->remote_modules_lock),NULL);
+	pthread_mutex_init(&(new->my_modules_lock),NULL);
 	return new;
 }
 

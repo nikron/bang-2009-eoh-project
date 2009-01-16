@@ -26,6 +26,10 @@ typedef struct {
 	 */
 	unsigned char *module_version;
 	/**
+	 * Callbacks to interact with the module.
+	 */
+	BANG_callbacks callbacks;
+	/**
 	 * The module initialize method.
 	 */
 	BANG_callbacks (*module_init)(BANG_api);

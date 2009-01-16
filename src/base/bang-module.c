@@ -212,7 +212,7 @@ BANG_module* BANG_load_module(char *path) {
 	module->handle = handle;
 	module->path = path;
 
-	module->module_init(get_BANG_api());
+	module->callbacks = module->module_init(get_BANG_api());
 
 	return module;
 }

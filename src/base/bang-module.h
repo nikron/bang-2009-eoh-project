@@ -11,8 +11,6 @@
 #include"bang-module-api.h"
 #include"bang-types.h"
 
-BANG_module_info* new_BANG_module_info(BANG_module *module);
-
 /**
  * \param path File path to a module that can be loaded.
  *

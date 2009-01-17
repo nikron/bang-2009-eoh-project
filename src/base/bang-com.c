@@ -198,7 +198,6 @@ static void free_peer(peer *p) {
 #ifdef BDEBUG_1
 	fprintf(stderr,"Freeing a peer with peer_id %d.\n",p->peer_id);
 #endif
-	int i;
 	pthread_cancel(p->receive_thread);
 
 	/* We need to close the receive thread in a more roundabout way, since it may be waiting
@@ -644,10 +643,6 @@ static peer* new_peer() {
 	peer *new;
 	new = (peer*) calloc(1,sizeof(peer));
 	new->requests = new_BANG_requests();
-	new->my_modules_len = 0;
-	new->remote_modules_len = 0;
-	pthread_mutex_init(&(new->remote_modules_lock),NULL);
-	pthread_mutex_init(&(new->my_modules_lock),NULL);
 	return new;
 }
 

@@ -7,6 +7,7 @@
  */
 #include"bang-module.h"
 #include"bang-com.h"
+#include"bang-routing.h"
 #include"bang-signals.h"
 #include"bang-types.h"
 #include<dlfcn.h>
@@ -86,15 +87,15 @@ static BANG_api* get_BANG_api() {
 		 * the amount of memory leaked is constant and small */
 		api = calloc(1,sizeof(BANG_api));
 
-		api.BANG_debug_on_all_peers = &BANG_debug_on_all_peers;
-		api.BANG_get_me_peers = &BANG_get_me_peers;
-		api.BANG_number_of_active_peers = &BANG_number_of_active_peers;
-		api.BANG_get_my_id = &BANG_get_my_id;
-		api.BANG_assert_authority = &BANG_assert_authority;
-		api.BANG_assert_authority_to_peer = &BANG_assert_authority_to_peer;
-		api.BANG_request_job = &BANG_request_job;
-		api.BANG_finished_request = &BANG_finished_request;
-		api.BANG_send_job = &BANG_send_job;
+		api->BANG_debug_on_all_peers = &BANG_debug_on_all_peers;
+		api->BANG_get_me_peers = &BANG_get_me_peers;
+		api->BANG_number_of_active_peers = &BANG_number_of_active_peers;
+		api->BANG_get_my_id = &BANG_get_my_id;
+		api->BANG_assert_authority = &BANG_assert_authority;
+		api->BANG_assert_authority_to_peer = &BANG_assert_authority_to_peer;
+		api->BANG_request_job = &BANG_request_job;
+		api->BANG_finished_request = &BANG_finished_request;
+		api->BANG_send_job = &BANG_send_job;
 	}
 
 	return api;
@@ -106,11 +107,10 @@ static BANG_api* get_BANG_api() {
  *
  * \brief Creates a BANG_module_info for use by a module.
  */
-BANG_module_info* new_BANG_module_info(BANG_module *module) {
+BANG_module_info* new_BANG_module_info() {
 	BANG_module_info *info = calloc(1,sizeof(BANG_module_info));
 
-	/* Currently id's are not global they are relative to each other. */
-	info->peer_number = 0;
+	info->peer_number = 1;
 	info->my_id = 0;
 
 	return info;
@@ -205,6 +205,7 @@ BANG_module* BANG_load_module(char *path) {
 	module->path = path;
 
 	module->callbacks = module->module_init(get_BANG_api());
+	module->info = new_BANG_module_info();
 
 	return module;
 }
@@ -212,7 +213,8 @@ BANG_module* BANG_load_module(char *path) {
 void BANG_unload_module(BANG_module *module) {
 	if (module != NULL) {
 		dlclose(module->handle);
-		free(module->module_info);
+		/* TODO: This wont free it */
+		free(module->info);
 		free(module->md);
 		free(module);
 	}
@@ -225,7 +227,8 @@ void BANG_run_module(BANG_module *module) {
 		args.args = module;
 		args.length = sizeof(BANG_module);
 		BANG_send_signal(BANG_RUNNING_MODULE,&args,1);
-		module->info = new_BANG_module_info(module);
+
+		BANG_register_module_route(module);
 		module->module_run(module->info);
 	}
 }

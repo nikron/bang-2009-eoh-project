@@ -20,6 +20,7 @@ LOBJS=bang-com$(OBJEXT) \
       bang-module-api$(OBJEXT) \
       bang-core$(OBJEXT) \
       bang-utils$(OBJEXT) \
+      bang-routing$(OBJEXT)
 
 LSRC=src/base/bang-com$(SRCEXT) \
      src/base/bang-net$(SRCEXT) \
@@ -28,6 +29,7 @@ LSRC=src/base/bang-com$(SRCEXT) \
      src/base/bang-module-api$(SRCEXT) \
      src/base/bang-core$(SRCEXT) \
      src/base/bang-utils$(SRCEXT) \
+     src/base/bang-routing$(SRCEXT)
 
 AOBJS=server-preferences$(OBJEXT) \
       main$(OBJEXT)

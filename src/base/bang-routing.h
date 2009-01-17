@@ -9,6 +9,7 @@
 #ifndef __BANG_ROUTING_H
 #define __BANG_ROUTING_H
 #include<uuid/uuid.h>
+#include"bang-module.h"
 
 /**
  * \param uuid The module-peer to route to.
@@ -33,7 +34,7 @@ void BANG_route_job_to_uuids(uuid_t *uuids, BANG_job *job);
  * \brief Registers a module at a uuid and returns that
  * uuid, inserts the uuid into the module.
  */
-uuid_t BANG_register_module_route(BANG_module *module);
+void BANG_register_module_route(BANG_module *module);
 
 /**
  * \param uuid The uuid that the remote end will register as.

@@ -11,6 +11,7 @@
 #define __BANG_MODULE_API_H
 
 #include"bang-module-api.h"
+#include<uuid/uuid.h>
 
 /**
  * Information about a module's peers.  A module needs
@@ -24,7 +25,7 @@ typedef struct {
 	 * module as their index + 1.  The actual contents
 	 * of the int is a peer_id
 	 */
-	int *peers;
+	uuid_t *uuids;
 	/**
 	 * The number of peers that this module has.
 	 */

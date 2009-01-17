@@ -25,14 +25,15 @@ typedef struct {
 	 * 3 is a magic number ~
 	 */
 	unsigned char *module_version;
+	BANG_module_info *info;
 	/**
 	 * Callbacks to interact with the module.
 	 */
-	BANG_callbacks callbacks;
+	BANG_callbacks *callbacks;
 	/**
 	 * The module initialize method.
 	 */
-	BANG_callbacks (*module_init)(BANG_api);
+	BANG_callbacks* (*module_init)(BANG_api*);
 	/**
 	 * The module run method.
 	 */

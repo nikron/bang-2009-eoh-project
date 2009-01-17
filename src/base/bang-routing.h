@@ -21,12 +21,34 @@
 void BANG_route_job(uuid_t uuid, BANG_job *job);
 
 /**
- * \param uuids A null termianted list of peers.
+ * \param uuids A null termianted list of routes.
  * \param job The job to route.
  *
  * \brief Routes the job to all peers in the uuid list.
  */
 void BANG_route_job_to_uuids(uuid_t *uuids, BANG_job *job);
+
+/**
+ * \param uuid The route to send a finished job through.
+ *
+ * \brief Routes a finished job through a route.
+ */
+void BANG_route_finished_job(uuid_t uuid, BANG_job *job);
+
+/**
+ * \param uuid The route to request a job from.
+ *
+ * \brief Requests a job from a peer through route.
+ */
+void BANG_route_request_job(uuid_t uuid);
+
+/**
+ * \param authority Route to the authority.
+ * \param peer Peer that needs that needs to respect authority.
+ *
+ * \brief Routes an assertation of authority to uuid.
+ */
+void BANG_route_assertion_of_authority(uuid_t authority, uuid_t peer);
 
 /**
  * \param module The module to register with the uuid.

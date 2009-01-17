@@ -134,15 +134,11 @@ void BANG_assert_authority_to_peer(BANG_module_info *info, int authority, int pe
 
 /**
  * \param id The peer to get a job from.
- * \param blocking If false, the callback will be used instead.
  *
- * \return A job for you to act upon.
- *
- * \brief If non-null, there is a job waiting for the module.
- * Else, an error or non blocking happened.
+ * \brief Requests a job from the peer, sent to your callback.
  *
  */
-BANG_job *BANG_request_job(BANG_module_info *info, int id, char blocking);
+void BANG_request_job(BANG_module_info *info, int id);
 
 /**
  * \param job The finished job.
@@ -171,7 +167,7 @@ typedef struct {
 	int (*BANG_get_my_id) (BANG_module_info *info);
 	void (*BANG_assert_authority) (BANG_module_info *info, int id);
 	void (*BANG_assert_authority_to_peer) (BANG_module_info *info, int authority, int peer);
-	BANG_job* (*BANG_request_job) (BANG_module_info *info, int id, char blocking);
+	void  (*BANG_request_job) (BANG_module_info *info, int id);
 	void (*BANG_finished_request) (BANG_module_info *info, BANG_job *job);
 	void (*BANG_send_job) (BANG_module_info *info, BANG_job *job);
 } BANG_api;

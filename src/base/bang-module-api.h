@@ -154,12 +154,11 @@ void BANG_finished_request(BANG_module_info *info, BANG_job *job);
 void BANG_send_job(BANG_module_info *info, BANG_job *job);
 
 /**
- * The api for the modules to use.
+ * The api for the modules to use.  This will
+ * be filled out with pointers to the above functions and
+ * passed to the module.
  */
 typedef struct {
-	/**
-	 * Reference to BANG_debug_on_all_peers.
-	 */
 	void (*BANG_debug_on_all_peers) (BANG_module_info *info, char *message);
 	void (*BANG_get_me_peers) (BANG_module_info *info);
 	int (*BANG_number_of_active_peers) ();

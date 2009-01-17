@@ -42,6 +42,22 @@ static signal_node **signal_handlers;
  *
  * \brief Frees a signal node linked list.
  */
+static void recursive_sig_free(signal_node *head);
+
+/**
+ * \param signal The signal whose lock you want to acquire.
+ *
+ * \brief Acquires a read lock on a signal.
+ */
+static void acquire_sig_lock(int signal);
+
+/**
+ * \param signal The signal whose lock you want to release.
+ *
+ * \brief Releases a read lock on a signal.
+ */
+static void release_sig_lock(int signal);
+
 static void recursive_sig_free(signal_node *head) {
 	if (head == NULL) return;
 	if (head->next != NULL) {
@@ -81,8 +97,12 @@ void BANG_sig_close() {
 }
 
 int BANG_install_sighandler(int signal, BANGSignalHandler handler) {
+	/* We need to get a lock on the signal so that people aren't creating
+	 * more that one signal at a time */
 	pthread_mutex_lock(&add_handler_lock[signal]);
+
 	if (signal_handlers[signal] == NULL) {
+		/* Create a head node if there is none. */
 		signal_handlers[signal] = (signal_node*) malloc(sizeof(signal_node));
 		signal_handlers[signal]->handler = handler;
 		signal_handlers[signal]->next = NULL;
@@ -90,6 +110,7 @@ int BANG_install_sighandler(int signal, BANGSignalHandler handler) {
 		return 0;
 	} else {
 		signal_node *cur;
+		/* Append the handler if there is a head. */
 		for (cur = signal_handlers[signal]; cur != NULL; cur = cur->next) {
 			if (cur->next == NULL) {
 				cur->next =(signal_node*) malloc(sizeof(signal_node));
@@ -108,7 +129,7 @@ int BANG_install_sighandler(int signal, BANGSignalHandler handler) {
 
 /**
  * Each signal must be sent in its own thread, so BANG_send_signal creates this structure
- * in order to pass arguements to a thread_send_signal pthread
+ * in order to pass arguments to a thread_send_signal pthread.
  */
 typedef struct {
 	/**
@@ -138,7 +159,6 @@ static void* threaded_send_signal(void *thread_args) {
 }
 
 int BANG_send_signal(int signal, BANG_sigargs *args, int num_args) {
-	acquire_sig_lock(signal);
 
 #ifdef BDEBUG_1
 	fprintf(stderr,"Sending out the signal %d.\n",signal);
@@ -148,13 +168,19 @@ int BANG_send_signal(int signal, BANG_sigargs *args, int num_args) {
 	signal_node *cur;
 	send_signal_args *thread_args;
 	pthread_t signal_thread;
-
 	int i = 0;
+
+
+	/* Grab a read lock so the amount of signal handlers does not change */
+	acquire_sig_lock(signal);
+
 	for (cur = signal_handlers[signal]; cur != NULL; cur = cur->next) {
+		/* Used to transfer data to the thread. */
 		thread_args = (send_signal_args*) calloc(1,sizeof(send_signal_args));
 
 		thread_args->handler_args = calloc(num_args,sizeof(void*));
 
+		/* Each signal handler must have its own copy of the arguments. */
 		for (i = 0; i < num_args; ++i) {
 			thread_args->handler_args[i] = calloc(args[i].length,1);
 			memcpy(thread_args->handler_args[i],args[i].args,args[i].length);
@@ -165,6 +191,7 @@ int BANG_send_signal(int signal, BANG_sigargs *args, int num_args) {
 		thread_args->num_handler_args = num_args;
 
 		pthread_create(&signal_thread,NULL,threaded_send_signal,(void*)thread_args);
+		/* We wont try to keep track of these threads */
 		pthread_detach(signal_thread);
 	}
 

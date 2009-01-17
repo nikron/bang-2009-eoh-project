@@ -41,8 +41,10 @@ void* BANG_read_peer_thread(void *self_info);
 void* BANG_write_peer_thread(void *self_info);
 
 /**
- *
  * \return A new unique peer id.
+ *
+ * Creates a new peer and returns the an id to find
+ * that peer by.
  */
 int BANG_new_peer_id();
 
@@ -83,6 +85,7 @@ void BANG_add_peer(int socket);
  * \param peer_id The id of the peer thread.
  *
  * \brief Gets the current key of the peer id (the place it is located in the keys array).
+ * Note: This is should be an internal function.
  */
 int BANG_get_key_with_peer_id(int peer_id);
 #endif

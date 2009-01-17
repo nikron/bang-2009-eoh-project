@@ -48,7 +48,7 @@ static unsigned char* module_hash(char *path) {
 	ctx = (ctx == NULL)  ? EVP_MD_CTX_create() : ctx;
 
 	EVP_MD_CTX_init(ctx);
-	///TODO: Error checking!
+	/* TODO: Error checking! */
 	EVP_DigestInit_ex(ctx,EVP_sha1(),NULL);
 
 
@@ -69,17 +69,22 @@ static unsigned char* module_hash(char *path) {
 
 /**
  * \return An api.
+ *
+ * Allocates and returns an api for a module to use.  This memory
+ * should not be touched by the module.
  */
-static BANG_api get_BANG_api() {
-	static int completed = 0;
+static BANG_api* get_BANG_api() {
+	static BANG_api *api = NULL;
 
-	static BANG_api api;
-
-	if (!completed) {
+	if (api == NULL) {
 		/*If we forget to do something in this function, this will force
 		 * the program to segfault when a module calls a function
-		 * we were susposed to give them. */
-		memset(&api,0,sizeof(BANG_api));
+		 * we were susposed to give them. 
+		 * calloc sets everything to zero*/
+
+		/* This is memory will 'leak' we will let the OS clean it up, because
+		 * the amount of memory leaked is constant and small */
+		api = calloc(1,sizeof(BANG_api));
 
 		api.BANG_debug_on_all_peers = &BANG_debug_on_all_peers;
 		api.BANG_get_me_peers = &BANG_get_me_peers;
@@ -92,29 +97,16 @@ static BANG_api get_BANG_api() {
 		api.BANG_send_job = &BANG_send_job;
 	}
 
-	completed = 1;
-
 	return api;
 }
 
+/**
+ * \param module Modules to derive info from.
+ * \return A newly allocated BANG_module_info.
+ *
+ * \brief Creates a BANG_module_info for use by a module.
+ */
 BANG_module_info* new_BANG_module_info(BANG_module *module) {
-	int name_size = strlen(module->module_name) + 1;
-	char buf[name_size + LENGTH_OF_VERSION];
-	memcpy(buf,module->module_name,name_size);
-	memcpy(buf + name_size,module->module_version,LENGTH_OF_VERSION);
-
-	BANG_request request;
-	request.type = BANG_MODULE_REGISTER_REQUEST;
-	request.request = &buf;
-	request.length = sizeof(&buf);
-	BANG_request_all(request);
-
-	request.type = BANG_MODULE_PEER_REQUEST;
-	request.request = malloc(LENGTH_OF_VERSION + name_size);
-	memcpy(request.request,buf,name_size + LENGTH_OF_VERSION);
-	request.length = LENGTH_OF_VERSION + name_size;
-	BANG_request_all(request);
-	
 	BANG_module_info *info = calloc(1,sizeof(BANG_module_info));
 
 	/* Currently id's are not global they are relative to each other. */
@@ -220,6 +212,7 @@ BANG_module* BANG_load_module(char *path) {
 void BANG_unload_module(BANG_module *module) {
 	if (module != NULL) {
 		dlclose(module->handle);
+		free(module->module_info);
 		free(module->md);
 		free(module);
 	}
@@ -232,8 +225,8 @@ void BANG_run_module(BANG_module *module) {
 		args.args = module;
 		args.length = sizeof(BANG_module);
 		BANG_send_signal(BANG_RUNNING_MODULE,&args,1);
-		BANG_module_info *info = new_BANG_module_info(module);
-		module->module_run(info);
+		module->info = new_BANG_module_info(module);
+		module->module_run(module->info);
 	}
 }
 

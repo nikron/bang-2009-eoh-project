@@ -109,8 +109,10 @@ static BANG_api* get_BANG_api() {
  */
 BANG_module_info* new_BANG_module_info() {
 	BANG_module_info *info = calloc(1,sizeof(BANG_module_info));
+	info->peers_info = calloc(1,sizeof(peers_information));
+	/* We aren't even a peer yet since we haven't been run/registered */
+	info->peers_info->peer_number = 0;
 
-	info->peer_number = 1;
 	info->my_id = 0;
 
 	return info;

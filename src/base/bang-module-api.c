@@ -6,10 +6,13 @@
  * \brief  Fufills an api request that a module may have.
  */
 
-#include<stdio.h>
-#include<string.h>
 #include"bang-module-api.h"
 #include"bang-com.h"
+#include"bang-routing.h"
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<uuid/uuid.h>
 
 /* TODO: Implement this.  Well, this is basically what are our app is all about. */
 void BANG_debug_on_all_peers(BANG_module_info *info, char *message) {
@@ -48,5 +51,18 @@ void BANG_finished_request(BANG_module_info *info, BANG_job *job) {
 }
 
 void BANG_send_job(BANG_module_info *info, BANG_job *job) {
-	fprintf(stderr,"Sending job to %d by authority %d!\n",job->peer,job->authority);
+	/* Make sure the peer is valid.
+	 * TODO: USE LOCKS!
+	 */
+	if (job->peer < 0 || 
+		job->peer > info->peers_info->peer_number ||
+		info->peers_info->validity[job->peer] == 0
+		) {
+
+		free(job->data);
+		free(job);
+		return;
+	}
+
+	BANG_route_job(info->peers_info->uuids[job->peer],job);
 }

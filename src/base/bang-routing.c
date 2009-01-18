@@ -13,6 +13,30 @@
 
 static sqlite3 *db;
 
+/* TODO: Many elements in the functions are the same, consolidate somehow. DRY, afterall*/
+
+static sqlite3_stmt* prepare_select_statement(uuid_t uuid);
+
+static sqlite3_stmt* prepare_select_statement(uuid_t uuid) {
+	sqlite3_stmt *get_peer_route;
+	sqlite3_prepare_v2(db,"SELECT remote,module,peer_id,name,version FROM mappings WHERE ? = route_uuid",90,&get_peer_route,NULL);
+	return get_peer_route;
+}
+
+void BANG_route_job(uuid_t uuid, BANG_job *job) {
+	sqlite3_stmt *get_peer_route = prepare_select_statement(uuid);
+	sqlite3_bind_blob(get_peer_route,1,peer,sizeof(uuid_t),SQLITE_STATIC);
+
+	if (sqlite3_step(get_peer_route) == SQLITE_ROW) {
+		if (sqlite3_column_int(get_peer_route,1) == REMOTE_ROUTE) {
+			/* TODO: Make a request to peer. */
+		} else {
+			const BANG_module *module = sqlite3_column_blob(get_peer_route,2);
+			/* TODO: Callback peer with job */
+		}
+	}
+}
+
 void BANG_register_module_route(BANG_module *module) {
 
 	/* MORE DEREFENCES THAN YOU CAN HANDLE! */
@@ -35,9 +59,9 @@ void BANG_register_module_route(BANG_module *module) {
 
 
 void BANG_route_assertion_of_authority(uuid_t authority, uuid_t peer) {
-	sqlite3_stmt *get_peer_route;
-	sqlite3_prepare_v2(db,"SELECT remote,module,peer_id,name,version FROM mappings WHERE ? = route_uuid",90,&get_peer_route,NULL);
+	sqlite3_stmt *get_peer_route = prepare_select_statement(peer);
 	sqlite3_bind_blob(get_peer_route,1,peer,sizeof(uuid_t),SQLITE_STATIC);
+
 	if (sqlite3_step(get_peer_route) == SQLITE_ROW) {
 		if (sqlite3_column_int(get_peer_route,1) == REMOTE_ROUTE) {
 			/* TODO: Make a request to peer. */

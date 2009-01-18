@@ -94,4 +94,8 @@ void BANG_register_module_route(BANG_module *module);
  * \brief Registers a remote module route.
  */
 void BANG_register_peer_route(uuid_t uuid, int peer, char *module_name, char* module_version);
+
+void BANG_route_init();
+
+void BANG_route_close();
 #endif

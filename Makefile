@@ -11,8 +11,7 @@ SRCEXT=.c
 
 COPTS=-Wall -Wextra -Werror -O3 -g -D_REENTRANT -lpthread
 
-GTKOPTS=`pkg-config --cflags --libs gtk+-2.0 --libs openssl ` -lgthread-2.0
-
+GTKOPTS=`pkg-config --cflags --libs gtk+-2.0 --libs openssl --libs uuid --libs sqlite3 --libs gthread-2.0`
 LOBJS=bang-com$(OBJEXT) \
       bang-net$(OBJEXT) \
       bang-signals$(OBJEXT) \

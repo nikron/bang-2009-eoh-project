@@ -628,17 +628,18 @@ void BANG_request_peer_id(int peer_id, BANG_request request) {
 	release_peers_read_lock();
 }
 
+static int intcmp(const void *i1, const void *i2) {
+	return *((int*) i1) - *((int*) i2);
+}
+
 int BANG_get_key_with_peer_id(int peer_id) {
+	int pos = -1;
 	acquire_peers_read_lock();
-	unsigned int i = 0;
-	for (i = 0; i < current_peers; ++i) {
-		if (peers[i]->peer_id == peer_id) {
-			release_peers_read_lock();
-			return i;
-		}
-	}
+	int *ptr = bsearch(&peer_id,keys,current_peers,sizeof(int),&intcmp);
+	if (ptr != NULL)
+		pos = keys - ptr;
 	release_peers_read_lock();
-	return -1;
+	return pos;
 }
 
 static peer* new_peer() {

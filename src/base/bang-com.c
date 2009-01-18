@@ -629,13 +629,15 @@ void BANG_request_peer_id(int peer_id, BANG_request request) {
 }
 
 int BANG_get_key_with_peer_id(int peer_id) {
+	acquire_peers_read_lock();
 	unsigned int i = 0;
 	for (i = 0; i < current_peers; ++i) {
 		if (peers[i]->peer_id == peer_id) {
+			release_peers_read_lock();
 			return i;
 		}
 	}
-
+	release_peers_read_lock();
 	return -1;
 }
 

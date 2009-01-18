@@ -179,6 +179,12 @@ static unsigned int current_peers = 0;
  */
 static peer **peers = NULL;
 
+/**
+ * TODO: make this structure not take linear time when sending a request
+ * to a specific peer
+ */
+static int *keys = NULL;
+
 static void acquire_peers_read_lock() {
 	pthread_mutex_lock(&peers_read_lock);
 	if (peers_readers == 0)
@@ -644,6 +650,9 @@ void BANG_add_peer(int socket) {
 	int current_key = current_peers - 1;
 	int current_id = peer_count++;
 
+	keys = (int*) realloc(keys,current_peers * sizeof(int));
+	keys[current_key] = current_id;
+
 	peers = (peer**) realloc(peers,current_peers * sizeof(peer*));
 	peers[current_key] = new_peer();
 	peers[current_key]->peer_id = current_id;
@@ -701,12 +710,14 @@ void BANG_remove_peer(int peer_id) {
 
 	for (;((unsigned int)pos) < current_peers - 1; ++pos) {
 		peers[pos] = peers[pos + 1];
+		keys[pos] = keys[pos + 1];
 	}
 
 	--current_peers;
 
 
 	peers = (peer**) realloc(peers,current_peers * sizeof(peer*));
+	keys = (int*) realloc(keys,current_peers * sizeof(int));
 
 	pthread_mutex_unlock(&peers_change_lock);
 
@@ -746,6 +757,8 @@ void BANG_com_close() {
 	pthread_mutex_destroy(&peers_change_lock);
 	pthread_mutex_destroy(&peers_read_lock);
 	free(peers);
+	free(keys);
+	keys = NULL;
 	peers = NULL;
 	current_peers = 0;
 	peer_count = 0;

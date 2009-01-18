@@ -25,7 +25,21 @@ static sqlite3_stmt* prepare_select_statement(uuid_t uuid) {
 
 void BANG_route_job(uuid_t uuid, BANG_job *job) {
 	sqlite3_stmt *get_peer_route = prepare_select_statement(uuid);
-	sqlite3_bind_blob(get_peer_route,1,peer,sizeof(uuid_t),SQLITE_STATIC);
+	sqlite3_bind_blob(get_peer_route,1,uuid,sizeof(uuid_t),SQLITE_STATIC);
+
+	if (sqlite3_step(get_peer_route) == SQLITE_ROW) {
+		if (sqlite3_column_int(get_peer_route,1) == REMOTE_ROUTE) {
+			/* TODO: Make a request to peer. */
+		} else {
+			const BANG_module *module = sqlite3_column_blob(get_peer_route,2);
+			/* TODO: Callback peer with job */
+		}
+	}
+}
+
+void BANG_route_finished_job(uuid_t uuid, BANG_job *job) {
+	sqlite3_stmt *get_peer_route = prepare_select_statement(uuid);
+	sqlite3_bind_blob(get_peer_route,1,uuid,sizeof(uuid_t),SQLITE_STATIC);
 
 	if (sqlite3_step(get_peer_route) == SQLITE_ROW) {
 		if (sqlite3_column_int(get_peer_route,1) == REMOTE_ROUTE) {

@@ -20,12 +20,12 @@ static sqlite3_stmt* prepare_select_statement(uuid_t uuid);
 static sqlite3_stmt* prepare_select_statement(uuid_t uuid) {
 	sqlite3_stmt *get_peer_route;
 	sqlite3_prepare_v2(db,"SELECT remote,module,peer_id,name,version FROM mappings WHERE ? = route_uuid",90,&get_peer_route,NULL);
+	sqlite3_bind_blob(get_peer_route,1,uuid,sizeof(uuid_t),SQLITE_STATIC);
 	return get_peer_route;
 }
 
 void BANG_route_job(uuid_t uuid, BANG_job *job) {
 	sqlite3_stmt *get_peer_route = prepare_select_statement(uuid);
-	sqlite3_bind_blob(get_peer_route,1,uuid,sizeof(uuid_t),SQLITE_STATIC);
 
 	if (sqlite3_step(get_peer_route) == SQLITE_ROW) {
 		if (sqlite3_column_int(get_peer_route,1) == REMOTE_ROUTE) {
@@ -37,9 +37,9 @@ void BANG_route_job(uuid_t uuid, BANG_job *job) {
 	}
 }
 
+/* COPY AND PASTE FUNCTIONS... must find better way.. */
 void BANG_route_finished_job(uuid_t uuid, BANG_job *job) {
 	sqlite3_stmt *get_peer_route = prepare_select_statement(uuid);
-	sqlite3_bind_blob(get_peer_route,1,uuid,sizeof(uuid_t),SQLITE_STATIC);
 
 	if (sqlite3_step(get_peer_route) == SQLITE_ROW) {
 		if (sqlite3_column_int(get_peer_route,1) == REMOTE_ROUTE) {

@@ -24,6 +24,8 @@
  */
 static void get_uuid_from_id(uuid_t uuid, int id, BANG_module_info *info);
 
+static uuid_t* get_valid_routes(BANG_module_info *info);
+
 static void get_uuid_from_id(uuid_t uuid, int id, BANG_module_info *info) {
 	if (id < 0 || id > info->peers_info->peer_number ||
 		info->peers_info->validity[id] == 0) {
@@ -31,6 +33,20 @@ static void get_uuid_from_id(uuid_t uuid, int id, BANG_module_info *info) {
 	} else {
 		uuid_copy(uuid,info->peers_info->uuids[id]);
 	}
+}
+
+static uuid_t* get_valid_routes(BANG_module_info *info) {
+	int i, size = 1;
+	uuid_t *valid_routes = calloc(size,sizeof(uuid_t));
+	for (i = 0; i < info->peers_info->peer_number; ++i) {
+		if (info->peers_info->validity[i]) {
+			valid_routes = realloc(valid_routes,size++ * sizeof(uuid_t));
+			uuid_copy(valid_routes[i],info->peers_info->uuids[i]);
+		}
+	}
+	uuid_clear(valid_routes[size]);
+
+	return valid_routes;
 }
 
 /* TODO: Implement this.  Well, this is basically what are our app is all about. 
@@ -41,19 +57,21 @@ static void get_uuid_from_id(uuid_t uuid, int id, BANG_module_info *info) {
 void BANG_debug_on_all_peers(BANG_module_info *info, char *message) {
 	/* The first slot will be us, so skip that. */
 	fprintf(stderr,"%s",message);
-	int i = 1;
-	uuid_t route;
 
-	for (; i < info->peers_info->peer_number; ++i) {
-		get_uuid_from_id(route,i,info);
-		if (!uuid_is_null(route)) {
-			BANG_route_send_message(route,message);
-		}
+	int i = 1;
+	uuid_t *valid_routes = get_valid_routes(info);
+
+	for (; !uuid_is_null(valid_routes[i]); ++i) {
+		BANG_route_send_message(valid_routes[i],message);
 	}
 }
 
 void BANG_get_me_peers(BANG_module_info *info) {
 	/* This does not use routing...! */
+	uuid_t *valid_routes = get_valid_routes(info);
+	int **peers_to_bug = BANG_not_route_get_peer_id(valid_routes);
+
+	free(valid_routes);
 }
 
 int BANG_number_of_active_peers(BANG_module_info *info) {
@@ -76,14 +94,13 @@ void BANG_assert_authority(BANG_module_info *info, int id) {
 	fprintf(stderr,"%d is asserting authority!\n",id);
 #endif
 	uuid_t authority;
-	int i = 0;
 	get_uuid_from_id(authority,id,info);
 
 	if (!uuid_is_null(authority)) {
-		for (; i < info->peers_info->peer_number; ++i) {
-			if (info->peers_info->validity[i]) {
-				BANG_route_assertion_of_authority(authority,info->peers_info->uuids[i]);
-			}
+		int i = 0;
+		uuid_t *valid_routes = get_valid_routes(info);
+		for (; !uuid_is_null(valid_routes[i]); ++i) {
+			BANG_route_assertion_of_authority(authority,valid_routes[i]);
 		}
 	}
 }

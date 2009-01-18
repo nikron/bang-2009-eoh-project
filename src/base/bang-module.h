@@ -38,4 +38,6 @@ void* BANG_get_symbol(BANG_module *module, char *symbol);
  */
 void BANG_run_module(BANG_module *module);
 
+void BANG_module_callback_jobs_available(const BANG_module *module, uuid_t auth, uuid_t peer);
+
 #endif

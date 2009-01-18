@@ -39,6 +39,17 @@ static void get_uuid_from_id(uuid_t uuid, int id, BANG_module_info *info) {
  * Note: This is no longer what out app is about, I added another layer of indirection.
  */
 void BANG_debug_on_all_peers(BANG_module_info *info, char *message) {
+	/* The first slot will be us, so skip that. */
+	fprintf(stderr,"%s",message);
+	int i = 1;
+	uuid_t route;
+
+	for (; i < info->peers_info->peer_number; ++i) {
+		get_uuid_from_id(route,i,info);
+		if (!uuid_is_null(route)) {
+			BANG_route_send_message(route,message);
+		}
+	}
 }
 
 void BANG_get_me_peers(BANG_module_info *info) {

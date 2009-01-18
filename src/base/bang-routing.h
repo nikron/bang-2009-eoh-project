@@ -51,6 +51,33 @@ void BANG_route_request_job(uuid_t uuid);
 void BANG_route_assertion_of_authority(uuid_t authority, uuid_t peer);
 
 /**
+ * \param uuid Route to send debug message.
+ * \param message The message that will be printed out on the remote end.
+ *
+ * \brief Sends a message to along the route.
+ */
+void BANG_route_send_message(uuid_t uuid, char *message);
+
+/**
+ * \param uuid The route to a peer.
+ *
+ * \return A peer id of the route if valid.  Otherwise -1.
+ *
+ * \brief Gets the peer id from the route.
+ */
+int BANG_route_get_peer_id(uuid_t uuid);
+
+/**
+ * \param uuids The routes to peers.
+ *
+ * \return NULL terminated array of peer ids.
+ *
+ * \brief Returns peer_ids not on the list.
+ * memory: You must take care of it.
+ */
+int** BANG_not_route_get_peer_id(uuid_t *uuids);
+
+/**
  * \param module The module to register with the uuid.
  *
  * \brief Registers a module at a uuid and returns that

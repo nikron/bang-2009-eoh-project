@@ -15,12 +15,23 @@
 #include<stdlib.h>
 #include<string.h>
 
-///The handlers for each signal is stored in linked list.
+/**
+ * A list of handlers for each signal is stored in linked list.
+ */
 struct _signal_node {
+	/**
+	 * A handler for the signal.
+	 */
 	BANGSignalHandler handler;
+	/**
+	 * Next node in the list.
+	 */
 	struct _signal_node *next;
 };
 
+/**
+ * A simple typedef of _signal_node.
+ */
 typedef struct _signal_node signal_node;
 
 /**

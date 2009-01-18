@@ -34,7 +34,8 @@ int BANG_install_sighandler(int signal, BANGSignalHandler handler);
 
 /**
  * \param signal The signal number which to send.
- * \param args The arguements to the handlers which are called.
+ * \param args The arguments to the handlers which are called.
+ * \param num_args The number of arguments that void is.
  *
  * \brief Calls the handlers of signal with args.
  */

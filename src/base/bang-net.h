@@ -13,7 +13,7 @@
 #define DEFAULT_PORT "7878"
 
 /**
- * \param port
+ * \param new_port The new port that the server will run on.
  *
  * \brief Sets the port of the server.  Will attempt to restart the server.
  * This of course may fail for any number of reasons.
@@ -21,12 +21,12 @@
 void BANG_set_server_port(char *new_port);
 
 /**
- * \param port The port the server should start at.
+ * \param server_port The port the server should start at.
  * \param start_server If true, the server thread is started on init.
  *
  * \brief Initializes the net part of the library.
  */
-void BANG_net_init(char *sever_port,char start_server);
+void BANG_net_init(char *server_port,char start_server);
 
 /**
  * \brief Closes and frees the net part of the library.
@@ -34,7 +34,7 @@ void BANG_net_init(char *sever_port,char start_server);
 void BANG_net_close();
 
 /**
- * \param port The port that BANG should bind to.
+ * \param not_used This is currently not used.
  *
  * \brief A networking thread that allows others to connection to this machine.  It creates
  * slave connection threads.

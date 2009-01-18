@@ -30,6 +30,7 @@ void BANG_route_job_to_uuids(uuid_t *uuids, BANG_job *job);
 
 /**
  * \param uuid The route to send a finished job through.
+ * \param job The finished job to route.
  *
  * \brief Routes a finished job through a route.
  */
@@ -95,7 +96,13 @@ void BANG_register_module_route(BANG_module *module);
  */
 void BANG_register_peer_route(uuid_t uuid, int peer, char *module_name, char* module_version);
 
+/**
+ * \brief Starts the routing part of the library.
+ */
 void BANG_route_init();
 
+/**
+ * \brief Frees and stops the routing part of the library.
+ */
 void BANG_route_close();
 #endif

@@ -9,8 +9,20 @@
 #define __BANG_TYPES_H
 #include"bang-module-api.h"
 
+/**
+ * The major version of the library.
+ * {0}.1.1
+ */
 #define BANG_MAJOR_VERSION 0
+/**
+ * The middle version of the library.
+ * 0.{1}.1
+ */
 #define BANG_MIDDLE_VERSION 1
+/**
+ * The minor version of the library.
+ * 0.1.{1}
+ */
 #define BANG_MINOR_VERSION 1
 
 /**

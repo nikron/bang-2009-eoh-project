@@ -10,6 +10,7 @@
 #include"bang-routing.h"
 #include"bang-signals.h"
 #include"bang-types.h"
+#include<assert.h>
 #include<dlfcn.h>
 #include<openssl/sha.h>
 #include<openssl/evp.h>
@@ -38,6 +39,8 @@
  * \brief Finds the sha1 hash of the file
  */
 static unsigned char* module_hash(char *path) {
+	assert(path != NULL);
+
 	FILE *fd = fopen(path,"r");
 	if (fd == NULL) return NULL;
 	char buf[UPDATE_SIZE];
@@ -119,6 +122,8 @@ BANG_module_info* new_BANG_module_info() {
 }
 
 BANG_module* BANG_load_module(char *path) {
+	assert(path != NULL);
+
 	/* Get rid of any lingering errors. */
 	/* while (dlerror() != NULL) {} 
 	 * Never mind, this apprently causes segfaults
@@ -213,6 +218,8 @@ BANG_module* BANG_load_module(char *path) {
 }
 
 void BANG_unload_module(BANG_module *module) {
+	assert(module != NULL);
+
 	if (module != NULL) {
 		dlclose(module->handle);
 		/* TODO: This wont free it */
@@ -224,6 +231,8 @@ void BANG_unload_module(BANG_module *module) {
 
 
 void BANG_run_module(BANG_module *module) {
+	assert(module != NULL);
+	j
 	if (module != NULL) {
 		BANG_sigargs args;
 		args.args = module;
@@ -236,6 +245,9 @@ void BANG_run_module(BANG_module *module) {
 }
 
 void* BANG_get_symbol(BANG_module *module, char *symbol) {
+	assert(module != NULL);
+	assert(symbol != NULL);
+
 	if (module != NULL) {
 		/* Get rid of any lingering errors. */
 		while (dlerror() != NULL) {}

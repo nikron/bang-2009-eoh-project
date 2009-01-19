@@ -232,7 +232,7 @@ void BANG_unload_module(BANG_module *module) {
 
 void BANG_run_module(BANG_module *module) {
 	assert(module != NULL);
-	j
+
 	if (module != NULL) {
 		BANG_sigargs args;
 		args.args = module;

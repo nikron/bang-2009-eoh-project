@@ -151,19 +151,10 @@ static BANG_requests* new_BANG_requests();
 static void read_peer_thread_self_close(peer *self);
 
 /**
- * This is a lock on readers
+ * A lock on peers structure and affiliate things.  It can have multiple readers,
+ * but only one writer.
  */
-static pthread_mutex_t peers_read_lock;
-
-/**
- * The number of threads currently reading for the peers structure
- */
-static int peers_readers = 0;
-
-/**
- * A lock on changing the size of peers
- */
-static pthread_mutex_t peers_change_lock;
+static BANG_rw_syncro *peers_lock;
 
 /**
  * The total number of peers we get through the length of the program.
@@ -185,14 +176,6 @@ static peer **peers = NULL;
  * to a specific peer
  */
 static int *keys = NULL;
-
-static void acquire_peers_read_lock() {
-	BANG_acquire_read_lock(&peers_readers,&peers_read_lock,&peers_change_lock);
-}
-
-static void release_peers_read_lock() {
-	BANG_release_read_lock(&peers_readers,&peers_read_lock,&peers_change_lock);
-}
 
 static void free_peer(peer *p) {
 #ifdef BDEBUG_1
@@ -276,10 +259,10 @@ static void read_peer_thread_self_close(peer *self) {
 	*((int*)args.args) = self->peer_id;
 	args.length = sizeof(int);
 
-	acquire_peers_read_lock();
+	BANG_read_lock(peers_lock);
 	BANG_send_signal(BANG_PEER_DISCONNECTED,&args,1);
 	free(args.args);
-	release_peers_read_lock();
+	BANG_read_unlock(peers_lock);
 
 	pthread_exit(NULL);
 }
@@ -599,13 +582,13 @@ static void request_peer(peer *to_be_requested, BANG_request request) {
 void BANG_request_all(BANG_request request) {
 	unsigned int i = 0;
 
-	acquire_peers_read_lock();
+	BANG_read_lock(peers_lock);
 
 	for (; i < current_peers; ++i) {
 		request_peer(peers[i],request);
 	}
 
-	release_peers_read_lock();
+	BANG_read_unlock(peers_lock);
 }
 
 static void catch_request_all(int signal, int num_requests, void **vrequest) {
@@ -622,10 +605,13 @@ static void catch_request_all(int signal, int num_requests, void **vrequest) {
 
 void BANG_request_peer_id(int peer_id, BANG_request request) {
 	int id;
-	acquire_peers_read_lock();
+
+	BANG_read_lock(peers_lock);
+
 	id = BANG_get_key_with_peer_id(peer_id);
 	request_peer(peers[id],request);
-	release_peers_read_lock();
+
+	BANG_read_unlock(peers_lock);
 }
 
 static int intcmp(const void *i1, const void *i2) {
@@ -634,11 +620,13 @@ static int intcmp(const void *i1, const void *i2) {
 
 int BANG_get_key_with_peer_id(int peer_id) {
 	int pos = -1;
-	acquire_peers_read_lock();
+	BANG_read_lock(peers_lock);
+
 	int *ptr = bsearch(&peer_id,keys,current_peers,sizeof(int),&intcmp);
 	if (ptr != NULL)
 		pos = keys - ptr;
-	release_peers_read_lock();
+
+	BANG_read_unlock(peers_lock);
 	return pos;
 }
 
@@ -650,7 +638,7 @@ static peer* new_peer() {
 }
 
 void BANG_add_peer(int socket) {
-	pthread_mutex_lock(&peers_change_lock);
+	BANG_write_lock(peers_lock);
 
 	++current_peers;
 	int current_key = current_peers - 1;
@@ -670,8 +658,8 @@ void BANG_add_peer(int socket) {
 	pthread_create(&(peers[current_key]->receive_thread),NULL,BANG_read_peer_thread,peers[current_key]);
 	pthread_create(&(peers[current_key]->send_thread),NULL,BANG_write_peer_thread,peers[current_key]);
 
-	pthread_mutex_unlock(&peers_change_lock);
 
+	BANG_write_unlock(peers_lock);
 	/**
 	 * Send out that we successfully started the peer threads.
 	 */
@@ -706,7 +694,7 @@ void BANG_remove_peer(int peer_id) {
 	fprintf(stderr,"Removing peer %d.\n",peer_id);
 #endif
 
-	pthread_mutex_lock(&peers_change_lock);
+	BANG_write_lock(peers_lock);
 
 	int pos = BANG_get_key_with_peer_id(peer_id);
 	if (pos == -1) return;
@@ -725,7 +713,7 @@ void BANG_remove_peer(int peer_id) {
 	peers = (peer**) realloc(peers,current_peers * sizeof(peer*));
 	keys = (int*) realloc(keys,current_peers * sizeof(int));
 
-	pthread_mutex_unlock(&peers_change_lock);
+	BANG_write_unlock(peers_lock);
 
 	BANG_sigargs peer_send;
 	peer_send.args = calloc(1,sizeof(int));
@@ -739,8 +727,7 @@ void BANG_com_init() {
 	BANG_install_sighandler(BANG_PEER_CONNECTED,&catch_add_peer);
 	BANG_install_sighandler(BANG_PEER_DISCONNECTED,&catch_remove_peer);
 	BANG_install_sighandler(BANG_REQUEST_ALL,&catch_request_all);
-	pthread_mutex_init(&peers_change_lock,NULL);
-	pthread_mutex_init(&peers_read_lock,NULL);
+	peers_lock = new_BANG_rw_syncro();
 }
 
 void BANG_com_close() {
@@ -753,17 +740,15 @@ void BANG_com_close() {
 	fprintf(stderr,"BANG com closing.\n");
 #endif
 	unsigned int i = 0;
-	pthread_mutex_lock(&peers_change_lock);
+	BANG_write_lock(peers_lock);
+
 	for (i = 0; i < current_peers; ++i) {
 		free_peer(peers[i]);
 	}
 
-	pthread_mutex_unlock(&peers_change_lock);
+	BANG_write_unlock(peers_lock);
 
-	pthread_mutex_destroy(&peers_change_lock);
-	pthread_mutex_destroy(&peers_read_lock);
-	free(peers);
-	free(keys);
+	free_BANG_rw_syncro(peers_lock);
 	keys = NULL;
 	peers = NULL;
 	current_peers = 0;

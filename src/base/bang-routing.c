@@ -160,16 +160,18 @@ int BANG_route_get_peer_id(uuid_t uuid) {
 int** BANG_not_route_get_peer_id(uuid_t *uuids) {
 	if (uuids == NULL) return NULL;
 	int i = 0, j = 0;
-	int **peer_ids = NULL;
+	int peer_id, **peer_ids = NULL;
 
 	/* TODO: Make this actually construct a not list, not a list of
 	 * the peers. */
 	while (!uuid_is_null(uuids[i])) {
 		sqlite3_stmt *select_statement = prepare_select_statement(uuids[i]);
-		if (sqlite3_step(select_statement) == SQLITE_ROW) {
+		if (sqlite3_step(select_statement) == SQLITE_ROW &&
+			(peer_id = sqlite3_column_int(select_statement,3)) != -1) {
+			
 			peer_ids = realloc(peer_ids,j++ + 1 * sizeof(int));
 			peer_ids[j] = malloc(sizeof(int));
-			*(peer_ids[j]) = sqlite3_column_int(select_statement,i);
+			*(peer_ids[j]) = peer_id;
 		}
 	}
 	

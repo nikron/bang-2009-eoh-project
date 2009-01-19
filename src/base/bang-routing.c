@@ -139,20 +139,25 @@ int BANG_route_get_peer_id(uuid_t uuid) {
 	return - 1;
 }
 
-static char* create_not_select_string(unsigned int nots) {
+#define BEGIN_SELECT "SELECT peer_id FROM mappings WHERE"
+#define WHERE_CLAUSE " remote_uuid = ? "
+#define SIZE_OF_WHERE sizeof(WHERE_CLAUSE)
+#define SIZE_OF_BEGIN sizeof(BEGIN_SELECT)
+
+static char* create_select_string(unsigned int nots) {
 	if (nots == 0) return NULL;
 
-	unsigned int string_length = 34 + (21 * nots) + (nots - 1) * 3 + 1,
+	unsigned int string_length = SIZE_OF_BEGIN + (SIZE_OF_WHERE * nots) + (nots - 1) * 3 + 1,
 		     size = 0,
 		     i = 0;
 
 	char *statement = malloc(string_length * sizeof(char));
 
-	strcpy(statement + size,"SELECT peer_id FROM mappings WHERE");
-	size += 34;
+	strcpy(statement + size,BEGIN_SELECT);
+	size += SIZE_OF_BEGIN;
 	for (i = 0; i < nots; ++i) {
-		strcpy(statement + size," NOT remote_uuid = ? ");
-		size += 21;
+		strcpy(statement + size,WHERE_CLAUSE);
+		size += SIZE_OF_WHERE;
 		
 		if (i + 1 < nots) {
 			strcpy(statement ,"AND");
@@ -168,7 +173,7 @@ static char* create_not_select_string(unsigned int nots) {
 int** BANG_not_route_get_peer_id(uuid_t *uuids, unsigned int length) {
 	if (length == 0) return NULL;
 	unsigned int i;
-	char *select_string = create_not_select_string(length);
+	char *select_string = create_select_string(length);
 
 	sqlite3_stmt *select_statement;
 	sqlite3_prepare_v2(db,select_string,-1,&select_statement,NULL);
@@ -181,6 +186,8 @@ int** BANG_not_route_get_peer_id(uuid_t *uuids, unsigned int length) {
 	int **peer_ids = NULL;
 	i = 0;
 
+	/* TODO: Make this actually construct a not list, not a list of
+	 * the peers. */
 	while (sqlite3_step(select_statement) == SQLITE_ROW) {
 		peer_ids = realloc(peer_ids,i++ + 1 * sizeof(int));
 		peer_ids[i] = malloc(sizeof(int));

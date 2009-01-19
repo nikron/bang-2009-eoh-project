@@ -12,21 +12,23 @@
 #include"bang-module.h"
 
 /**
- * \param uuid The module-peer to route to.
+ * \param authority The module-peer sending the job.
+ * \param peer The module-peer to route to.
  * \param job The job to route to the module-peer.
  *
  * Gets a job to the a module, whever it may be as long
  * as it is valid.
  */
-void BANG_route_job(uuid_t uuid, BANG_job *job);
+void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job);
 
 /**
- * \param uuids A null termianted list of routes.
+ * \param authority The authority sending the job.
+ * \param peers A null termianted list of routes.
  * \param job The job to route.
  *
  * \brief Routes the job to all peers in the uuid list.
  */
-void BANG_route_job_to_uuids(uuid_t *uuids, BANG_job *job);
+void BANG_route_job_to_uuids(uuid_t authority, uuid_t *peers, BANG_job *job);
 
 /**
  * \param uuid The route to send a finished job through.

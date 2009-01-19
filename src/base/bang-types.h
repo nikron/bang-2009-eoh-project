@@ -329,12 +329,12 @@ enum BANG_request_types {
 	 */
 	BANG_MODULE_PEER_REQUEST,
 	/**
-	 * BANG_request.type == BANG_JOB_SEND_REQUEST
+	 * BANG_request.type == BANG_SEND_JOB_REQUEST
 	 * BAND_request.request:
 	 * | uuid_t | job stuff ~ |
 	 *
 	 */
-	BANG_JOB_SEND_REQUEST,
+	BANG_SEND_JOB_REQUEST,
 	/**
 	 * do:
 	 *	-send BANG_SEND_MODULE

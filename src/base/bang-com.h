@@ -80,7 +80,6 @@ void BANG_remove_peer(int peer_id);
  */
 void BANG_add_peer(int socket);
 
-
 /**
  * \param peer_id The id of the peer thread.
  *

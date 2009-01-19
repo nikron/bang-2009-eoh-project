@@ -146,6 +146,6 @@ void BANG_send_job(BANG_module_info *info, BANG_job *job) {
 	get_uuid_from_id(route,job->peer,info);
 
 	if (!uuid_is_null(route)) {
-		BANG_route_job(route,job);
+		BANG_route_job(info->peers_info->uuids[info->my_id],route,job);
 	}
 }

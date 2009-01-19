@@ -34,6 +34,9 @@ typedef struct {
  * though it is fairly transparent.
  */
 typedef struct {
+	/**
+	 * Infomation about the peers of this module.
+	 */
 	peers_information *peers_info;
 	/**
 	 * The id of module running.  Currently is always
@@ -42,8 +45,18 @@ typedef struct {
 	int my_id;
 } BANG_module_info;
 
+/**
+ * A job to be sent to be a peer, so that it the "data" can be worked
+ * on, and sent as a job back, with the "data" finished.
+ */
 typedef struct {
+	/**
+	 * For the module's use as sendable data.
+	 */
 	void *data;
+	/**
+	 * The size of the data
+	 */
 	unsigned int length;
 	/**
 	 * For use by the module, if it wants

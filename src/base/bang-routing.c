@@ -1,9 +1,11 @@
+#include"bang-com.h"
 #include"bang-routing.h"
 #include"bang-module.h"
 #include"bang-module-api.h"
 #include"bang-types.h"
 #include<stdio.h>
 #include<stdlib.h>
+#include<string.h>
 /* I am really reeling in those external libraries! */
 #include<sqlite3.h>
 #include<uuid/uuid.h>
@@ -25,14 +27,36 @@ static sqlite3_stmt* prepare_select_statement(uuid_t uuid) {
 	return get_peer_route;
 }
 
-void BANG_route_job(uuid_t uuid, BANG_job *job) {
-	sqlite3_stmt *get_peer_route = prepare_select_statement(uuid);
+void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job) {
+	sqlite3_stmt *get_peer_route = prepare_select_statement(peer);
 
 	if (sqlite3_step(get_peer_route) == SQLITE_ROW) {
 		if (sqlite3_column_int(get_peer_route,1) == REMOTE_ROUTE) {
 			/* TODO: Make a request to peer. */
+			BANG_request request;
+			request.type = BANG_SEND_JOB_REQUEST;
+			/* We are being a little presumptuous, and constructing the actual message
+			 * that the communications infrastructure will send...
+			 *
+			 * Probably should move this to bang-com.c
+			 */
+			request.length = LENGTH_OF_HEADER +sizeof(uuid_t)  * 2 +
+					4 /* A MAGIC NUMBER! */ +
+					LENGTH_OF_LENGTHS +
+					job->length;
+			request.request = malloc(request.length);
+			unsigned int header = BANG_SEND_JOB;
+			memcpy(request.request,&header,LENGTH_OF_HEADER);
+			memcpy(request.request,authority,sizeof(uuid_t));
+			memcpy(request.request,peer,sizeof(uuid_t));
+			memcpy(request.request,&(job->job_number),4);
+			memcpy(request.request,job->data,job->length);
+
+			BANG_request_peer_id(sqlite3_column_int(get_peer_route,3),request);
+
+
 		} else {
-			const BANG_module *module = sqlite3_column_blob(get_peer_route,2);
+			/* const BANG_module *module =  */sqlite3_column_blob(get_peer_route,2);
 			/* TODO: Callback peer with job */
 		}
 	}

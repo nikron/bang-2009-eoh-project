@@ -94,8 +94,22 @@ int BANG_route_get_peer_id(uuid_t uuid) {
 	return - 1;
 }
 
-void BANG_register_module_route(BANG_module *module) {
+static void insert_route(uuid_t uuid, int remote, BANG_module *module, int peer_id, char *module_name, unsigned char *module_version) {
+	sqlite3_stmt *insert;
 
+	sqlite3_prepare_v2(db,"INSERT INTO mappings (route_uuid,remote,module,peer_id,name,text) VALUES (?,?,?,?,?)",85,&insert,NULL);
+	sqlite3_bind_blob(insert,1,uuid,sizeof(uuid_t),SQLITE_STATIC);
+	sqlite3_bind_int(insert,2,remote);
+	sqlite3_bind_blob(insert,3,module,sizeof(BANG_module*),SQLITE_STATIC);
+	sqlite3_bind_int(insert,4,peer_id);
+	sqlite3_bind_text(insert,5,module_name,-1,SQLITE_STATIC);
+	sqlite3_bind_blob(insert,6,module_version,LENGTH_OF_VERSION,SQLITE_STATIC);
+
+	sqlite3_step(insert);
+	sqlite3_finalize(insert);
+}
+
+void BANG_register_module_route(BANG_module *module) {
 	/* MORE DEREFENCES THAN YOU CAN HANDLE!
 	 * Create a uuid and insert into the module.
 	 */
@@ -106,26 +120,12 @@ void BANG_register_module_route(BANG_module *module) {
 	module->info->peers_info->validity[module->info->my_id] = 1;
 
 	/* Insert the route in the database. */
-	sqlite3_stmt *insert_module;
-	sqlite3_prepare_v2(db,"INSERT INTO mappings (route_uuid,remote,module,name,text) VALUES (?,1,?,?,?)",80,&insert_module,NULL);
-	sqlite3_bind_blob(insert_module,1,module->info->peers_info->uuids[module->info->my_id],sizeof(uuid_t),SQLITE_STATIC);
-	/* Store the _pointer_ to the module. */
-	sqlite3_bind_blob(insert_module,2,module,sizeof(BANG_module*),SQLITE_STATIC);
-	sqlite3_bind_text(insert_module,3,module->module_name,-1,SQLITE_STATIC);
-	sqlite3_bind_blob(insert_module,4,module->module_version,LENGTH_OF_VERSION,SQLITE_STATIC);
-	sqlite3_step(insert_module);
-	sqlite3_finalize(insert_module);
+	insert_route(module->info->peers_info->uuids[module->info->my_id],LOCAL_ROUTE,module,-1,module->module_name,module->module_version);
 }
 
 
-void BANG_register_peer_route(uuid_t uuid, int peer, char *module_name, char* module_version) {
-	sqlite3_stmt *insert_peer_route;
-	sqlite3_prepare_v2(db,"INSERT INTO mappings (route_uuid,remote,peer_id,name,text) VALUES (?,2,?,?,?)",80,&insert_module,NULL);
-	sqlite3_bind_int(insert_module,2,peer);
-	sqlite3_bind_text(insert_module,3,module_name,-1,SQLITE_STATIC);
-	sqlite3_bind_blob(insert_module,4,module_version,LENGTH_OF_VERSION,SQLITE_STATIC);
-	sqlite3_step(insert_module);
-	sqlite3_finalize(insert_module);
+void BANG_register_peer_route(uuid_t uuid, int peer, char *module_name, unsigned char* module_version) {
+	insert_route(uuid,REMOTE_ROUTE,NULL,peer,module_name,module_version);
 }
 
 void BANG_route_init() {

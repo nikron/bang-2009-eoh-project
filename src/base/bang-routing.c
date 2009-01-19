@@ -3,6 +3,7 @@
 #include"bang-module.h"
 #include"bang-module-api.h"
 #include"bang-types.h"
+#include<assert.h>
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
@@ -20,14 +21,23 @@ static sqlite3 *db;
 
 static sqlite3_stmt* prepare_select_statement(uuid_t uuid);
 
+static void insert_route(uuid_t uuid, int remote, BANG_module *module, int peer_id, char *module_name, unsigned char *module_version);
+
 static sqlite3_stmt* prepare_select_statement(uuid_t uuid) {
+	assert(!uuid_is_null(uuid));
+
 	sqlite3_stmt *get_peer_route;
 	sqlite3_prepare_v2(db,"SELECT remote,module,peer_id,name,version FROM mappings WHERE ? = route_uuid",90,&get_peer_route,NULL);
 	sqlite3_bind_blob(get_peer_route,1,uuid,sizeof(uuid_t),SQLITE_STATIC);
+
 	return get_peer_route;
 }
 
 void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job) {
+	assert(!uuid_is_null(authority));
+	assert(!uuid_is_null(peer));
+	assert(job != NULL);
+
 	sqlite3_stmt *get_peer_route = prepare_select_statement(peer);
 
 	if (sqlite3_step(get_peer_route) == SQLITE_ROW) {
@@ -64,19 +74,25 @@ void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 
 /* COPY AND PASTE FUNCTIONS... must find better way.. */
 void BANG_route_finished_job(uuid_t uuid, BANG_job *job) {
+	assert(!uuid_is_null(uuid));
+	assert(job != NULL);
+
 	sqlite3_stmt *get_peer_route = prepare_select_statement(uuid);
 
 	if (sqlite3_step(get_peer_route) == SQLITE_ROW) {
 		if (sqlite3_column_int(get_peer_route,1) == REMOTE_ROUTE) {
 			/* TODO: Make a request to peer. */
 		} else {
-			const BANG_module *module = sqlite3_column_blob(get_peer_route,2);
+			/* const BANG_module *module = */sqlite3_column_blob(get_peer_route,2);
 			/* TODO: Callback peer with job */
 		}
 	}
 }
 
 void BANG_route_assertion_of_authority(uuid_t authority, uuid_t peer) {
+	assert(!uuid_is_null(authority));
+	assert(!uuid_is_null(peer));
+
 	sqlite3_stmt *get_peer_route = prepare_select_statement(peer);
 
 	if (sqlite3_step(get_peer_route) == SQLITE_ROW) {
@@ -91,6 +107,9 @@ void BANG_route_assertion_of_authority(uuid_t authority, uuid_t peer) {
 
 
 void BANG_route_send_message(uuid_t uuid, char *message) {
+	assert(!uuid_is_null(uuid));
+	assert(message != NULL);
+
 	sqlite3_stmt *get_peer_route = prepare_select_statement(uuid);
 
 	if (sqlite3_step(get_peer_route) == SQLITE_ROW) {
@@ -106,6 +125,8 @@ void BANG_route_send_message(uuid_t uuid, char *message) {
 }
 
 int BANG_route_get_peer_id(uuid_t uuid) {
+	assert(!uuid_is_null(uuid));
+
 	sqlite3_stmt *get_peer_route = prepare_select_statement(uuid);
 
 	if (sqlite3_step(get_peer_route) == SQLITE_ROW) {
@@ -119,6 +140,12 @@ int BANG_route_get_peer_id(uuid_t uuid) {
 }
 
 static void insert_route(uuid_t uuid, int remote, BANG_module *module, int peer_id, char *module_name, unsigned char *module_version) {
+	assert(!uuid_is_null(uuid));
+	assert(remote == LOCAL_ROUTE || remote == REMOTE_ROUTE);
+	assert(peer_id >= 0);
+	assert(module_name != NULL);
+	assert(module_version != NULL);
+
 	sqlite3_stmt *insert;
 
 	sqlite3_prepare_v2(db,"INSERT INTO mappings (route_uuid,remote,module,peer_id,name,text) VALUES (?,?,?,?,?)",85,&insert,NULL);
@@ -134,6 +161,8 @@ static void insert_route(uuid_t uuid, int remote, BANG_module *module, int peer_
 }
 
 void BANG_register_module_route(BANG_module *module) {
+	assert(module != NULL);
+
 	/* MORE DEREFENCES THAN YOU CAN HANDLE!
 	 * Create a uuid and insert into the module.
 	 */
@@ -149,6 +178,11 @@ void BANG_register_module_route(BANG_module *module) {
 
 
 void BANG_register_peer_route(uuid_t uuid, int peer, char *module_name, unsigned char* module_version) {
+	assert(!uuid_is_null(uuid));
+	assert(peer >= 0);
+	assert(module_name != NULL);
+	assert(module_version != NULL);
+
 	insert_route(uuid,REMOTE_ROUTE,NULL,peer,module_name,module_version);
 }
 

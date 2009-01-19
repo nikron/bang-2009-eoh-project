@@ -69,8 +69,12 @@ void BANG_debug_on_all_peers(BANG_module_info *info, char *message) {
 void BANG_get_me_peers(BANG_module_info *info) {
 	/* This does not use routing...! */
 	uuid_t *valid_routes = get_valid_routes(info);
-	/* TODO: THIS! */
-	/*int **peers_to_bug =*/ BANG_not_route_get_peer_id(valid_routes);
+	unsigned int length = 0;
+	while (!uuid_is_null(valid_routes[length])) {
+			++length;
+	}
+
+	/*int **peers_to_bug =*/ BANG_not_route_get_peer_id(valid_routes,length);
 
 	free(valid_routes);
 }

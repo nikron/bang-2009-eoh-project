@@ -72,13 +72,14 @@ int BANG_route_get_peer_id(uuid_t uuid);
 
 /**
  * \param uuids The routes to peers.
+ * \param length The number of routes
  *
  * \return NULL terminated array of peer ids.
  *
  * \brief Returns peer_ids not on the list.
  * memory: You must take care of it.
  */
-int** BANG_not_route_get_peer_id(uuid_t *uuids);
+int** BANG_not_route_get_peer_id(uuid_t *uuids, unsigned int length);
 
 /**
  * \param module The module to register with the uuid.

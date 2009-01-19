@@ -51,9 +51,9 @@ void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 			 * Probably should move this to bang-com.c
 			 */
 			request.length = LENGTH_OF_HEADER +sizeof(uuid_t)  * 2 +
-					4 /* A MAGIC NUMBER! */ +
-					LENGTH_OF_LENGTHS +
-					job->length;
+				4 /* A MAGIC NUMBER! */ +
+				LENGTH_OF_LENGTHS +
+				job->length;
 			request.request = malloc(request.length);
 			unsigned int header = BANG_SEND_JOB;
 			memcpy(request.request,&header,LENGTH_OF_HEADER);
@@ -137,6 +137,60 @@ int BANG_route_get_peer_id(uuid_t uuid) {
 	}
 
 	return - 1;
+}
+
+static char* create_not_select_string(unsigned int nots) {
+	if (nots == 0) return NULL;
+
+	unsigned int string_length = 34 + (21 * nots) + (nots - 1) * 3 + 1,
+		     size = 0,
+		     i = 0;
+
+	char *statement = malloc(string_length * sizeof(char));
+
+	strcpy(statement + size,"SELECT peer_id FROM mappings WHERE");
+	size += 34;
+	for (i = 0; i < nots; ++i) {
+		strcpy(statement + size," NOT remote_uuid = ? ");
+		size += 21;
+		
+		if (i + 1 < nots) {
+			strcpy(statement ,"AND");
+			size += 3;
+		}
+	}
+
+	statement[string_length] = '\0';
+
+	return statement;
+}
+
+int** BANG_not_route_get_peer_id(uuid_t *uuids, unsigned int length) {
+	if (length == 0) return NULL;
+	unsigned int i;
+	char *select_string = create_not_select_string(length);
+
+	sqlite3_stmt *select_statement;
+	sqlite3_prepare_v2(db,select_string,-1,&select_statement,NULL);
+	free(select_string);
+
+	for (i = 1; i <= length; ++i) {
+		sqlite3_bind_blob(select_statement,i,uuids[i],sizeof(uuid_t),SQLITE_STATIC);
+	}
+
+	int **peer_ids = NULL;
+	i = 0;
+
+	while (sqlite3_step(select_statement) == SQLITE_ROW) {
+		peer_ids = realloc(peer_ids,i++ + 1 * sizeof(int));
+		peer_ids[i] = malloc(sizeof(int));
+		*(peer_ids[i]) = sqlite3_column_int(select_statement,i);
+
+	}
+	
+	peer_ids[i + 1] = NULL;
+
+	return peer_ids;
 }
 
 static void insert_route(uuid_t uuid, int remote, BANG_module *module, int peer_id, char *module_name, unsigned char *module_version) {

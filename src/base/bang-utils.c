@@ -1,5 +1,42 @@
 #include"bang-utils.h"
+#include<stdlib.h>
 #include<string.h>
+
+void BANG_read_lock(BANG_rw_syncro *lck) {
+	BANG_acquire_read_lock(&(lck->readers),lck->read,lck->write);
+}
+
+void BANG_read_unlock(BANG_rw_syncro *lck) {
+	BANG_release_read_lock(&(lck->readers),lck->read,lck->write);
+}
+
+void BANG_write_lock(BANG_rw_syncro *lck) {
+	pthread_mutex_lock(lck->write);
+}
+
+void BANG_write_unlock(BANG_rw_syncro *lck) {
+	pthread_mutex_unlock(lck->write);
+}
+
+BANG_rw_syncro* new_BANG_rw_syncro() {
+	BANG_rw_syncro *new = malloc(sizeof(BANG_rw_syncro));
+	new->read = malloc(sizeof(pthread_mutex_t));
+	pthread_mutex_init(new->read,NULL);
+	new->write = malloc(sizeof(pthread_mutex_t));
+	pthread_mutex_init(new->write,NULL);
+	new->readers = 0;
+
+	return new;
+}
+void free_BANG_rw_syncro(BANG_rw_syncro *lck) {
+	pthread_mutex_unlock(lck->read);
+	pthread_mutex_destroy(lck->read);
+	free(lck->read);
+	pthread_mutex_unlock(lck->write);
+	pthread_mutex_destroy(lck->write);
+	free(lck->write);
+	free(lck);
+}
 
 int BANG_module_name_cmp(const char *m1, const char *m2) {
 	int cmp = strcmp(m1,m2);

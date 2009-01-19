@@ -81,10 +81,28 @@ void BANG_route_finished_job(uuid_t uuid, BANG_job *job) {
 
 	if (sqlite3_step(get_peer_route) == SQLITE_ROW) {
 		if (sqlite3_column_int(get_peer_route,1) == REMOTE_ROUTE) {
-			/* TODO: Make a request to peer. */
+			/* TODO: Make a request to remote peer. */
 		} else {
 			/* const BANG_module *module = */sqlite3_column_blob(get_peer_route,2);
-			/* TODO: Callback peer with job */
+			/* TODO: Callback local peer with job */
+		}
+	}
+}
+
+
+void BANG_route_request_job(uuid_t peer, uuid_t authority) {
+	/* We have to find where the authority, so we can request that
+	 * authority to give us a job.
+	 */
+
+	sqlite3_stmt *get_auth_route = prepare_select_statement(authority);
+
+	if (sqlite3_step(get_auth_route) == SQLITE_ROW) {
+		if (sqlite3_column_int(get_auth_route,1) == REMOTE_ROUTE) {
+			/* TODO: Make a request to peer. */
+		} else {
+			/* const BANG_module *module = */sqlite3_column_blob(get_auth_route,2);
+			/* TODO: Callback local peer with job */
 		}
 	}
 }
@@ -139,63 +157,23 @@ int BANG_route_get_peer_id(uuid_t uuid) {
 	return - 1;
 }
 
-#define BEGIN_SELECT "SELECT peer_id FROM mappings WHERE"
-#define WHERE_CLAUSE " remote_uuid = ? "
-#define SIZE_OF_WHERE sizeof(WHERE_CLAUSE)
-#define SIZE_OF_BEGIN sizeof(BEGIN_SELECT)
-
-static char* create_select_string(unsigned int nots) {
-	if (nots == 0) return NULL;
-
-	unsigned int string_length = SIZE_OF_BEGIN + (SIZE_OF_WHERE * nots) + (nots - 1) * 3 + 1,
-		     size = 0,
-		     i = 0;
-
-	char *statement = malloc(string_length * sizeof(char));
-
-	strcpy(statement + size,BEGIN_SELECT);
-	size += SIZE_OF_BEGIN;
-	for (i = 0; i < nots; ++i) {
-		strcpy(statement + size,WHERE_CLAUSE);
-		size += SIZE_OF_WHERE;
-		
-		if (i + 1 < nots) {
-			strcpy(statement ,"AND");
-			size += 3;
-		}
-	}
-
-	statement[string_length] = '\0';
-
-	return statement;
-}
-
-int** BANG_not_route_get_peer_id(uuid_t *uuids, unsigned int length) {
-	if (length == 0) return NULL;
-	unsigned int i;
-	char *select_string = create_select_string(length);
-
-	sqlite3_stmt *select_statement;
-	sqlite3_prepare_v2(db,select_string,-1,&select_statement,NULL);
-	free(select_string);
-
-	for (i = 1; i <= length; ++i) {
-		sqlite3_bind_blob(select_statement,i,uuids[i],sizeof(uuid_t),SQLITE_STATIC);
-	}
-
+int** BANG_not_route_get_peer_id(uuid_t *uuids) {
+	if (uuids == NULL) return NULL;
+	int i = 0, j = 0;
 	int **peer_ids = NULL;
-	i = 0;
 
 	/* TODO: Make this actually construct a not list, not a list of
 	 * the peers. */
-	while (sqlite3_step(select_statement) == SQLITE_ROW) {
-		peer_ids = realloc(peer_ids,i++ + 1 * sizeof(int));
-		peer_ids[i] = malloc(sizeof(int));
-		*(peer_ids[i]) = sqlite3_column_int(select_statement,i);
-
+	while (!uuid_is_null(uuids[i])) {
+		sqlite3_stmt *select_statement = prepare_select_statement(uuids[i]);
+		if (sqlite3_step(select_statement) == SQLITE_ROW) {
+			peer_ids = realloc(peer_ids,j++ + 1 * sizeof(int));
+			peer_ids[j] = malloc(sizeof(int));
+			*(peer_ids[j]) = sqlite3_column_int(select_statement,i);
+		}
 	}
 	
-	peer_ids[i + 1] = NULL;
+	peer_ids[j + 1] = NULL;
 
 	return peer_ids;
 }

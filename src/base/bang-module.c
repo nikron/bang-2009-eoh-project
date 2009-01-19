@@ -125,7 +125,7 @@ BANG_module* BANG_load_module(char *path) {
 	assert(path != NULL);
 
 	/* Get rid of any lingering errors. */
-	/* while (dlerror() != NULL) {} 
+	/* while (dlerror() != NULL) {}
 	 * Never mind, this apprently causes segfaults
 	 */
 

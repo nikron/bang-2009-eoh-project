@@ -69,12 +69,8 @@ void BANG_debug_on_all_peers(BANG_module_info *info, char *message) {
 void BANG_get_me_peers(BANG_module_info *info) {
 	/* This does not use routing...! */
 	uuid_t *valid_routes = get_valid_routes(info);
-	unsigned int length = 0;
-	while (!uuid_is_null(valid_routes[length])) {
-			++length;
-	}
 
-	/*int **peers_to_bug =*/ BANG_not_route_get_peer_id(valid_routes,length);
+	/*int **peers_to_bug =*/ BANG_not_route_get_peer_id(valid_routes);
 
 	free(valid_routes);
 }
@@ -127,11 +123,12 @@ void BANG_request_job(BANG_module_info *info, int id) {
 #ifdef BDEBUG_1
 	fprintf(stderr,"Requesting a job from authority %d with blocking at %d!\n",id,blocking);
 #endif
-	uuid_t route;
-	get_uuid_from_id(route,id,info);
+	uuid_t auth, me;
+	get_uuid_from_id(auth,id,info);
+	get_uuid_from_id(me,info->my_id,info);
 
-	if (!uuid_is_null(route)) {
-		BANG_route_request_job(route);
+	if (!uuid_is_null(auth)) {
+		BANG_route_request_job(auth,me);
 	}
 
 }

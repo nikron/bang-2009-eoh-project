@@ -43,7 +43,7 @@ void BANG_route_finished_job(uuid_t uuid, BANG_job *job);
  *
  * \brief Requests a job from a peer through route.
  */
-void BANG_route_request_job(uuid_t uuid);
+void BANG_route_request_job(uuid_t peer, uuid_t authority);
 
 /**
  * \param authority Route to the authority.
@@ -71,15 +71,14 @@ void BANG_route_send_message(uuid_t uuid, char *message);
 int BANG_route_get_peer_id(uuid_t uuid);
 
 /**
- * \param uuids The routes to peers.
- * \param length The number of routes
+ * \param uuids The routes to peers, null terminated.
  *
  * \return NULL terminated array of peer ids.
  *
  * \brief Returns peer_ids not on the list.
  * memory: You must take care of it.
  */
-int** BANG_not_route_get_peer_id(uuid_t *uuids, unsigned int length);
+int** BANG_not_route_get_peer_id(uuid_t *uuids);
 
 /**
  * \param module The module to register with the uuid.

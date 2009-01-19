@@ -101,8 +101,7 @@ void BANG_route_request_job(uuid_t peer, uuid_t authority) {
 		if (sqlite3_column_int(get_auth_route,1) == REMOTE_ROUTE) {
 			/* TODO: Make a request to peer. */
 		} else {
-			/* const BANG_module *module = */sqlite3_column_blob(get_auth_route,2);
-			/* TODO: Callback local peer with job */
+			const BANG_module *module = sqlite3_column_blob(get_auth_route,2);
 		}
 	}
 }

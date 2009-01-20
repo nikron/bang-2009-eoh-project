@@ -102,6 +102,7 @@ void BANG_route_request_job(uuid_t peer, uuid_t authority) {
 			/* TODO: Make a request to peer. */
 		} else {
 			const BANG_module *module = sqlite3_column_blob(get_auth_route,2);
+			BANG_module_callback_job_request(module,authority,peer);
 		}
 	}
 }
@@ -117,7 +118,7 @@ void BANG_route_assertion_of_authority(uuid_t authority, uuid_t peer) {
 			/* TODO: Make a request to peer. */
 		} else {
 			const BANG_module *module = sqlite3_column_blob(get_peer_route,2);
-			BANG_module_callback_jobs_available(module,authority,peer);
+			BANG_module_callback_job_available(module,authority,peer);
 		}
 	}
 }

@@ -261,3 +261,19 @@ void* BANG_get_symbol(BANG_module *module, char *symbol) {
 	} else
 		return NULL;
 }
+
+void BANG_module_callback_job_available(const BANG_module *module, uuid_t auth, uuid_t peer) {
+	assert(module != NULL);
+
+	/* Make sure they have the right module. */
+	if (uuid_compare(module->info->peers_info->uuids[module->info->my_id],auth) == 0) {
+
+		/* TODO: USE LOCKS! */
+		int i = 0;
+		for (i = 0; i < module->info->peers_info->peer_number; ++i) {
+			if (uuid_compare(module->info->peers_info->uuids[i],peer) == 0) {
+				module->callbacks->outgoing_job(module->info,i);
+			}
+		}
+	}
+}

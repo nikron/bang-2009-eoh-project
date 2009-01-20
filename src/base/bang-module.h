@@ -38,6 +38,23 @@ void* BANG_get_symbol(BANG_module *module, char *symbol);
  */
 void BANG_run_module(BANG_module *module);
 
-void BANG_module_callback_jobs_available(const BANG_module *module, uuid_t auth, uuid_t peer);
+/**
+ * \param module The module of the peer.
+ * \param auth The uuid of the authority saying a job is available.
+ * \param peer The uuid of the peer being told that a job is available at auth.
+ *
+ * \brief A callback to tell peer with module that there is a job availabel held
+ * by auth.
+ */
+void BANG_module_callback_job_available(const BANG_module *module, uuid_t auth, uuid_t peer);
+
+/**
+ * \param module The module of the auth.
+ * \param auth The authority getting asked for a job.
+ * \param peer The peer requesting a job.
+ *
+ * \brief A callback to tell the authority that the uuid peer wants a job.
+ */
+void BANG_module_callback_job_request(const BANG_module *module, uuid_t auth, uuid_t peer);
 
 #endif

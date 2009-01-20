@@ -41,14 +41,6 @@ void* BANG_read_peer_thread(void *self_info);
 void* BANG_write_peer_thread(void *self_info);
 
 /**
- * \return A new unique peer id.
- *
- * Creates a new peer and returns the an id to find
- * that peer by.
- */
-int BANG_new_peer_id();
-
-/**
  * \param peer_id The peer you want to add a request.
  * \param request The request you want to add to the peer.
  *

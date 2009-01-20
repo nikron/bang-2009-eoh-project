@@ -348,6 +348,226 @@ static void free_BANG_requests(BANG_requests *requests) {
 	free_request_list(requests->head);
 }
 
+static void request_peer(peer *to_be_requested, BANG_request request) {
+	pthread_mutex_lock(&(to_be_requested->requests->lock));
+
+	request_node *temp = new_request_node();
+	temp->request = request;
+	append_request(&(to_be_requested->requests->head),temp);
+
+	pthread_mutex_unlock(&(to_be_requested->requests->lock));
+	sem_post(&(to_be_requested->requests->num_requests));
+}
+
+static int intcmp(const void *i1, const void *i2) {
+	return *((int*) i1) - *((int*) i2);
+}
+
+static int get_key_with_peer_id(int peer_id) {
+	int pos = -1;
+
+	int *ptr = bsearch(&peer_id,keys,current_peers,sizeof(int),&intcmp);
+	if (ptr != NULL)
+		pos = keys - ptr;
+
+	return pos;
+}
+
+static peer* new_peer(int peer_id, int socket) {
+	peer *new;
+
+	new = (peer*) calloc(1,sizeof(peer));
+
+	new->peer_id = peer_id;
+	new->socket = socket;
+
+	new->requests = new_BANG_requests();
+
+	/* Set up the poll struct. */
+	new->pfd.fd = socket;
+	new->pfd.events = POLLIN  | POLLERR | POLLHUP | POLLNVAL;
+
+	return new;
+}
+
+static int add_peer_to_peers(peer *new) {
+	int current_key = ++current_peers;
+
+	keys = (int*) realloc(keys,current_peers * sizeof(int));
+	peers = (peer**) realloc(peers,current_peers * sizeof(peer*));
+
+	keys[current_key] = new->peer_id;
+	peers[current_key] = new;
+
+	return current_key;
+}
+
+static void catch_add_peer(int signal, int num_sockets, void **socket) {
+	if (signal == BANG_PEER_CONNECTED) {
+		int **sock = (int**) socket;
+		int i = 0;
+		for (; i < num_sockets; ++i) {
+			BANG_add_peer(*(sock[i]));
+			free(sock[i]);
+		}
+		free(sock);
+	}
+}
+
+static void catch_remove_peer(int signal, int num_peer_ids, void **peer_id) {
+	if (signal == BANG_PEER_DISCONNECTED) {
+		int **id = (int**) peer_id;
+		int i = 0;
+		for (; i < num_peer_ids; ++i) {
+			BANG_remove_peer(*(id[i]));
+			free(id[i]);
+		}
+		free(id);
+	}
+}
+
+static void catch_request_all(int signal, int num_requests, void **vrequest) {
+	if (signal == BANG_REQUEST_ALL) {
+		BANG_request **to_request  = (BANG_request**) vrequest;
+		int i = 0;
+		for (; i < num_requests; ++i) {
+			BANG_request_all(*(to_request[i]));
+			free(to_request[i]);
+		}
+		free(to_request);
+	}
+}
+
+void BANG_add_peer(int socket) {
+	BANG_write_lock(peers_lock);
+
+	int current_id = peer_count++;
+
+	peer *new = new_peer(current_id,socket);
+
+	int key = add_peer_to_peers(new);
+
+#ifdef BDEBUG_1
+	fprintf(stderr,"Threads being started at %d.\n",key);
+#endif
+
+	pthread_create(&(peers[key]->receive_thread),NULL,BANG_read_peer_thread,peers[key]);
+	pthread_create(&(peers[key]->send_thread),NULL,BANG_write_peer_thread,peers[key]);
+
+	BANG_write_unlock(peers_lock);
+	/**
+	 * Send out that we successfully started the peer threads.
+	 */
+	BANG_sigargs args;
+	args.args = calloc(1,sizeof(int));
+	*((int*)args.args) = current_id;
+	args.length = sizeof(int);
+
+	BANG_send_signal(BANG_PEER_ADDED,&args,1);
+
+	free(args.args);
+}
+
+void BANG_remove_peer(int peer_id) {
+	/*
+	 * this lock is needed when trying to change the
+	 * peers structure
+	 */
+#ifdef BDEBUG_1
+	fprintf(stderr,"Removing peer %d.\n",peer_id);
+#endif
+
+	BANG_write_lock(peers_lock);
+
+	int pos = get_key_with_peer_id(peer_id);
+	if (pos == -1) return;
+
+	free_peer(peers[pos]);
+	peers[pos] = NULL;
+
+	for (;((unsigned int)pos) < current_peers - 1; ++pos) {
+		peers[pos] = peers[pos + 1];
+		keys[pos] = keys[pos + 1];
+	}
+
+	--current_peers;
+
+
+	peers = (peer**) realloc(peers,current_peers * sizeof(peer*));
+	keys = (int*) realloc(keys,current_peers * sizeof(int));
+
+	BANG_write_unlock(peers_lock);
+
+	BANG_sigargs peer_send;
+	peer_send.args = calloc(1,sizeof(int));
+	*((int*)peer_send.args) = peer_id;
+	peer_send.length = sizeof(int);
+	BANG_send_signal(BANG_PEER_REMOVED,&peer_send,1);
+	free(peer_send.args);
+}
+
+void BANG_request_peer_id(int peer_id, BANG_request request) {
+	int id;
+
+	BANG_read_lock(peers_lock);
+
+	id = get_key_with_peer_id(peer_id);
+	request_peer(peers[id],request);
+
+	BANG_read_unlock(peers_lock);
+}
+
+void BANG_request_all(BANG_request request) {
+	unsigned int i = 0;
+
+	BANG_read_lock(peers_lock);
+
+	for (; i < current_peers; ++i) {
+		request_peer(peers[i],request);
+	}
+
+	BANG_read_unlock(peers_lock);
+}
+
+void BANG_com_init() {
+	BANG_install_sighandler(BANG_PEER_CONNECTED,&catch_add_peer);
+	BANG_install_sighandler(BANG_PEER_DISCONNECTED,&catch_remove_peer);
+	BANG_install_sighandler(BANG_REQUEST_ALL,&catch_request_all);
+	peers_lock = new_BANG_rw_syncro();
+}
+
+void BANG_com_close() {
+	/*
+	 * All of threads should of got hit by a global BANG_CLOSE_ALL
+	 * Should it be sent here?
+	 * Anyway, we'll just wait for each thread now
+	 */
+#ifdef BDEBUG_1
+	fprintf(stderr,"BANG com closing.\n");
+#endif
+	free_peer_set(peers);
+
+	unsigned int i = 0;
+	BANG_write_lock(peers_lock);
+
+	for (i = 0; i < current_peers; ++i) {
+		free_peer(peers[i]);
+	}
+
+	BANG_write_unlock(peers_lock);
+
+	free_BANG_rw_syncro(peers_lock);
+	keys = NULL;
+	peers = NULL;
+	current_peers = 0;
+	peer_count = 0;
+}
+
+/*
+ * HERE THERE BE DRAGONS!
+ *
+ * Or, actual peer logic starts here...
+ */
 
 static char peer_respond_hello(peer *self) {
 	unsigned char *version = (unsigned char*) extract_message(self,LENGTH_OF_VERSION);
@@ -402,60 +622,6 @@ static char read_module_message(peer *self) {
 	BANG_send_signal(BANG_RECEIVED_MODULE,&args,1);
 	free(args.args);
 	return 1;
-}
-
-void* BANG_read_peer_thread(void *self_info) {
-	peer *self = (peer*)self_info;
-
-	unsigned int *header;
-
-	char reading = 1;
-
-	while (reading) {
-		if ((header = (unsigned int*) extract_message(self,LENGTH_OF_HEADER)) != NULL) {
-			switch (*header) {
-				case BANG_HELLO:
-					reading = peer_respond_hello(self);
-					break;
-				case BANG_DEBUG_MESSAGE:
-					reading = read_debug_message(self);
-					break;
-				case BANG_SEND_MODULE:
-					/* I guess we'll take it... */
-					reading = read_module_message(self);
-					break;
-				case BANG_WANT_MODULE:
-					/* TODO: Someone is asking us if we want a module... send out a signal! */
-					break;
-				case BANG_REQUEST_MODULE:
-					/* TODO: This may be pretty hard to do. */
-					break;
-				case BANG_MISMATCH_VERSION:
-				case BANG_BYE:
-					reading = 0;
-					break;
-				default:
-					/**
-					 * Protocol mismatch, hang up.
-					 */
-#ifdef BDEBUG_1
-					fprintf(stderr,"Protocol mismatch on peer read thread %d, hanging up.\n",self->peer_id);
-#endif
-					reading = 0;
-					break;
-			}
-			free(header);
-		} else {
-			reading = 0;
-		}
-	}
-
-#ifdef BDEBUG_1
-	fprintf(stderr,"Peer read thread %d closing on self.\n",self->peer_id);
-#endif
-
-	read_peer_thread_self_close(self);
-	return NULL;
 }
 
 static unsigned int write_message(peer *self, void *message, unsigned int length) {
@@ -527,6 +693,60 @@ static void send_module_peer_request(peer *self, BANG_request request) {
 	free(request.request);
 }
 
+void* BANG_read_peer_thread(void *self_info) {
+	peer *self = (peer*)self_info;
+
+	unsigned int *header;
+
+	char reading = 1;
+
+	while (reading) {
+		if ((header = (unsigned int*) extract_message(self,LENGTH_OF_HEADER)) != NULL) {
+			switch (*header) {
+				case BANG_HELLO:
+					reading = peer_respond_hello(self);
+					break;
+				case BANG_DEBUG_MESSAGE:
+					reading = read_debug_message(self);
+					break;
+				case BANG_SEND_MODULE:
+					/* I guess we'll take it... */
+					reading = read_module_message(self);
+					break;
+				case BANG_WANT_MODULE:
+					/* TODO: Someone is asking us if we want a module... send out a signal! */
+					break;
+				case BANG_REQUEST_MODULE:
+					/* TODO: This may be pretty hard to do. */
+					break;
+				case BANG_MISMATCH_VERSION:
+				case BANG_BYE:
+					reading = 0;
+					break;
+				default:
+					/**
+					 * Protocol mismatch, hang up.
+					 */
+#ifdef BDEBUG_1
+					fprintf(stderr,"Protocol mismatch on peer read thread %d, hanging up.\n",self->peer_id);
+#endif
+					reading = 0;
+					break;
+			}
+			free(header);
+		} else {
+			reading = 0;
+		}
+	}
+
+#ifdef BDEBUG_1
+	fprintf(stderr,"Peer read thread %d closing on self.\n",self->peer_id);
+#endif
+
+	read_peer_thread_self_close(self);
+	return NULL;
+}
+
 void* BANG_write_peer_thread(void *self_info) {
 	peer *self = (peer*)self_info;
 	request_node *current;
@@ -585,219 +805,4 @@ void* BANG_write_peer_thread(void *self_info) {
 	fprintf(stderr,"Write thread peer with peer_id %d is closing itself.\n",self->peer_id);
 #endif
 	return NULL;
-}
-
-static void catch_add_peer(int signal, int num_sockets, void **socket) {
-	if (signal == BANG_PEER_CONNECTED) {
-		int **sock = (int**) socket;
-		int i = 0;
-		for (; i < num_sockets; ++i) {
-			BANG_add_peer(*(sock[i]));
-			free(sock[i]);
-		}
-		free(sock);
-	}
-}
-
-static void request_peer(peer *to_be_requested, BANG_request request) {
-	pthread_mutex_lock(&(to_be_requested->requests->lock));
-
-	request_node *temp = new_request_node();
-	temp->request = request;
-	append_request(&(to_be_requested->requests->head),temp);
-
-	pthread_mutex_unlock(&(to_be_requested->requests->lock));
-	sem_post(&(to_be_requested->requests->num_requests));
-}
-
-void BANG_request_all(BANG_request request) {
-	unsigned int i = 0;
-
-	BANG_read_lock(peers_lock);
-
-	for (; i < current_peers; ++i) {
-		request_peer(peers[i],request);
-	}
-
-	BANG_read_unlock(peers_lock);
-}
-
-static void catch_request_all(int signal, int num_requests, void **vrequest) {
-	if (signal == BANG_REQUEST_ALL) {
-		BANG_request **to_request  = (BANG_request**) vrequest;
-		int i = 0;
-		for (; i < num_requests; ++i) {
-			BANG_request_all(*(to_request[i]));
-			free(to_request[i]);
-		}
-		free(to_request);
-	}
-}
-
-void BANG_request_peer_id(int peer_id, BANG_request request) {
-	int id;
-
-	BANG_read_lock(peers_lock);
-
-	id = get_key_with_peer_id(peer_id);
-	request_peer(peers[id],request);
-
-	BANG_read_unlock(peers_lock);
-}
-
-static int intcmp(const void *i1, const void *i2) {
-	return *((int*) i1) - *((int*) i2);
-}
-
-static int get_key_with_peer_id(int peer_id) {
-	int pos = -1;
-
-	int *ptr = bsearch(&peer_id,keys,current_peers,sizeof(int),&intcmp);
-	if (ptr != NULL)
-		pos = keys - ptr;
-
-	return pos;
-}
-
-static peer* new_peer(int peer_id, int socket) {
-	peer *new;
-
-	new = (peer*) calloc(1,sizeof(peer));
-
-	new->peer_id = peer_id;
-	new->socket = socket;
-
-	new->requests = new_BANG_requests();
-
-	/* Set up the poll struct. */
-	new->pfd.fd = socket;
-	new->pfd.events = POLLIN  | POLLERR | POLLHUP | POLLNVAL;
-
-	return new;
-}
-
-static int add_peer_to_peers(peer *new) {
-	int current_key = ++current_peers;
-
-	keys = (int*) realloc(keys,current_peers * sizeof(int));
-	peers = (peer**) realloc(peers,current_peers * sizeof(peer*));
-
-	keys[current_key] = new->peer_id;
-	peers[current_key] = new;
-
-	return current_key;
-}
-
-void BANG_add_peer(int socket) {
-	BANG_write_lock(peers_lock);
-
-
-	int current_id = peer_count++;
-
-	peer *new = new_peer(current_id,socket);
-
-	int key = add_peer_to_peers(new);
-
-#ifdef BDEBUG_1
-	fprintf(stderr,"Threads being started at %d.\n",key);
-#endif
-
-	pthread_create(&(peers[key]->receive_thread),NULL,BANG_read_peer_thread,peers[key]);
-	pthread_create(&(peers[key]->send_thread),NULL,BANG_write_peer_thread,peers[key]);
-
-
-	BANG_write_unlock(peers_lock);
-	/**
-	 * Send out that we successfully started the peer threads.
-	 */
-	BANG_sigargs args;
-	args.args = calloc(1,sizeof(int));
-	*((int*)args.args) = current_id;
-	args.length = sizeof(int);
-
-	BANG_send_signal(BANG_PEER_ADDED,&args,1);
-
-	free(args.args);
-}
-
-static void catch_remove_peer(int signal, int num_peer_ids, void **peer_id) {
-	if (signal == BANG_PEER_DISCONNECTED) {
-		int **id = (int**) peer_id;
-		int i = 0;
-		for (; i < num_peer_ids; ++i) {
-			BANG_remove_peer(*(id[i]));
-			free(id[i]);
-		}
-		free(id);
-	}
-}
-
-void BANG_remove_peer(int peer_id) {
-	/*
-	 * this lock is needed when trying to change the
-	 * peers structure
-	 */
-#ifdef BDEBUG_1
-	fprintf(stderr,"Removing peer %d.\n",peer_id);
-#endif
-
-	BANG_write_lock(peers_lock);
-
-	int pos = get_key_with_peer_id(peer_id);
-	if (pos == -1) return;
-
-	free_peer(peers[pos]);
-	peers[pos] = NULL;
-
-	for (;((unsigned int)pos) < current_peers - 1; ++pos) {
-		peers[pos] = peers[pos + 1];
-		keys[pos] = keys[pos + 1];
-	}
-
-	--current_peers;
-
-
-	peers = (peer**) realloc(peers,current_peers * sizeof(peer*));
-	keys = (int*) realloc(keys,current_peers * sizeof(int));
-
-	BANG_write_unlock(peers_lock);
-
-	BANG_sigargs peer_send;
-	peer_send.args = calloc(1,sizeof(int));
-	*((int*)peer_send.args) = peer_id;
-	peer_send.length = sizeof(int);
-	BANG_send_signal(BANG_PEER_REMOVED,&peer_send,1);
-	free(peer_send.args);
-}
-
-void BANG_com_init() {
-	BANG_install_sighandler(BANG_PEER_CONNECTED,&catch_add_peer);
-	BANG_install_sighandler(BANG_PEER_DISCONNECTED,&catch_remove_peer);
-	BANG_install_sighandler(BANG_REQUEST_ALL,&catch_request_all);
-	peers_lock = new_BANG_rw_syncro();
-}
-
-void BANG_com_close() {
-	/*
-	 * All of threads should of got hit by a global BANG_CLOSE_ALL
-	 * Should it be sent here?
-	 * Anyway, we'll just wait for each thread now
-	 */
-#ifdef BDEBUG_1
-	fprintf(stderr,"BANG com closing.\n");
-#endif
-	unsigned int i = 0;
-	BANG_write_lock(peers_lock);
-
-	for (i = 0; i < current_peers; ++i) {
-		free_peer(peers[i]);
-	}
-
-	BANG_write_unlock(peers_lock);
-
-	free_BANG_rw_syncro(peers_lock);
-	keys = NULL;
-	peers = NULL;
-	current_peers = 0;
-	peer_count = 0;
 }

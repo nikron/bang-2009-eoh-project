@@ -86,6 +86,27 @@ typedef struct {
 } peer;
 
 /**
+ * A structure to access information about peers.  It's purpose is to have atmoic addition, removal,
+ * and lookup of peers.  Hopefully it should also have constant addition, removal, and lookup, but
+ * it currently has constant addition, linear removal, and log(n) lookup.
+ */
+typedef struct {
+	/**
+	 * A lock on peers structure and affiliate things.  It can have multiple readers,
+	 * but only one writer.
+	 */
+	BANG_rw_syncro *peers_lock;
+
+	unsigned int peer_count;
+	unsigned int current_peers;
+	size_t size;
+
+
+	peer **peers = NULL;
+	int *keys = NULL;
+} peer_set;
+
+/**
  * \brief Allocates and returns a new request node.
  */
 static request_node* new_request_node();
@@ -134,14 +155,23 @@ static peer* new_peer(int peer_id, int socket);
  */
 static void free_peer(peer *p);
 
+static peer_set* new_peer_set();
+
+static void free_peer_set();
+
 /**
- * \param new_peer A fully allocated and assemebled peer.
+ * \param peers The set to add the peer to.
+ * \param new_peer A peer to be added to the set.
  *
- * \return The place where the peer is located in the key array.
+ * \return The peer_id of the peer.
  *
  * \brief Adds new_peer to the peers array.
  */
-static int add_peer_to_peers(peer *new_peer);
+static int peer_set_add_peer(peer_set *peers, peer *new_peer);
+
+static void peer_set_remove_peer_by_id(peer_set *peers, int peer_id);
+
+static void peer_set_remover_peer(peer_set *peers, peer *dead_peer);
 
 /**
  * \param peer_id The id of a peer.
@@ -185,32 +215,7 @@ static BANG_requests* new_BANG_requests();
  */
 static void free_BANG_requests(BANG_requests *requests);
 
-/**
- * A lock on peers structure and affiliate things.  It can have multiple readers,
- * but only one writer.
- */
-static BANG_rw_syncro *peers_lock;
-
-/**
- * The total number of peers we get through the length of the program.
- */
-static unsigned int peer_count = 0;
-
-/**
- * The current number of peers connected to the program.
- */
-static unsigned int current_peers = 0;
-
-/**
- * Information and threads for each peer connected to the program
- */
-static peer **peers = NULL;
-
-/**
- * TODO: make this structure not take linear time when sending a request
- * to a specific peer
- */
-static int *keys = NULL;
+static peer_set peers;
 
 static request_node* new_request_node() {
 	request_node *new_node = (request_node*) calloc(1,sizeof(request_node));

@@ -43,7 +43,7 @@ void BANG_run_module(BANG_module *module);
  * \param auth The uuid of the authority saying a job is available.
  * \param peer The uuid of the peer being told that a job is available at auth.
  *
- * \brief A callback to tell peer with module that there is a job availabel held
+ * \brief A callback to tell peer with module that there is a job available held
  * by auth.
  */
 void BANG_module_callback_job_available(const BANG_module *module, uuid_t auth, uuid_t peer);
@@ -56,5 +56,4 @@ void BANG_module_callback_job_available(const BANG_module *module, uuid_t auth, 
  * \brief A callback to tell the authority that the uuid peer wants a job.
  */
 void BANG_module_callback_job_request(const BANG_module *module, uuid_t auth, uuid_t peer);
-
 #endif

@@ -48,7 +48,7 @@ static unsigned char* module_hash(char *path) {
 
 	unsigned char *md = (unsigned char*) calloc(SHA_DIGEST_LENGTH,sizeof(unsigned char));
 
-	static EVP_MD_CTX *ctx = NULL; 
+	static EVP_MD_CTX *ctx = NULL;
 	ctx = (ctx == NULL)  ? EVP_MD_CTX_create() : ctx;
 
 	EVP_MD_CTX_init(ctx);
@@ -83,7 +83,7 @@ static BANG_api* get_BANG_api() {
 	if (api == NULL) {
 		/*If we forget to do something in this function, this will force
 		 * the program to segfault when a module calls a function
-		 * we were susposed to give them. 
+		 * we were susposed to give them.
 		 * calloc sets everything to zero*/
 
 		/* This is memory will 'leak' we will let the OS clean it up, because
@@ -263,6 +263,23 @@ void* BANG_get_symbol(BANG_module *module, char *symbol) {
 }
 
 void BANG_module_callback_job_available(const BANG_module *module, uuid_t auth, uuid_t peer) {
+	assert(module != NULL);
+
+	/* Make sure they have the right module. */
+	if (uuid_compare(module->info->peers_info->uuids[module->info->my_id],auth) == 0) {
+
+		/* TODO: USE LOCKS! */
+		int i = 0;
+		for (i = 0; i < module->info->peers_info->peer_number; ++i) {
+			if (uuid_compare(module->info->peers_info->uuids[i],peer) == 0) {
+				module->callbacks->jobs_available(module->info,i);
+			}
+		}
+	}
+}
+
+
+void BANG_module_callback_job_request(const BANG_module *module, uuid_t auth, uuid_t peer) {
 	assert(module != NULL);
 
 	/* Make sure they have the right module. */

@@ -11,8 +11,7 @@
 #include"bang-utils.h"
 #include"bang-types.h"
 #include<poll.h>
-#include<pthread.h>
-#include<semaphore.h>
+#include<pthread.h> #include<semaphore.h>
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
@@ -86,6 +85,19 @@ typedef struct {
 } peer;
 
 /**
+ * \brief Allocates and returns a new request node.
+ */
+static request_node* new_request_node();
+
+/**
+ * \param head The head of the list to be freed.
+ *
+ * \brief Frees resources used by a request list started at
+ * head.
+ */
+static void free_request_list(request_node *head);
+
+/**
  * \return The head of the request node list starting at head.
  *
  * \brief Pops off the head of the linked list.
@@ -101,19 +113,6 @@ static request_node* pop_request(request_node **head);
 static void append_request(request_node **head, request_node *node);
 
 /**
- * \param head The head of the list to be freed.
- *
- * \brief Frees resources used by a request list started at
- * head.
- */
-static void free_request_list(request_node *head);
-
-/**
- * \brief Allocates and returns a new request node.
- */
-static request_node* new_request_node();
-
-/**
  * \param self The peer to be requested.
  * \param request Request to be given to the peer.
  *
@@ -122,21 +121,51 @@ static request_node* new_request_node();
 static void request_peer(peer *self, BANG_request request);
 
 /**
+ * \brief Allocates and returns a new peer.
+ */
+static peer* new_peer();
+
+/**
  * \brief Removes and frees a peer and its resources.
  */
 static void free_peer(peer *p);
 
 /**
- * \brief Allocates and returns a new peer.
- */
-static peer* new_peer();
-
-/*
- * \param requests The requests to be freed.
+ * \param new_peer A fully allocated and assemebled peer.
  *
- * \brief Frees a BANGRequests struct.
+ * \brief Adds new_peer to the peers array.
  */
-static void free_BANG_requests(BANG_requests *requests);
+static void add_peer_to_peers(peer *new_peer);
+
+/**
+ * \param peer_id The id of a peer.
+ *
+ * \brief Gets the location of the peer in the in
+ * the peers array.
+ */
+static int get_key_with_peer_id(int peer_id);
+
+/**
+ * \param self The peer to be closed.
+ *
+ * \brief A peer thread asks to close itself.
+ */
+static void read_peer_thread_self_close(peer *self);
+
+/**
+ * \param self The peer wanting to extract a message from the socket.
+ * \param length The length of the message to extract.
+ *
+ * \brief Extracts a message of length length.
+ */
+static void* extract_message(peer *self, unsigned int length);
+
+/**
+ * \param self The peer responding to BANG_HELLO.
+ *
+ * \brief Acts on an incoming BANG_HELLO.
+ */
+static char peer_respond_hello(peer *self);
 
 /*
  * \return Returns an initialized BANGRequest pointer.
@@ -144,11 +173,11 @@ static void free_BANG_requests(BANG_requests *requests);
 static BANG_requests* new_BANG_requests();
 
 /*
- * \param self The peer to be closed.
+ * \param requests The requests to be freed.
  *
- * \brief A peer thread asks to close itself.
+ * \brief Frees a BANGRequests struct.
  */
-static void read_peer_thread_self_close(peer *self);
+static void free_BANG_requests(BANG_requests *requests);
 
 /**
  * A lock on peers structure and affiliate things.  It can have multiple readers,
@@ -177,6 +206,42 @@ static peer **peers = NULL;
  */
 static int *keys = NULL;
 
+static request_node* new_request_node() {
+	request_node *new_node = (request_node*) calloc(1,sizeof(request_node));
+	new_node->next = NULL;
+	return new_node;
+}
+
+static void free_request_list(request_node *head) {
+	if (head == NULL) return;
+	if (head->next != NULL)
+		free_request_list(head->next);
+	free(head);
+}
+
+static request_node* pop_request(request_node  **head) {
+	request_node *temp = *head;
+	if (temp->next == NULL) {
+		*head = NULL;
+		return temp;
+
+	} else {
+		*head = temp->next;
+		temp->next = NULL;
+		return temp;
+	}
+}
+
+static void append_request(request_node **head, request_node *node) {
+	if (*head == NULL) {
+		*head = node;
+	} else {
+		request_node *cur;
+		for (cur = *head; cur->next != NULL; cur = cur->next);
+		cur->next = node;
+	}
+}
+
 static void free_peer(peer *p) {
 #ifdef BDEBUG_1
 	fprintf(stderr,"Freeing a peer with peer_id %d.\n",p->peer_id);
@@ -203,56 +268,6 @@ static void free_peer(peer *p) {
 	free(p);
 }
 
-static request_node* pop_request(request_node  **head) {
-	request_node *temp = *head;
-	if (temp->next == NULL) {
-		*head = NULL;
-		return temp;
-
-	} else {
-		*head = temp->next;
-		temp->next = NULL;
-		return temp;
-	}
-}
-
-static void append_request(request_node **head, request_node *node) {
-	if (*head == NULL) {
-		*head = node;
-	} else {
-		request_node *cur;
-		for (cur = *head; cur->next != NULL; cur = cur->next);
-		cur->next = node;
-	}
-}
-
-static void free_request_list(request_node *head) {
-	if (head == NULL) return;
-	if (head->next != NULL)
-		free_request_list(head->next);
-	free(head);
-}
-
-static request_node* new_request_node() {
-	request_node *new_node = (request_node*) calloc(1,sizeof(request_node));
-	new_node->next = NULL;
-	return new_node;
-}
-
-static BANG_requests* new_BANG_requests() {
-	BANG_requests *requests = (BANG_requests*) calloc(1,sizeof(BANG_requests));
-	requests->head = NULL;
-	pthread_mutex_init(&(requests->lock),NULL);
-	sem_init(&(requests->num_requests),0,0);
-	return requests;
-}
-
-static void free_BANG_requests(BANG_requests *requests) {
-	pthread_mutex_destroy(&(requests->lock));
-	sem_destroy(&(requests->num_requests));
-	free_request_list(requests->head);
-}
-
 static void read_peer_thread_self_close(peer *self) {
 	BANG_sigargs args;
 	args.args = calloc(1,sizeof(int));
@@ -267,13 +282,6 @@ static void read_peer_thread_self_close(peer *self) {
 	pthread_exit(NULL);
 }
 
-/**
- *
- * \param self The peer wanting to extract a message from the socket.
- * \param length The length of the message to extract.
- *
- * \brief Extracts a message of length length.
- */
 static void* extract_message(peer *self, unsigned int length) {
 	void *message = (char*) calloc(length,1);
 	int check_read;
@@ -314,6 +322,21 @@ static void* extract_message(peer *self, unsigned int length) {
 
 	return message;
 }
+
+static BANG_requests* new_BANG_requests() {
+	BANG_requests *requests = (BANG_requests*) calloc(1,sizeof(BANG_requests));
+	requests->head = NULL;
+	pthread_mutex_init(&(requests->lock),NULL);
+	sem_init(&(requests->num_requests),0,0);
+	return requests;
+}
+
+static void free_BANG_requests(BANG_requests *requests) {
+	pthread_mutex_destroy(&(requests->lock));
+	sem_destroy(&(requests->num_requests));
+	free_request_list(requests->head);
+}
+
 
 static char peer_respond_hello(peer *self) {
 	unsigned char *version = (unsigned char*) extract_message(self,LENGTH_OF_VERSION);
@@ -608,7 +631,7 @@ void BANG_request_peer_id(int peer_id, BANG_request request) {
 
 	BANG_read_lock(peers_lock);
 
-	id = BANG_get_key_with_peer_id(peer_id);
+	id = get_key_with_peer_id(peer_id);
 	request_peer(peers[id],request);
 
 	BANG_read_unlock(peers_lock);
@@ -618,15 +641,13 @@ static int intcmp(const void *i1, const void *i2) {
 	return *((int*) i1) - *((int*) i2);
 }
 
-int BANG_get_key_with_peer_id(int peer_id) {
+static int get_key_with_peer_id(int peer_id) {
 	int pos = -1;
-	BANG_read_lock(peers_lock);
 
 	int *ptr = bsearch(&peer_id,keys,current_peers,sizeof(int),&intcmp);
 	if (ptr != NULL)
 		pos = keys - ptr;
 
-	BANG_read_unlock(peers_lock);
 	return pos;
 }
 
@@ -696,7 +717,7 @@ void BANG_remove_peer(int peer_id) {
 
 	BANG_write_lock(peers_lock);
 
-	int pos = BANG_get_key_with_peer_id(peer_id);
+	int pos = get_key_with_peer_id(peer_id);
 	if (pos == -1) return;
 
 	free_peer(peers[pos]);

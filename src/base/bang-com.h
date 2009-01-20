@@ -79,12 +79,4 @@ void BANG_remove_peer(int peer_id);
  * be able to catch this, remember to use a signal.
  */
 void BANG_add_peer(int socket);
-
-/**
- * \param peer_id The id of the peer thread.
- *
- * \brief Gets the current key of the peer id (the place it is located in the keys array).
- * Note: This is should be an internal function.
- */
-int BANG_get_key_with_peer_id(int peer_id);
 #endif

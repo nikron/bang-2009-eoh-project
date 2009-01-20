@@ -11,7 +11,8 @@
 #include"bang-utils.h"
 #include"bang-types.h"
 #include<poll.h>
-#include<pthread.h> #include<semaphore.h>
+#include<pthread.h>
+#include<semaphore.h>
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
@@ -121,9 +122,12 @@ static void append_request(request_node **head, request_node *node);
 static void request_peer(peer *self, BANG_request request);
 
 /**
+ * \param peer_id Id to be used for the peer.
+ * \param socket Socket to be used for the peer.
+ *
  * \brief Allocates and returns a new peer.
  */
-static peer* new_peer();
+static peer* new_peer(int peer_id, int socket);
 
 /**
  * \brief Removes and frees a peer and its resources.
@@ -133,9 +137,11 @@ static void free_peer(peer *p);
 /**
  * \param new_peer A fully allocated and assemebled peer.
  *
+ * \return The place where the peer is located in the key array.
+ *
  * \brief Adds new_peer to the peers array.
  */
-static void add_peer_to_peers(peer *new_peer);
+static int add_peer_to_peers(peer *new_peer);
 
 /**
  * \param peer_id The id of a peer.
@@ -395,9 +401,6 @@ static char read_module_message(peer *self) {
 
 void* BANG_read_peer_thread(void *self_info) {
 	peer *self = (peer*)self_info;
-	memset(&(self->pfd),0,sizeof(struct pollfd));
-	self->pfd.fd = self->socket;
-	self->pfd.events = POLLIN  | POLLERR | POLLHUP | POLLNVAL;
 
 	unsigned int *header;
 
@@ -651,33 +654,51 @@ static int get_key_with_peer_id(int peer_id) {
 	return pos;
 }
 
-static peer* new_peer() {
+static peer* new_peer(int peer_id, int socket) {
 	peer *new;
+
 	new = (peer*) calloc(1,sizeof(peer));
+
+	new->peer_id = peer_id;
+	new->socket = socket;
+
 	new->requests = new_BANG_requests();
+
+	/* Set up the poll struct. */
+	new->pfd.fd = socket;
+	new->pfd.events = POLLIN  | POLLERR | POLLHUP | POLLNVAL;
+
 	return new;
+}
+
+static int add_peer_to_peers(peer *new) {
+	int current_key = ++current_peers;
+
+	keys = (int*) realloc(keys,current_peers * sizeof(int));
+	peers = (peer**) realloc(peers,current_peers * sizeof(peer*));
+
+	keys[current_key] = new->peer_id;
+	peers[current_key] = new;
+
+	return current_key;
 }
 
 void BANG_add_peer(int socket) {
 	BANG_write_lock(peers_lock);
 
-	++current_peers;
-	int current_key = current_peers - 1;
+
 	int current_id = peer_count++;
 
-	keys = (int*) realloc(keys,current_peers * sizeof(int));
-	keys[current_key] = current_id;
+	peer *new = new_peer(current_id,socket);
 
-	peers = (peer**) realloc(peers,current_peers * sizeof(peer*));
-	peers[current_key] = new_peer();
-	peers[current_key]->peer_id = current_id;
-	peers[current_key]->socket = socket;
+	int key = add_peer_to_peers(new);
 
 #ifdef BDEBUG_1
-	fprintf(stderr,"Threads being started at %d.\n",current_key);
+	fprintf(stderr,"Threads being started at %d.\n",key);
 #endif
-	pthread_create(&(peers[current_key]->receive_thread),NULL,BANG_read_peer_thread,peers[current_key]);
-	pthread_create(&(peers[current_key]->send_thread),NULL,BANG_write_peer_thread,peers[current_key]);
+
+	pthread_create(&(peers[key]->receive_thread),NULL,BANG_read_peer_thread,peers[key]);
+	pthread_create(&(peers[key]->send_thread),NULL,BANG_write_peer_thread,peers[key]);
 
 
 	BANG_write_unlock(peers_lock);

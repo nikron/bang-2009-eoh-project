@@ -188,6 +188,8 @@ static void peer_set_start_peer_by_id(peer_set *ps, int peer_id);
 
 static void peer_set_stop_peer_by_id(peer_set *ps, int peer_id);
 
+static peer* peer_set_get_peer(peer_set *ps, int peer_id);
+
 /**
  * \param self The peer to be closed.
  *
@@ -443,6 +445,20 @@ static void peer_set_stop_peer_by_id(peer_set *ps, int peer_id) {
 	BANG_read_unlock(ps->lck);
 }
 
+static peer* peer_set_get_peer(peer_set *ps, int peer_id) {
+	peer *ret_peer = NULL;
+
+	BANG_read_lock(ps->lck);
+
+	int key = internal_peer_set_get_key(ps, peer_id);
+	if (key != -1)
+		ret_peer = ps->peers[key];
+
+	BANG_read_unlock(ps->lck);
+
+	return ret_peer;
+}
+
 static void catch_add_peer(int signal, int num_sockets, void **socket) {
 	if (signal == BANG_PEER_CONNECTED) {
 		int **sock = (int**) socket;
@@ -518,26 +534,21 @@ void BANG_remove_peer(int peer_id) {
 }
 
 void BANG_request_peer_id(int peer_id, BANG_request request) {
-	int id;
-
-	BANG_read_lock(peers_lock);
-
-	id = get_key_with_peer_id(peer_id);
-	request_peer(peers[id],request);
-
-	BANG_read_unlock(peers_lock);
+	peer *to_be_requested = peer_set_get_peer(peers,peer_id);
+	request_peer(to_be_requested,request);
 }
 
 void BANG_request_all(BANG_request request) {
 	unsigned int i = 0;
 
-	BANG_read_lock(peers_lock);
+	/* TODO: Do this a better a way, have a peer set function? */
+	BANG_read_lock(peers->lck);
 
-	for (; i < current_peers; ++i) {
-		request_peer(peers[i],request);
+	for (; i < peers->current_peers; ++i) {
+		request_peer(peers->peers[i],request);
 	}
 
-	BANG_read_unlock(peers_lock);
+	BANG_read_unlock(peers->lck);
 }
 
 void BANG_com_init() {

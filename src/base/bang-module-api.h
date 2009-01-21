@@ -11,6 +11,7 @@
 #define __BANG_MODULE_API_H
 
 #include"bang-module-api.h"
+#include"bang-utils.h"
 #include<uuid/uuid.h>
 
 typedef struct {
@@ -43,6 +44,8 @@ typedef struct {
 	 * 0, but modules shouldn't depend on that.
 	 */
 	int my_id;
+
+	BANG_rw_syncro *lck;
 } BANG_module_info;
 
 /**

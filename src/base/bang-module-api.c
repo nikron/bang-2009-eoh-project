@@ -27,15 +27,21 @@ static void get_uuid_from_id(uuid_t uuid, int id, BANG_module_info *info);
 static uuid_t* get_valid_routes(BANG_module_info *info);
 
 static void get_uuid_from_id(uuid_t uuid, int id, BANG_module_info *info) {
+	BANG_read_lock(info->lck);
+
 	if (id < 0 || id > info->peers_info->peer_number ||
 		info->peers_info->validity[id] == 0) {
 		uuid_clear(uuid);
 	} else {
 		uuid_copy(uuid,info->peers_info->uuids[id]);
 	}
+
+	BANG_read_unlock(info->lck);
 }
 
 static uuid_t* get_valid_routes(BANG_module_info *info) {
+	BANG_read_lock(info->lck);
+
 	int i, size = 1;
 	uuid_t *valid_routes = calloc(size,sizeof(uuid_t));
 	for (i = 0; i < info->peers_info->peer_number; ++i) {
@@ -45,6 +51,8 @@ static uuid_t* get_valid_routes(BANG_module_info *info) {
 		}
 	}
 	uuid_clear(valid_routes[size]);
+
+	BANG_read_unlock(info->lck);
 
 	return valid_routes;
 }
@@ -64,6 +72,7 @@ void BANG_debug_on_all_peers(BANG_module_info *info, char *message) {
 	for (; !uuid_is_null(valid_routes[i]); ++i) {
 		BANG_route_send_message(valid_routes[i],message);
 	}
+
 }
 
 void BANG_get_me_peers(BANG_module_info *info) {
@@ -79,7 +88,6 @@ int BANG_number_of_active_peers(BANG_module_info *info) {
 	/* The way we store ids may change in the future, so this is a simple
 	 * wrapper function 
 	 *
-	 * TODO: Locks!
 	 */
 	return info->peers_info->peer_number;
 }

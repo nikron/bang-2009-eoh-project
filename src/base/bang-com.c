@@ -182,8 +182,6 @@ static int peer_set_create_peer(peer_set *ps, int socket);
 
 static void peer_set_remove_peer_by_id(peer_set *ps, int peer_id);
 
-static void peer_set_remove_peer(peer_set *ps, peer *dead_peer);
-
 static void peer_set_start_peer_by_id(peer_set *ps, int peer_id);
 
 static void peer_set_stop_peer_by_id(peer_set *ps, int peer_id);
@@ -204,6 +202,8 @@ static void read_peer_thread_self_close(peer *self);
  * \brief Extracts a message of length length.
  */
 static void* extract_message(peer *self, unsigned int length);
+
+static unsigned int write_message(peer *self, void *message, unsigned int length);
 
 /**
  * \param self The peer responding to BANG_HELLO.
@@ -684,14 +684,10 @@ static void send_module_peer_request(peer *self, BANG_request request) {
 
 static void read_peer_thread_self_close(peer *self) {
 	BANG_sigargs args;
-	args.args = calloc(1,sizeof(int));
-	*((int*)args.args) = self->peer_id;
+	args.args = &(self->peer_id);
 	args.length = sizeof(int);
 
-	BANG_read_lock(peers_lock);
 	BANG_send_signal(BANG_PEER_DISCONNECTED,&args,1);
-	free(args.args);
-	BANG_read_unlock(peers_lock);
 
 	pthread_exit(NULL);
 }

@@ -18,6 +18,16 @@ typedef struct {
 } BANG_rw_syncro;
 
 /**
+ * \param v1 A bang version.
+ * \param v2 Another bang version.
+ *
+ * \return A comparsion of the two versions.
+ *
+ * \brief Compares the two versions, 0 if equal, - if less than, + if greater than.
+ */ 
+int BANG_version_cmp(const unsigned char *v1, const unsigned char *v2);
+
+/**
  * \param m1 The first module name to compare.
  * \param m2 The second module name to compare.
  *

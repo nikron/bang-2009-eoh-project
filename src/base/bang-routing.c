@@ -12,6 +12,7 @@
 #include<uuid/uuid.h>
 
 #define DB_SCHEMA "CREATE TABLE mappings(route_uuid blob unique primary key, remote integer, peer_id int, module blob, name text, version blob)"
+#define DB_FILE ":memory:"
 #define REMOTE_ROUTE 2
 #define LOCAL_ROUTE 1
 
@@ -252,10 +253,10 @@ void BANG_route_close() {
 #endif
 	/* Keep the mappings database in memory. */
 #ifdef NEW_SQLITE
-	sqlite3_open_v2(":memory",&db,SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX,NULL);
+	sqlite3_open_v2(DB_FILE,&db,SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX,NULL);
 #else
 	/* Dcl needs to update their sqlite3 libraries =/ */
-	sqlite3_open(":memory",&db);
+	sqlite3_open(DB_FILE,&db);
 #endif
 
 	/*TODO: check for errors.

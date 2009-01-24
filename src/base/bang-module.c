@@ -262,18 +262,50 @@ void* BANG_get_symbol(BANG_module *module, char *symbol) {
 		return NULL;
 }
 
+static char check_if_uuid_valid(BANG_module_info *info, uuid_t uuid, int id) {
+	BANG_read_lock(info->lck);
+	char valid = uuid_compare(info->peers_info->uuids[id],uuid) == 0;
+	BANG_read_unlock(info->lck);
+	return valid;
+}
+
+static int get_id_from_uuid(BANG_module_info *info, uuid_t uuid) {
+	int i = 0;
+	BANG_read_lock(info->lck);
+
+	for (i = 0; i < info->peers_info->peer_number; ++i) {
+		if (uuid_compare(info->peers_info->uuids[i],uuid) == 0) {
+			BANG_read_unlock(info->lck);
+			return i;
+		}
+	}
+
+	BANG_read_unlock(info->lck);
+	return -1;
+}
+
+void BANG_module_callback_job(const BANG_module *module, uuid_t auth, uuid_t peer) {
+	assert(module != NULL);
+
+	/* Make sure they have the right module. */
+	if (check_if_uuid_valid(module->info,peer,module->info->my_id)) {
+
+		int id = get_id_from_uuid(module->info,auth);
+		if (id != -1) {
+			module->callbacks->jobs_available(module->info,id);
+		}
+	}
+}
+
 void BANG_module_callback_job_available(const BANG_module *module, uuid_t auth, uuid_t peer) {
 	assert(module != NULL);
 
 	/* Make sure they have the right module. */
-	if (uuid_compare(module->info->peers_info->uuids[module->info->my_id],auth) == 0) {
+	if (check_if_uuid_valid(module->info,peer,module->info->my_id)) {
 
-		/* TODO: USE LOCKS! */
-		int i = 0;
-		for (i = 0; i < module->info->peers_info->peer_number; ++i) {
-			if (uuid_compare(module->info->peers_info->uuids[i],peer) == 0) {
-				module->callbacks->jobs_available(module->info,i);
-			}
+		int id = get_id_from_uuid(module->info,auth);
+		if (id != -1) {
+			module->callbacks->jobs_available(module->info,id);
 		}
 	}
 }
@@ -282,15 +314,24 @@ void BANG_module_callback_job_available(const BANG_module *module, uuid_t auth, 
 void BANG_module_callback_job_request(const BANG_module *module, uuid_t auth, uuid_t peer) {
 	assert(module != NULL);
 
-	/* Make sure they have the right module. */
-	if (uuid_compare(module->info->peers_info->uuids[module->info->my_id],auth) == 0) {
+	if (check_if_uuid_valid(module->info,auth,module->info->my_id)) {
 
-		/* TODO: USE LOCKS! */
-		int i = 0;
-		for (i = 0; i < module->info->peers_info->peer_number; ++i) {
-			if (uuid_compare(module->info->peers_info->uuids[i],peer) == 0) {
-				module->callbacks->outgoing_job(module->info,i);
-			}
+		int id = get_id_from_uuid(module->info,peer);
+		if (id != -1) {
+			module->callbacks->outgoing_job(module->info,id);
+		}
+	}
+}
+
+
+void BANG_module_callback_job_finished(const BANG_module *module, uuid_t auth, uuid_t peer) {
+	assert(module != NULL);
+
+	if (check_if_uuid_valid(module->info,auth,module->info->my_id)) {
+
+		int id = get_id_from_uuid(module->info,peer);
+		if (id != -1) {
+			module->callbacks->outgoing_job(module->info,id);
 		}
 	}
 }

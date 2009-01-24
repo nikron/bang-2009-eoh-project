@@ -288,24 +288,6 @@ enum BANG_headers {
 	BANG_NUM_HEADERS
 };
 
-/**
- * A request to be made to a write peer thread.
- */
-typedef struct {
-	/**
-	 * The type of request.
-	 */
-	char type;
-	/**
-	 * Information part of the request.
-	 */
-	void *request;
-	/**
-	 * Length of the information.
-	 */
-	unsigned int length;
-} BANG_request;
-
 enum BANG_request_types {
 	/**
 	 * Ask for the peer to start a sign off.
@@ -363,6 +345,24 @@ enum BANG_request_types {
 	BANG_SEND_MODULE_REQUEST,
 	BANG_NUM_REQUESTS
 };
+
+/**
+ * A request to be made to a write peer thread.
+ */
+typedef struct {
+	/**
+	 * The type of request.
+	 */
+	enum BANG_request_types type;
+	/**
+	 * Information part of the request.
+	 */
+	void *request;
+	/**
+	 * Length of the information.
+	 */
+	unsigned int length;
+} BANG_request;
 
 
 /**

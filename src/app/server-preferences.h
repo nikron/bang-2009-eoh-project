@@ -1,3 +1,0 @@
-#ifndef __SERVER_PREFRENCES_H
-#define __SERVER_PREFRENCES_H
-#endif

@@ -263,13 +263,44 @@ void* BANG_get_symbol(BANG_module *module, char *symbol) {
 }
 
 static int BANG_module_info_peer_add(BANG_module_info *info, uuid_t new_peer) {
+	int i;
 	BANG_write_lock(info->lck);
+	for (i = 0; i < info->peers_info->peer_number; ++i) {
+		if (info->peers_info->validity[i] == 0) {
+			uuid_copy(info->peers_info->uuids[i],new_peer);
+			info->peers_info->validity[i] = 1;
+			BANG_write_unlock(info->lck);
+
+			return i;
+
+		}
+	}
 	BANG_write_unlock(info->lck);
+	
+	return -1;
 }
 
-static int BANG_module_info_peer_remove(BANG_module_info *info, uuid_t new_peer) {
+static int BANG_module_info_peer_remove(BANG_module_info *info, uuid_t old_peer) {
+	int i;
 	BANG_write_lock(info->lck);
+	for (i = 0; i < info->peers_info->peer_number; ++i) {
+		if (uuid_compare(info->peers_info->uuids[i],old_peer) == 0) {
+			info->peers_info->validity[i] = 0;
+			BANG_write_unlock(info->lck);
+
+			return i;
+		}
+	}
 	BANG_write_unlock(info->lck);
+	i = info->peers_info->peer_number++;
+
+	info->peers_info->uuids = realloc(info->peers_info->uuids,i * sizeof(uuid_t));
+	info->peers_info->validity = realloc(info->peers_info->validity,i * sizeof(char));
+
+	uuid_copy(info->peers_info->uuids[i - 1],old_peer);
+	info->peers_info->validity[i - 1] = 1;
+
+	return i - 1;
 }
 
 static char check_if_uuid_valid(BANG_module_info *info, uuid_t uuid, int id) {

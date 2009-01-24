@@ -1,0 +1,54 @@
+\documentclass{article}
+\usepackage{nikhil}
+\usepackage{graphics}
+\begin{document}
+\headers{!bang}{January 4, 2009}{Nikhil Bysani}
+\begin{center}
+The BANG protocol
+\end{center}
+\section{Abstract}
+The BANG protocol is to enable peers to share the load of a program.
+
+Note:  This document is very unfinished.
+
+\section{Basic}
+The protocol tries to be mostly stateless, but some messages can only be sent if the connection is in a certain state.
+At the very least each message is an unsigned  4 byte header.  Each header should signify something and possibly have some information
+attached to it.  Lengths should also be 4 unsigned bytes.
+
+\section{Headers}
+All headers are four unsigned bytes long.  They start each message.
+
+\begin{itemize}
+	\item
+		{ \bf BANG\_HELLO } \\
+		Level 0 Message \\
+		Can be responded to by a following BANG\_HELLO or BANG\_VERSION\_MISMATCH.
+		Second BANG\_HELLO puts the protocol into a level 1 state.
+	\item
+		{ \bf BANG\_DEBUG\_MESSAGE } \\
+		Level 1 Message \\
+		No response needed, prints out a message on the remote end.
+	\item
+		{ \bf BANG\_SEND\_MODULE } \\
+		Level 2 Message \\
+		Sent after a BANG\_REQUEST\_MODULE
+	\item
+		{ \bf BANG\_REQUEST\_MODULE } \\
+		Level 1 Message \\
+		Sent after a BANG\_WANT\_MODULE or sent independently.
+	\item
+		{ \bf BANG\_WANT\_MODULE }
+	\item
+		{ \bf BANG\_MISMATCH\_VERSION }
+	\item
+		{ \bf BANG\_BYE }
+\end{itemize}
+
+
+\section{Flowcharts}
+Here are the flowcharts on how each message should be followed. \\
+
+\includegraphics{level0.png}
+
+\end{document}

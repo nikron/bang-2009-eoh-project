@@ -13,9 +13,9 @@
 
 char BANG_module_name[5] = "test";
 unsigned char BANG_module_version[] = {0,0,1};
-BANG_api api;
+BANG_api *api;
 
-BANG_callbacks BANG_module_init(BANG_api get_api) {
+BANG_callbacks BANG_module_init(BANG_api *get_api) {
 	api = get_api;
 	fprintf(stderr,"TEST:\t Module with name %s is initializing with version %d.%d.%d.\n",
 			BANG_module_name,
@@ -27,11 +27,11 @@ BANG_callbacks BANG_module_init(BANG_api get_api) {
 	return callbacks;
 }
 
-void BANG_module_run() {
+void BANG_module_run(BANG_module_info *info) {
 	fprintf(stderr,"TEST:\t Module with name %s is running with version %d.%d.%d.\n",
 			BANG_module_name,
 			BANG_module_version[0],
 			BANG_module_version[1],
 			BANG_module_version[2]);
-	api.BANG_debug_on_all_peers("TESTING ON ALL PEERS!\n");
+	api->BANG_debug_on_all_peers(info,"TESTING ON ALL PEERS!\n");
 }

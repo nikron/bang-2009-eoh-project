@@ -82,12 +82,19 @@ int** BANG_not_route_get_peer_id(uuid_t *uuids);
 
 /**
  * \param peer A running module peer.
- * \param new_peer A new peer for the module peer
+ * \param new_peer A new peer for the module peer.
  *
  * \brief Tells the peer that a new peer is on their network.
  */
 void BANG_route_new_peer(uuid_t peer, uuid_t new_peer);
 
+
+/**
+ * \param peer A running module peer.
+ * \param old_peer A peer being remvoed from the network.
+ *
+ * \brief Tells the module that they are losing a peer.
+ */
 void BANG_route_remove_peer(uuid_t peer, uuid_t old_peer);
 
 /**

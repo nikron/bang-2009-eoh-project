@@ -27,7 +27,13 @@ static sqlite3_stmt* prepare_select_statement(uuid_t uuid) {
 	assert(!uuid_is_null(uuid));
 
 	sqlite3_stmt *get_peer_route;
+	/* God dammit, ews needs to update sqlite */
+#ifdef NEW_SQLITE
 	sqlite3_prepare_v2(db,"SELECT remote,module,peer_id,name,version FROM mappings WHERE ? = route_uuid",90,&get_peer_route,NULL);
+#else
+	sqlite3_prepare(db,"SELECT remote,module,peer_id,name,version FROM mappings WHERE ? = route_uuid",90,&get_peer_route,NULL);
+#endif
+
 	sqlite3_bind_blob(get_peer_route,1,uuid,sizeof(uuid_t),SQLITE_STATIC);
 
 	return get_peer_route;
@@ -168,13 +174,13 @@ int** BANG_not_route_get_peer_id(uuid_t *uuids) {
 		sqlite3_stmt *select_statement = prepare_select_statement(uuids[i]);
 		if (sqlite3_step(select_statement) == SQLITE_ROW &&
 			(peer_id = sqlite3_column_int(select_statement,3)) != -1) {
-			
+
 			peer_ids = realloc(peer_ids,j++ + 1 * sizeof(int));
 			peer_ids[j] = malloc(sizeof(int));
 			*(peer_ids[j]) = peer_id;
 		}
 	}
-	
+
 	peer_ids[j + 1] = NULL;
 
 	return peer_ids;
@@ -189,7 +195,11 @@ static void insert_route(uuid_t uuid, int remote, BANG_module *module, int peer_
 
 	sqlite3_stmt *insert;
 
+#ifdef NEW_SQLITE
 	sqlite3_prepare_v2(db,"INSERT INTO mappings (route_uuid,remote,module,peer_id,name,text) VALUES (?,?,?,?,?)",85,&insert,NULL);
+#else
+	sqlite3_prepare(db,"INSERT INTO mappings (route_uuid,remote,module,peer_id,name,text) VALUES (?,?,?,?,?)",85,&insert,NULL);
+#endif
 	sqlite3_bind_blob(insert,1,uuid,sizeof(uuid_t),SQLITE_STATIC);
 	sqlite3_bind_int(insert,2,remote);
 	sqlite3_bind_blob(insert,3,module,sizeof(BANG_module*),SQLITE_STATIC);
@@ -239,7 +249,13 @@ void BANG_route_close() {
 	fprintf(stderr,"BANG route closing.\n");
 #endif
 	/* Keep the mappings database in memory. */
+#ifdef NEW_SQLITE
 	sqlite3_open_v2(":memory",&db,SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX,NULL);
+#else
+	/* Dcl needs to update their sqlite3 libraries =/ */
+	sqlite3_open(":memory",&db);
+#endif
+
 	/*TODO: check for errors.
 	 * Create database.
 	 */

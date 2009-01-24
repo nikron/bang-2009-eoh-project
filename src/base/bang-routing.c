@@ -76,13 +76,12 @@ void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 		if (sqlite3_column_int(get_peer_route,1) == REMOTE_ROUTE) {
 
 			BANG_request request =
-				construct_request(BANG_SEND_JOB,
+				construct_request(BANG_SEND_JOB_REQUEST,
 					authority,
 					peer,
 					job->job_number,
 					job->length,
 					job->data);
-
 
 			BANG_request_peer_id(sqlite3_column_int(get_peer_route,3),request);
 
@@ -95,20 +94,30 @@ void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 }
 
 /* COPY AND PASTE FUNCTIONS... must find better way.. */
-void BANG_route_finished_job(uuid_t auth, uuid_t peer, BANG_job *job) {
-	assert(!uuid_is_null(auth));
+void BANG_route_finished_job(uuid_t authority, uuid_t peer, BANG_job *job) {
+	assert(!uuid_is_null(authority));
 	assert(job != NULL);
 
 	/* Get the information about the authority, because we are routing
 	 * to an authority. */
-	sqlite3_stmt *get_peer_route = prepare_select_statement(auth);
+	sqlite3_stmt *get_auth_route = prepare_select_statement(authority);
 
-	if (sqlite3_step(get_peer_route) == SQLITE_ROW) {
-		if (sqlite3_column_int(get_peer_route,1) == REMOTE_ROUTE) {
-			/* TODO: Make a request to remote peer. */
+	if (sqlite3_step(get_auth_route) == SQLITE_ROW) {
+		if (sqlite3_column_int(get_auth_route,1) == REMOTE_ROUTE) {
+			BANG_request request =
+				construct_request(
+					BANG_SEND_FINISHED_JOB_REQUEST,
+					authority,
+					peer,
+					job->job_number,
+					job->length,
+					job->data);
+
+			BANG_request_peer_id(sqlite3_column_int(get_auth_route,3),request);
+
 		} else {
-			const BANG_module *module = sqlite3_column_blob(get_peer_route,2);
-			BANG_module_callback_job_finished(module,job,auth,peer);
+			const BANG_module *module = sqlite3_column_blob(get_auth_route,2);
+			BANG_module_callback_job_finished(module,job,authority,peer);
 		}
 	}
 }
@@ -125,7 +134,10 @@ void BANG_route_request_job(uuid_t peer, uuid_t authority) {
 
 	if (sqlite3_step(get_auth_route) == SQLITE_ROW) {
 		if (sqlite3_column_int(get_auth_route,1) == REMOTE_ROUTE) {
-			/* TODO: Make a request to peer. */
+			BANG_request request;
+
+			BANG_request_peer_id(sqlite3_column_int(get_auth_route,3),request);
+
 		} else {
 			const BANG_module *module = sqlite3_column_blob(get_auth_route,2);
 			BANG_module_callback_job_request(module,authority,peer);
@@ -143,7 +155,10 @@ void BANG_route_assertion_of_authority(uuid_t authority, uuid_t peer) {
 
 	if (sqlite3_step(get_peer_route) == SQLITE_ROW) {
 		if (sqlite3_column_int(get_peer_route,1) == REMOTE_ROUTE) {
-			/* TODO: Make a request to peer. */
+			BANG_request request;
+
+			BANG_request_peer_id(sqlite3_column_int(get_peer_route,3),request);
+
 		} else {
 			const BANG_module *module = sqlite3_column_blob(get_peer_route,2);
 			BANG_module_callback_job_available(module,authority,peer);

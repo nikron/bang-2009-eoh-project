@@ -347,6 +347,12 @@ enum BANG_request_types {
 	 *
 	 */
 	BANG_SEND_JOB_REQUEST,
+	BANG_SEND_FINISHED_JOB_REQUEST,
+	/**
+	 * haha!
+	 */
+	BANG_SEND_REQUEST_JOB_REQUEST,
+	BANG_SEND_AVAILABLE_JOB_REQUEST,
 	/**
 	 * do:
 	 *	-send BANG_SEND_MODULE

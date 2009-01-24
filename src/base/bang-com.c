@@ -154,12 +154,29 @@ static peer* new_peer(int peer_id, int socket);
  */
 static void free_peer(peer *p);
 
+/**
+ * \param p The peer to stop.
+ *
+ * \brief Stops a peer's thread.  Note:  This
+ * will most likely make the remote end hang up.
+ */
 static void peer_stop(peer *p);
 
+/**
+ * \param p The peer to start.
+ *
+ * Starts a peer's threads.
+ */
 static void peer_start(peer *p);
 
+/**
+ * \return A new and allocated peer_set.
+ */
 static peer_set* new_peer_set();
 
+/**
+ * \brief Frees and dealloctes the peer set.
+ */
 static void free_peer_set();
 
 /**
@@ -180,12 +197,38 @@ static int internal_peer_set_get_key(peer_set *ps, int peer_id);
  */
 static int peer_set_create_peer(peer_set *ps, int socket);
 
+/**
+ * \param ps The peer set to remove an peer from.
+ * \param peer_id The peer to remove from the peer_set.
+ *
+ * \brief Removes peer_id from ps if it exisits.
+ */
 static void peer_set_remove_peer_by_id(peer_set *ps, int peer_id);
 
+/**
+ * \param ps The peer set with peer peer_id
+ * \param peer_id A valid peer_id in ps
+ *
+ * \brief Calls peer_start on the peer peer_id.
+ */
 static void peer_set_start_peer_by_id(peer_set *ps, int peer_id);
 
+/**
+ * \param ps The peer set with peer peer_id
+ * \param peer_id A valid peer_id in ps
+ *
+ * \brief Calls peer_stop on the peer peer_id.
+ */
 static void peer_set_stop_peer_by_id(peer_set *ps, int peer_id);
 
+/**
+ * \param ps The peer set with peer peer_id
+ * \param peer_id A valid peer_id in ps
+ *
+ * \return Gets the peer peer_id from ps.
+ *
+ * \brief Gets the peer peer_id from ps.
+ */
 static peer* peer_set_get_peer(peer_set *ps, int peer_id);
 
 /**

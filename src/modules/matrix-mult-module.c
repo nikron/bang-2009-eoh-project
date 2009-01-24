@@ -81,21 +81,21 @@ static int *jobs = NULL;
 static int current = -1;
 static int jobs_being_worked_on = -1;
 
-static BANG_api api;
+static BANG_api *api;
 
 static double multiply_row(double *column, double *row, unsigned int length);
 
-static void jobs_done_callback(BANG_job *job);
+static void jobs_done_callback(BANG_module_info *info, BANG_job *job);
 
-static void job_incoming_callback(BANG_job *job);
+static void job_incoming_callback(BANG_module_info *info, BANG_job *job);
 
-static void job_outgoing_callback(int id);
+static void job_outgoing_callback(BANG_module_info *info, int id);
 
-static void jobs_available_callback(int id);
+static void jobs_available_callback(BANG_module_info *info, int id);
 
-static void peer_added_callback(int id);
+static void peer_added_callback(BANG_module_info *info, int id);
 
-static void peer_removed_callback(int id);
+static void peer_removed_callback(BANG_module_info *info, int id);
 
 static BANG_job* new_BANG_job();
 
@@ -119,7 +119,7 @@ static matrix* new_matrix_with_dimensions(int width, int height, GIOChannel *fd)
 
 static void free_matrix(matrix *mat);
 
-static void *read_in_row(matrix *mat, unsigned int row);
+static matrix* read_in_row(matrix *mat, unsigned int row);
 
 static double* get_row_matrix(matrix *mat, unsigned int row);
 
@@ -141,13 +141,13 @@ static matrix* new_matrix(GIOChannel *fd) {
 }
 
 static void matrix_set_dimensions(matrix *mat, int width, int height) {
-	int i, j;
-	gchar *buf;
+	int i;
+	/* gchar *buf; */
 	GError *err;
 
 	mat->width = width;
 	mat->height = height;
-	char reading;
+	/* char reading; */
 
 	if (mat->matrix != NULL)
 		g_free(mat->matrix);
@@ -161,8 +161,8 @@ static void matrix_set_dimensions(matrix *mat, int width, int height) {
 	}
 }
 
-static void read_in_row(matrix *mat, unsigned int row) {
-	mat->matrix[row] = g_malloc(mat->with * sizeof(double));
+static matrix* read_in_row(matrix *mat, unsigned int row) {
+	mat->matrix[row] = g_malloc(mat->width * sizeof(double));
 	/* TODO: Actually read in!*/
 	return mat;
 }
@@ -285,14 +285,17 @@ static void set_cell_matrix_with_job(BANG_job *job) {
 	}
 }
 
-static void jobs_done_callback(BANG_job *job) {
+static void jobs_done_callback(BANG_module_info *info, BANG_job *job) {
 	if (jobs[job->job_number] != JOB_DONE) {
 		jobs[job->job_number] = JOB_DONE;
 		set_cell_matrix_with_job(job);
 	}
+	/* suppress compiler warning
+	 * TODO: find a better way */
+	info = NULL;
 }
 
-static void job_incoming_callback(BANG_job *job) {
+static void job_incoming_callback(BANG_module_info *info, BANG_job *job) {
 	double *result = g_malloc(sizeof(double));
 	*result = multiply_row_using_job(extract_multi_job(job));
 	free(job->data);
@@ -300,27 +303,29 @@ static void job_incoming_callback(BANG_job *job) {
 	/* This is pretty flimsy, but I'm pretty sure that double doesn't
 	 * change size across platforms. */
 	job->length = sizeof(double);
-	api.BANG_finished_request(job);
+	api->BANG_finished_request(info,job);
 }
 
-static void job_outgoing_callback(int peer) {
+static void job_outgoing_callback(BANG_module_info *info, int peer) {
 	BANG_job *job = new_BANG_job(peer);
-	api.BANG_send_job(job);
+	api->BANG_send_job(info,job);
 }
 
-static void jobs_available_callback(int id) {
+static void jobs_available_callback(BANG_module_info *info, int id) {
 	/* We'll accept all incoming jobs, and tell them to use the callback. */
-	api.BANG_request_job(id,0);
+	api->BANG_request_job(info,id);
 }
 
-static void peer_added_callback(int id) {
+static void peer_added_callback(BANG_module_info *info, int id) {
 	if (jobs) {
-		api.BANG_assert_authority_to_peer(my_id,id);
+		api->BANG_assert_authority_to_peer(info,my_id,id);
 	}
 }
 
-static void peer_removed_callback(int id) {
+static void peer_removed_callback(BANG_module_info *info, int id) {
 	free_jobs_held_by(id);
+	/* SUPPRESS WARNINGS OH GOD I FAIL. */
+	info = NULL;
 }
 
 static double multiply_row(double *row, double *column, unsigned int length) {
@@ -418,7 +423,8 @@ static void matrices_do_multiply(GtkButton *button, gpointer d) {
 		jobs = g_malloc(matrices[PRODUCT_MATRIX]->height * matrices[PRODUCT_MATRIX]->width * sizeof(int));
 		current = 0;
 
-		api.BANG_assert_authority(my_id);
+		/* api->BANG_assert_authority(my_id);
+		 * TODO: Need to this on how this will work. */
 	}
 }
 
@@ -492,7 +498,7 @@ void GUI_init(GtkWidget **page, GtkWidget **page_label) {
 }
 
 
-BANG_callbacks BANG_module_init(BANG_api get_api) {
+BANG_callbacks BANG_module_init(BANG_api *get_api) {
 	api = get_api;
 
 	/*TODO: Make callbacks and finish this */
@@ -507,9 +513,9 @@ BANG_callbacks BANG_module_init(BANG_api get_api) {
 	return callbacks;
 }
 
-void BANG_module_run() {
+void BANG_module_run(BANG_module_info *info) {
 	/* This should not change, however ids are only avialable when the program is run. */
-	my_id = api.BANG_get_my_id();
+	my_id = api->BANG_get_my_id(info);
 
 	gtk_widget_show_all(window);
 	gtk_widget_show(label);

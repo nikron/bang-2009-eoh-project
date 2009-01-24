@@ -20,10 +20,14 @@
  * \param uuid The place the uuid is placed.
  *
  * \brief Gets a uuid from the info, or puts NULL there
- * TODO: Use locks!
  */
 static void get_uuid_from_id(uuid_t uuid, int id, BANG_module_info *info);
 
+/**
+ * \param info The info about a module.
+ *
+ * \brief Gets a list of valid uuid's from the information.
+ */
 static uuid_t* get_valid_routes(BANG_module_info *info);
 
 static void get_uuid_from_id(uuid_t uuid, int id, BANG_module_info *info) {
@@ -57,11 +61,6 @@ static uuid_t* get_valid_routes(BANG_module_info *info) {
 	return valid_routes;
 }
 
-/* TODO: Implement this.  Well, this is basically what are our app is all about. 
- * TODO: LOCKS
- *
- * Note: This is no longer what out app is about, I added another layer of indirection.
- */
 void BANG_debug_on_all_peers(BANG_module_info *info, char *message) {
 	/* The first slot will be us, so skip that. */
 	fprintf(stderr,"%s",message);
@@ -75,6 +74,7 @@ void BANG_debug_on_all_peers(BANG_module_info *info, char *message) {
 
 }
 
+/* TODO: Request something... */
 void BANG_get_me_peers(BANG_module_info *info) {
 	/* This does not use routing...! */
 	uuid_t *valid_routes = get_valid_routes(info);
@@ -87,9 +87,18 @@ void BANG_get_me_peers(BANG_module_info *info) {
 int BANG_number_of_active_peers(BANG_module_info *info) {
 	/* The way we store ids may change in the future, so this is a simple
 	 * wrapper function 
-	 *
 	 */
-	return info->peers_info->peer_number;
+	int i = 0,j = 0;
+
+	BANG_read_lock(info->lck);
+	for (; i < info->peers_info->peers_number; ++i) {
+		if (info->peers_info->validity[i])
+			++j;
+	}
+
+	BANG_read_lock(info->lck);
+
+	return j;
 }
 
 int BANG_get_my_id(BANG_module_info *info) {

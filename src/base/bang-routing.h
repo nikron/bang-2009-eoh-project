@@ -88,7 +88,7 @@ int** BANG_not_route_get_peer_id(uuid_t *uuids);
  */
 void BANG_route_new_peer(uuid_t peer, uuid_t new_peer);
 
-void BANG_route_remove_peer(uuid_t peer, uuid_t new_peer);
+void BANG_route_remove_peer(uuid_t peer, uuid_t old_peer);
 
 /**
  * \param module The module to register with the uuid.

@@ -159,9 +159,9 @@ void BANG_route_new_peer(uuid_t peer, uuid_t new_peer) {
 	}
 }
 
-void BANG_route_remove_peer(uuid_t peer, uuid_t new_peer) {
+void BANG_route_remove_peer(uuid_t peer, uuid_t old_peer) {
 	assert(!uuid_is_null(peer));
-	assert(!uuid_is_null(new_peer));
+	assert(!uuid_is_null(old_peer));
 
 	sqlite3_stmt *get_peer_route = prepare_select_statement(peer);
 
@@ -171,7 +171,7 @@ void BANG_route_remove_peer(uuid_t peer, uuid_t new_peer) {
 			 * Not sure how we forward this... */
 		} else {
 			const BANG_module *module = sqlite3_column_blob(get_peer_route,2);
-			BANG_module_remove_peer(module,peer,new_peer);
+			BANG_module_remove_peer(module,peer,old_peer);
 		}
 	}
 }

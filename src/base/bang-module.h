@@ -63,5 +63,5 @@ void BANG_module_callback_job_finished(const BANG_module *module, uuid_t auth, u
 
 void BANG_module_new_peer(const BANG_module *module,uuid_t peer,uuid_t new_peer);
 
-void BANG_module_remove_peer(const BANG_module *module,uuid_t peer,uuid_t new_peer);
+void BANG_module_remove_peer(const BANG_module *module,uuid_t peer,uuid_t old_peer);
 #endif

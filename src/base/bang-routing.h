@@ -81,6 +81,16 @@ int BANG_route_get_peer_id(uuid_t uuid);
 int** BANG_not_route_get_peer_id(uuid_t *uuids);
 
 /**
+ * \param peer A running module peer.
+ * \param new_peer A new peer for the module peer
+ *
+ * \brief Tells the peer that a new peer is on their network.
+ */
+void BANG_route_new_peer(uuid_t peer, uuid_t new_peer);
+
+void BANG_route_remove_peer(uuid_t peer, uuid_t new_peer);
+
+/**
  * \param module The module to register with the uuid.
  *
  * \brief Registers a module at a uuid and returns that

@@ -142,6 +142,39 @@ void BANG_route_assertion_of_authority(uuid_t authority, uuid_t peer) {
 	}
 }
 
+void BANG_route_new_peer(uuid_t peer, uuid_t new_peer) {
+	assert(!uuid_is_null(peer));
+	assert(!uuid_is_null(new_peer));
+
+	sqlite3_stmt *get_peer_route = prepare_select_statement(peer);
+
+	if (sqlite3_step(get_peer_route) == SQLITE_ROW) {
+		if (sqlite3_column_int(get_peer_route,1) == REMOTE_ROUTE) {
+			/* TODO: Make a request to peer.
+			 * Not sure how we forward this... */
+		} else {
+			const BANG_module *module = sqlite3_column_blob(get_peer_route,2);
+			BANG_module_new_peer(module,peer,new_peer);
+		}
+	}
+}
+
+void BANG_route_remove_peer(uuid_t peer, uuid_t new_peer) {
+	assert(!uuid_is_null(peer));
+	assert(!uuid_is_null(new_peer));
+
+	sqlite3_stmt *get_peer_route = prepare_select_statement(peer);
+
+	if (sqlite3_step(get_peer_route) == SQLITE_ROW) {
+		if (sqlite3_column_int(get_peer_route,1) == REMOTE_ROUTE) {
+			/* TODO: Make a request to peer.
+			 * Not sure how we forward this... */
+		} else {
+			const BANG_module *module = sqlite3_column_blob(get_peer_route,2);
+			BANG_module_remove_peer(module,peer,new_peer);
+		}
+	}
+}
 
 void BANG_route_send_message(uuid_t uuid, char *message) {
 	assert(!uuid_is_null(uuid));
@@ -168,7 +201,6 @@ int BANG_route_get_peer_id(uuid_t uuid) {
 
 	if (sqlite3_step(get_peer_route) == SQLITE_ROW) {
 		if (sqlite3_column_int(get_peer_route,1) == REMOTE_ROUTE) {
-			/* TODO: Make a request to peer. */
 			return sqlite3_column_int(get_peer_route,3);
 		}
 	}

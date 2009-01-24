@@ -31,12 +31,12 @@ void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job);
 void BANG_route_job_to_uuids(uuid_t authority, uuid_t *peers, BANG_job *job);
 
 /**
- * \param uuid The route to send a finished job through.
+ * \param auth The route to send a finished job through.
  * \param job The finished job to route.
  *
  * \brief Routes a finished job through a route.
  */
-void BANG_route_finished_job(uuid_t uuid, BANG_job *job);
+void BANG_route_finished_job(uuid_t auth, uuid_t peer, BANG_job *job);
 
 /**
  * \param uuid The route to request a job from.

@@ -142,11 +142,12 @@ void BANG_request_job(BANG_module_info *info, int id) {
 }
 
 void BANG_finished_request(BANG_module_info *info, BANG_job *job) {
-	uuid_t route;
-	get_uuid_from_id(route,job->authority,info);
+	uuid_t auth,peer;
+	get_uuid_from_id(auth,job->authority,info);
+	get_uuid_from_id(peer,job->peer,info);
 
-	if (!uuid_is_null(route)) {
-		BANG_route_finished_job(route,job);
+	if (!uuid_is_null(auth)) {
+		BANG_route_finished_job(auth,peer,job);
 	}
 }
 

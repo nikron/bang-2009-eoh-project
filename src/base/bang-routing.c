@@ -45,11 +45,15 @@ void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 	assert(!uuid_is_null(peer));
 	assert(job != NULL);
 
+	/* Get the information about the peer, because we are routing to
+	 * a peer. */
 	sqlite3_stmt *get_peer_route = prepare_select_statement(peer);
 
 	if (sqlite3_step(get_peer_route) == SQLITE_ROW) {
 		if (sqlite3_column_int(get_peer_route,1) == REMOTE_ROUTE) {
-			/* TODO: Make a request to peer. */
+			/* TODO: Make a request to peer.
+			 * Make a non-shitty request.
+			 * */
 			BANG_request request;
 			request.type = BANG_SEND_JOB_REQUEST;
 			/* We are being a little presumptuous, and constructing the actual message
@@ -75,25 +79,27 @@ void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 
 
 		} else {
-			/* const BANG_module *module =  */sqlite3_column_blob(get_peer_route,2);
-			/* TODO: Callback peer with job */
+			const BANG_module *module = sqlite3_column_blob(get_peer_route,2);
+			BANG_module_callback_job(module,authority,peer);
 		}
 	}
 }
 
 /* COPY AND PASTE FUNCTIONS... must find better way.. */
-void BANG_route_finished_job(uuid_t uuid, BANG_job *job) {
-	assert(!uuid_is_null(uuid));
+void BANG_route_finished_job(uuid_t auth, uuid_t peer, BANG_job *job) {
+	assert(!uuid_is_null(auth));
 	assert(job != NULL);
 
-	sqlite3_stmt *get_peer_route = prepare_select_statement(uuid);
+	/* Get the information about the authority, because we are routing
+	 * to an authority. */
+	sqlite3_stmt *get_peer_route = prepare_select_statement(auth);
 
 	if (sqlite3_step(get_peer_route) == SQLITE_ROW) {
 		if (sqlite3_column_int(get_peer_route,1) == REMOTE_ROUTE) {
 			/* TODO: Make a request to remote peer. */
 		} else {
-			/* const BANG_module *module = */sqlite3_column_blob(get_peer_route,2);
-			/* TODO: Callback local peer with job */
+			const BANG_module *module = sqlite3_column_blob(get_peer_route,2);
+			BANG_module_callback_job_finished(module,auth,peer);
 		}
 	}
 }
@@ -104,6 +110,8 @@ void BANG_route_request_job(uuid_t peer, uuid_t authority) {
 	 * authority to give us a job.
 	 */
 
+	/* Get the information about the authority, because we are routing
+	 * to an authority. */
 	sqlite3_stmt *get_auth_route = prepare_select_statement(authority);
 
 	if (sqlite3_step(get_auth_route) == SQLITE_ROW) {
@@ -120,6 +128,8 @@ void BANG_route_assertion_of_authority(uuid_t authority, uuid_t peer) {
 	assert(!uuid_is_null(authority));
 	assert(!uuid_is_null(peer));
 
+	/* Get the information about the peer, because we are routing
+	 * to an authority. */
 	sqlite3_stmt *get_peer_route = prepare_select_statement(peer);
 
 	if (sqlite3_step(get_peer_route) == SQLITE_ROW) {

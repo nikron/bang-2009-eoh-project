@@ -503,10 +503,10 @@ BANG_callbacks BANG_module_init(BANG_api *get_api) {
 
 	/*TODO: Make callbacks and finish this */
 	BANG_callbacks callbacks;
-	callbacks.jobs_done = &jobs_done_callback;
+	callbacks.job_done = &jobs_done_callback;
 	callbacks.jobs_available = &jobs_available_callback;
 	callbacks.incoming_job = &job_incoming_callback;
-	callbacks.outgoing_job = &job_outgoing_callback;
+	callbacks.outgoing_jobs = &job_outgoing_callback;
 	callbacks.peer_added = &peer_added_callback;
 	callbacks.peer_removed = &peer_removed_callback;
 

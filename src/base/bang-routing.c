@@ -80,7 +80,7 @@ void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 
 		} else {
 			const BANG_module *module = sqlite3_column_blob(get_peer_route,2);
-			BANG_module_callback_job(module,authority,peer);
+			BANG_module_callback_job(module,job,authority,peer);
 		}
 	}
 }
@@ -99,7 +99,7 @@ void BANG_route_finished_job(uuid_t auth, uuid_t peer, BANG_job *job) {
 			/* TODO: Make a request to remote peer. */
 		} else {
 			const BANG_module *module = sqlite3_column_blob(get_peer_route,2);
-			BANG_module_callback_job_finished(module,auth,peer);
+			BANG_module_callback_job_finished(module,job,auth,peer);
 		}
 	}
 }

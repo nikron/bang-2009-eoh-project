@@ -26,6 +26,8 @@ static void get_uuid_from_id(uuid_t uuid, int id, BANG_module_info *info);
 /**
  * \param info The info about a module.
  *
+ * \return A null terminated list of uuids.
+ *
  * \brief Gets a list of valid uuid's from the information.
  */
 static uuid_t* get_valid_routes(BANG_module_info *info);
@@ -91,7 +93,7 @@ int BANG_number_of_active_peers(BANG_module_info *info) {
 	int i = 0,j = 0;
 
 	BANG_read_lock(info->lck);
-	for (; i < info->peers_info->peers_number; ++i) {
+	for (; i < info->peers_info->peer_number; ++i) {
 		if (info->peers_info->validity[i])
 			++j;
 	}

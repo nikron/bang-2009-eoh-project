@@ -99,12 +99,12 @@ typedef struct {
 	 * Callback for when a finished job is sent to you.
 	 * \param BANG_job* The job that has been finished.
 	 */
-	void (*jobs_done) (BANG_module_info*, BANG_job*);
+	void (*job_done) (BANG_module_info*, BANG_job*);
 	/**
 	 * Callback for when a peer requests you a job from you.
 	 * \param int The id of peer requesting a job.
 	 */
-	void (*outgoing_job) (BANG_module_info*, int);
+	void (*outgoing_jobs) (BANG_module_info*, int);
 	/**
 	 * Callback for when a job is sent to you.
 	 * \param BANG_job* the job that is sent to you.

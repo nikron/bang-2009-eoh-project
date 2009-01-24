@@ -325,15 +325,17 @@ static int get_id_from_uuid(BANG_module_info *info, uuid_t uuid) {
 	return -1;
 }
 
-void BANG_module_callback_job(const BANG_module *module, uuid_t auth, uuid_t peer) {
+void BANG_module_callback_job(const BANG_module *module, BANG_job *job, uuid_t auth, uuid_t peer) {
 	assert(module != NULL);
 
 	/* Make sure they have the right module. */
 	if (check_if_uuid_valid(module->info,peer,module->info->my_id)) {
+		job->peer = module->info->my_id;
 
 		int id = get_id_from_uuid(module->info,auth);
 		if (id != -1) {
-			module->callbacks->jobs_available(module->info,id);
+			job->authority = id;
+			module->callbacks->incoming_job(module->info,job);
 		}
 	}
 }
@@ -359,20 +361,22 @@ void BANG_module_callback_job_request(const BANG_module *module, uuid_t auth, uu
 
 		int id = get_id_from_uuid(module->info,peer);
 		if (id != -1) {
-			module->callbacks->outgoing_job(module->info,id);
+			module->callbacks->outgoing_jobs(module->info,id);
 		}
 	}
 }
 
 
-void BANG_module_callback_job_finished(const BANG_module *module, uuid_t auth, uuid_t peer) {
+void BANG_module_callback_job_finished(const BANG_module *module, BANG_job *job, uuid_t auth, uuid_t peer) {
 	assert(module != NULL);
 
 	if (check_if_uuid_valid(module->info,auth,module->info->my_id)) {
+		job->authority = module->info->my_id;
 
 		int id = get_id_from_uuid(module->info,peer);
 		if (id != -1) {
-			module->callbacks->outgoing_job(module->info,id);
+			job->peer = id;
+			module->callbacks->job_done(module->info,job);
 		}
 	}
 }

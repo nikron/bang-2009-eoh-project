@@ -39,7 +39,7 @@ ASRC=src/app/server-preferences$(SRCEXT) \
 LIBRARIES=libbang.so $(MODULES)
 MODULES=test-module.so matrix-mult-module.so
 
-.PHONY: doc modules
+.PHONY: doc modules commit
 
 all: $(EXENAME) $(LIBRARIES)
 
@@ -69,3 +69,8 @@ doc:
 clean:
 	rm -f $(EXENAME) $(LOBJS) $(AOBJS) $(LIBRARIES)
 	rm -Rf doc/dox
+
+commit:
+	git commit -a
+	git svn dcommit
+	git push

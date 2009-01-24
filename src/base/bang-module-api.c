@@ -83,6 +83,8 @@ void BANG_get_me_peers(BANG_module_info *info) {
 
 	/*int **peers_to_bug =*/ BANG_not_route_get_peer_id(valid_routes);
 
+	/*BANG_request req;*/
+
 	free(valid_routes);
 }
 

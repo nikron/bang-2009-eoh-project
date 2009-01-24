@@ -103,6 +103,10 @@ enum BANG_signals {
 	BANG_BIND_SUC = 0,
 	/**
 	 * A peer has been added and is now in active status.
+	 *
+	 * arguement:
+	 * int number of ids
+	 * **int (null terminated peer ids)
 	 */
 	BANG_PEER_ADDED,
 	/**

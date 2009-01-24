@@ -2,6 +2,7 @@
 #include"bang-routing.h"
 #include"bang-module.h"
 #include"bang-module-api.h"
+#include"bang-signals.h"
 #include"bang-types.h"
 #include<assert.h>
 #include<stdio.h>
@@ -11,8 +12,11 @@
 #include<sqlite3.h>
 #include<uuid/uuid.h>
 
-#define DB_SCHEMA "CREATE TABLE mappings(route_uuid blob unique primary key, remote integer, peer_id int, module blob, name text, version blob)"
-#define INSERT_STATEMENT "INSERT INTO mappings (route_uuid,remote,module,peer_id,name,text) VALUES (?,?,?,?,?)"
+#define CREATE_MAPPINGS "CREATE TABLE mappings(route_uuid blob unique primary key, remote integer, peer_id int, module blob, name text, version blob)"
+#define CREATE_PEER_LIST "CREATE TABLE peers(id int)"
+#define INSERT_STATEMENT "INSERT INTO mappings(route_uuid,remote,module,peer_id,name,text) VALUES (?,?,?,?,?)"
+#define INSERT_PEER "INSERT INTO peers(id) VALUES (?)"
+#define DELETE_PEER "DELETE FROM peers WHERE ? = id"
 #define SELECT_STATEMENT "SELECT remote,module,peer_id,name,version FROM mappings WHERE ? = route_uuid"
 #define DB_FILE ":memory:"
 #define REMOTE_ROUTE 2
@@ -29,6 +33,10 @@ static void insert_route(uuid_t uuid, int remote, BANG_module *module, int peer_
 static BANG_request construct_send_job_request(int type, uuid_t auth, uuid_t peer, int job_number, unsigned int job_length, void *data);
 
 static void mem_append(void *dst, void *src, int length, int *pos);
+
+static void catch_peer_added(int signal, int num_peers, void **p);
+
+static void catch_peer_removed(int signal, int num_peers, void **p);
 
 static void mem_append(void *dst, void *src, int length, int *pos) {
 	memcpy(dst + *pos,src,length);
@@ -328,16 +336,17 @@ void BANG_register_peer_route(uuid_t uuid, int peer, char *module_name, unsigned
 	insert_route(uuid,REMOTE_ROUTE,NULL,peer,module_name,module_version);
 }
 
-void BANG_route_init() {
-#ifdef BDEBUG_1
-	fprintf(stderr,"BANG route initializing.\n");
-#endif
-	sqlite3_close(db);
-}
-
 void BANG_route_close() {
 #ifdef BDEBUG_1
 	fprintf(stderr,"BANG route closing.\n");
+#endif
+
+	sqlite3_close(db);
+}
+
+void BANG_route_init() {
+#ifdef BDEBUG_1
+	fprintf(stderr,"BANG route initializing.\n");
 #endif
 	/* Keep the mappings database in memory. */
 #ifdef NEW_SQLITE
@@ -350,5 +359,62 @@ void BANG_route_close() {
 	/*TODO: check for errors.
 	 * Create database.
 	 */
-	sqlite3_exec(db,DB_SCHEMA,NULL,NULL,NULL);
+	sqlite3_exec(db,CREATE_MAPPINGS,NULL,NULL,NULL);
+	sqlite3_exec(db,CREATE_PEER_LIST,NULL,NULL,NULL);
+
+	BANG_install_sighandler(BANG_PEER_ADDED,&catch_peer_added);
+	BANG_install_sighandler(BANG_PEER_REMOVED,&catch_peer_removed);
+}
+
+static void catch_peer_added(int signal, int num_peers, void **p) {
+	int **peers = (int**) p;
+
+	if (signal == BANG_PEER_ADDED) {
+		int i = 0;
+		sqlite3_stmt *insert;
+
+		for (; i < num_peers; ++i) {
+#ifdef NEW_SQLITE
+			sqlite3_prepare_v2(db,INSERT_PEER,-1,&insert,NULL);
+#else
+			sqlite3_prepare(db,INSERT_PEER,-1,&insert,NULL);
+#endif
+			sqlite3_bind_int(insert,1,*(peers[i]));
+
+			sqlite3_step(insert);
+			sqlite3_finalize(insert);
+
+			free(peers[i]);
+			peers[i] = NULL;
+		}
+	}
+
+	free(peers);
+}
+
+
+static void catch_peer_removed(int signal, int num_peers, void **p) {
+	int **peers = (int**) p;
+
+	if (signal == BANG_PEER_ADDED) {
+		int i = 0;
+		sqlite3_stmt *delete;
+
+		for (; i < num_peers; ++i) {
+#ifdef NEW_SQLITE
+			sqlite3_prepare_v2(db,DELETE_PEER,-1,&delete,NULL);
+#else
+			sqlite3_prepare(db,DELETE_PEER,-1,&delete,NULL);
+#endif
+			sqlite3_bind_int(delete,1,*(peers[i]));
+
+			sqlite3_step(delete);
+			sqlite3_finalize(delete);
+
+			free(peers[i]);
+			peers[i] = NULL;
+		}
+	}
+
+	free(peers);
 }

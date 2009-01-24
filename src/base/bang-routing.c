@@ -24,6 +24,29 @@ static sqlite3_stmt* prepare_select_statement(uuid_t uuid);
 
 static void insert_route(uuid_t uuid, int remote, BANG_module *module, int peer_id, char *module_name, unsigned char *module_version);
 
+static BANG_request construct_request(char type, uuid_t auth, uuid_t peer, int job_number, unsigned int job_length, void *data);
+
+static BANG_request construct_request(char type, uuid_t auth, uuid_t peer, int job_number, unsigned int job_length, void *data) {
+	BANG_request req;
+
+	req.type = type;
+
+	req.length = sizeof(uuid_t)  * 2 +
+	    LENGTH_OF_LENGTHS +
+	    4 /* A MAGIC NUMBER! */ +
+	    job_length;
+
+	req.request = malloc(req.length);
+
+	memcpy(req.request,auth,sizeof(uuid_t));
+	memcpy(req.request,peer,sizeof(uuid_t));
+	memcpy(req.request,&(job_number),4);
+	memcpy(req.request,&(job_length),LENGTH_OF_LENGTHS);
+	memcpy(req.request,data,job_length);
+
+	return req;
+}
+
 static sqlite3_stmt* prepare_select_statement(uuid_t uuid) {
 	assert(!uuid_is_null(uuid));
 
@@ -51,29 +74,15 @@ void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 
 	if (sqlite3_step(get_peer_route) == SQLITE_ROW) {
 		if (sqlite3_column_int(get_peer_route,1) == REMOTE_ROUTE) {
-			/* TODO: Make a request to peer.
-			 * Make a non-shitty request.
-			 * */
-			BANG_request request;
-			request.type = BANG_SEND_JOB_REQUEST;
-			/* We are being a little presumptuous, and constructing the actual message
-			 * that the communications infrastructure will send...
-			 *
-			 * Probably should move this to bang-com.c
-			 */
-			request.length = LENGTH_OF_HEADER +sizeof(uuid_t)  * 2 +
-				LENGTH_OF_LENGTHS +
-				4 /* A MAGIC NUMBER! */ +
-				job->length;
-			request.request = malloc(request.length);
-			BANG_header header = BANG_SEND_JOB;
 
-			memcpy(request.request,&header,LENGTH_OF_HEADER);
-			memcpy(request.request,authority,sizeof(uuid_t));
-			memcpy(request.request,peer,sizeof(uuid_t));
-			memcpy(request.request,&(job->job_number),4);
-			memcpy(request.request,&(job->length),LENGTH_OF_LENGTHS);
-			memcpy(request.request,job->data,job->length);
+			BANG_request request =
+				construct_request(BANG_SEND_JOB,
+					authority,
+					peer,
+					job->job_number,
+					job->length,
+					job->data);
+
 
 			BANG_request_peer_id(sqlite3_column_int(get_peer_route,3),request);
 
@@ -218,7 +227,7 @@ int** BANG_not_route_get_peer_id(uuid_t *uuids) {
 	while (!uuid_is_null(uuids[i])) {
 		sqlite3_stmt *select_statement = prepare_select_statement(uuids[i]);
 		if (sqlite3_step(select_statement) == SQLITE_ROW &&
-			(peer_id = sqlite3_column_int(select_statement,3)) != -1) {
+				(peer_id = sqlite3_column_int(select_statement,3)) != -1) {
 
 			peer_ids = realloc(peer_ids,j++ + 1 * sizeof(int));
 			peer_ids[j] = malloc(sizeof(int));

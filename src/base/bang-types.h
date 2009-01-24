@@ -339,7 +339,11 @@ enum BANG_request_types {
 	/**
 	 * BANG_request.type == BANG_SEND_JOB_REQUEST
 	 * BAND_request.request:
-	 * | uuid_t | job stuff ~ |
+	 * | uuid_t auth | uuid_t peer |
+	 * | job_number | job_length | job data |
+	 *
+	 * do:
+	 * 	-send Out everything appended to a header.
 	 *
 	 */
 	BANG_SEND_JOB_REQUEST,

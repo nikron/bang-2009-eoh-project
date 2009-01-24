@@ -57,15 +57,17 @@ void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 			 * Probably should move this to bang-com.c
 			 */
 			request.length = LENGTH_OF_HEADER +sizeof(uuid_t)  * 2 +
-				4 /* A MAGIC NUMBER! */ +
 				LENGTH_OF_LENGTHS +
+				4 /* A MAGIC NUMBER! */ +
 				job->length;
 			request.request = malloc(request.length);
-			unsigned int header = BANG_SEND_JOB;
+			BANG_header header = BANG_SEND_JOB;
+
 			memcpy(request.request,&header,LENGTH_OF_HEADER);
 			memcpy(request.request,authority,sizeof(uuid_t));
 			memcpy(request.request,peer,sizeof(uuid_t));
 			memcpy(request.request,&(job->job_number),4);
+			memcpy(request.request,&(job->length),LENGTH_OF_LENGTHS);
 			memcpy(request.request,job->data,job->length);
 
 			BANG_request_peer_id(sqlite3_column_int(get_peer_route,3),request);

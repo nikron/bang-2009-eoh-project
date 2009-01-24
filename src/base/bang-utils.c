@@ -38,13 +38,21 @@ void free_BANG_rw_syncro(BANG_rw_syncro *lck) {
 	free(lck);
 }
 
+int BANG_version_cmp(const unsigned char *v1, const unsigned char *v2) {
+	int cmp = 0;
+
+	cmp += v1[0] - v2[0];
+	cmp += v1[1] - v2[1];
+	cmp += v1[2] - v2[2];
+
+	return cmp;
+}
+
 int BANG_module_name_cmp(const char *m1, const char *m2) {
 	int cmp = strcmp(m1,m2);
-	int length = strlen(m1),
-	    length2 = strlen(m2);
-	cmp += m1[length + 1] - m2[length2  + 1];
-	cmp += m1[length + 2] - m2[length2  + 2];
-	cmp += m1[length + 3] - m2[length2  + 3];
+	int length = strlen(m1) + 1,
+	    length2 = strlen(m2) + 1;
+	cmp += BANG_version_cmp(((unsigned char*)m1) + length, ((unsigned char*)m2) + length2);
 	return cmp;
 }
 

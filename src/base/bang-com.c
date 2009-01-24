@@ -6,10 +6,12 @@
  * \brief Implements "the master of slave peer threads" model.
  */
 #include"bang-com.h"
+#include"bang-module-api.h"
 #include"bang-net.h"
+#include"bang-routing.h"
 #include"bang-signals.h"
-#include"bang-utils.h"
 #include"bang-types.h"
+#include"bang-utils.h"
 #include<poll.h>
 #include<pthread.h>
 #include<semaphore.h>
@@ -623,7 +625,7 @@ void BANG_com_close() {
 static char peer_respond_hello(peer *self) {
 	unsigned char *version = (unsigned char*) extract_message(self,LENGTH_OF_VERSION);
 	/* TODO: Make this more elegant =P */
-	if (version == NULL || version[0] != BANG_MAJOR_VERSION || version[1] != BANG_MIDDLE_VERSION || version[2] != BANG_MINOR_VERSION) {
+	if (BANG_version_cmp(version,BANG_LIBRARY_VERSION) == 0) {
 		free(version);
 		return 0;
 	}
@@ -672,6 +674,58 @@ static char read_module_message(peer *self) {
 
 	BANG_send_signal(BANG_RECEIVED_MODULE,&args,1);
 	free(args.args);
+	return 1;
+}
+
+static void extract_uuid(peer *self,uuid_t uuid) {
+	uuid_t *uuid_ptr = (uuid_t*) extract_message(self,sizeof(uuid_t));
+	if (uuid_ptr) {
+		uuid_copy(uuid,*uuid_ptr);
+		free(uuid_ptr);
+	} else {
+		uuid_clear(uuid);
+	}
+}
+
+static char read_job_message(peer *self) {
+	uuid_t auth, peer;
+
+	extract_uuid(self,auth);
+	if (uuid_is_null(auth)) {
+		return 0;
+	}
+
+	extract_uuid(self,peer);
+	if (uuid_is_null(peer)) {
+		return 0;
+	}
+
+	BANG_job job;
+
+	/* A MAGIC NUMBER */
+	int *job_number = (int*) extract_message(self,4);
+	if (job_number == NULL) {
+		return 0;
+	}
+
+	job.job_number = *job_number;
+	free(job_number);
+
+	unsigned int *job_length  = (unsigned int*) extract_message(self,LENGTH_OF_LENGTHS);
+	if (job_length == NULL) {
+		return 0;
+	}
+
+	job.length = *job_length;
+	free(job_length);
+
+	job.data = extract_message(self,job.length);
+	if (job.data == NULL) {
+		return 0;
+	}
+
+	BANG_route_job(auth,peer,&job);
+
 	return 1;
 }
 
@@ -798,29 +852,37 @@ static void* extract_message(peer *self, unsigned int length) {
 void* BANG_read_peer_thread(void *self_info) {
 	peer *self = (peer*)self_info;
 
-	unsigned int *header;
+	BANG_header *header;
 
 	char reading = 1;
 
 	while (reading) {
-		if ((header = (unsigned int*) extract_message(self,LENGTH_OF_HEADER)) != NULL) {
+		if ((header = (BANG_header*) extract_message(self,LENGTH_OF_HEADER)) != NULL) {
 			switch (*header) {
 				case BANG_HELLO:
 					reading = peer_respond_hello(self);
 					break;
+
 				case BANG_DEBUG_MESSAGE:
 					reading = read_debug_message(self);
 					break;
+
 				case BANG_SEND_MODULE:
 					/* I guess we'll take it... */
 					reading = read_module_message(self);
 					break;
+
 				case BANG_WANT_MODULE:
 					/* TODO: Someone is asking us if we want a module... send out a signal! */
 					break;
+
 				case BANG_REQUEST_MODULE:
 					/* TODO: This may be pretty hard to do. */
 					break;
+
+				case BANG_SEND_JOB:
+					reading = read_job_message(self);
+
 				case BANG_MISMATCH_VERSION:
 				case BANG_BYE:
 					reading = 0;
@@ -835,6 +897,7 @@ void* BANG_read_peer_thread(void *self_info) {
 					reading = 0;
 					break;
 			}
+
 			free(header);
 		} else {
 			reading = 0;
@@ -853,7 +916,8 @@ void* BANG_write_peer_thread(void *self_info) {
 	peer *self = (peer*)self_info;
 	request_node *current;
 	char sending = 1;
-	unsigned int header;
+	BANG_header header;
+
 	while (sending) {
 		sem_wait(&(self->requests->num_requests));
 		pthread_mutex_lock(&(self->requests->lock));

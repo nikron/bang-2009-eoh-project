@@ -8,6 +8,7 @@
 #ifndef __BANG_TYPES_H
 #define __BANG_TYPES_H
 #include"bang-module-api.h"
+#include<stdint.h>
 
 /**
  * The major version of the library.
@@ -24,6 +25,11 @@
  * 0.1.{1}
  */
 #define BANG_MINOR_VERSION 1
+
+static const unsigned char BANG_LIBRARY_VERSION[3] = { 
+	BANG_MAJOR_VERSION, 
+	BANG_MIDDLE_VERSION,
+	BANG_MINOR_VERSION };
 
 /**
  * The structure that represents a module for the program.
@@ -193,7 +199,9 @@ enum BANG_signals {
 /**
  * Length of the headers.
  */
-#define LENGTH_OF_HEADER 4
+typedef uint32_t BANG_header;
+#define LENGTH_OF_HEADER sizeof(BANG_header)
+
 /**
  * Length of any lengths sent.
  */
@@ -233,6 +241,7 @@ enum BANG_headers {
 	 */
 	BANG_SEND_MODULE,
 	/**
+	 * Requests a module from the remote end
 	 * message:
 	 *	-BANG_REQUEST_MODULE (unsigned 4 bytes)
 	 *	-length
@@ -257,7 +266,6 @@ enum BANG_headers {
 	 * message:
 	 * 	-BANG_SEND_JOB
 	 * 	-uuid (16 bytes)
-	 * 	-job stuff
 	 */
 	BANG_SEND_JOB,
 	/**

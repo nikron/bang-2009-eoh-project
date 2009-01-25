@@ -4,6 +4,7 @@
 #include"bang-module-api.h"
 #include"bang-signals.h"
 #include"bang-types.h"
+#include"bang-utils.h"
 #include<assert.h>
 #include<stdio.h>
 #include<stdlib.h>
@@ -15,6 +16,7 @@
 #define CREATE_MAPPINGS "CREATE TABLE mappings(route_uuid blob unique primary key, remote integer, peer_id int, module blob, name text, version blob)"
 #define INSERT_STATEMENT "INSERT INTO mappings(route_uuid,remote,module,peer_id,name,text) VALUES (?,?,?,?,?)"
 #define SELECT_STATEMENT "SELECT remote,module,peer_id,name,version FROM mappings WHERE ? = route_uuid"
+#define SELECT_UUID "SELECT route_uuid WHERE ? = peer_id"
 
 #define CREATE_PEER_LIST "CREATE TABLE peers(id int)"
 #define INSERT_PEER "INSERT INTO peers(id) VALUES (?)"
@@ -33,9 +35,11 @@
  * TODO: START ERROR CHECKING THE SQL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
 
+static void insert_mapping(uuid_t uuid, int remote, BANG_module *module, int peer_id, char *module_name, unsigned char *module_version);
+
 static sqlite3_stmt* prepare_select_statement(uuid_t uuid);
 
-static void insert_mapping(uuid_t uuid, int remote, BANG_module *module, int peer_id, char *module_name, unsigned char *module_version);
+static uuid_t* select_routes_from_id(int id);
 
 static void insert_route(uuid_t p1, uuid_t p2);
 
@@ -342,6 +346,18 @@ void BANG_route_close() {
 	sqlite3_close(db);
 }
 
+static uuid_t* select_routes_from_id(int id) {
+	sqlite3_stmt *s_routes;
+
+#ifdef NEW_SQLITE
+	sqlite3_prepare_v2(db,SELECT_UUID,-1,&s_routes,NULL);
+#else
+	sqlite3_prepare(db,SELECT_UUID,-1,&s_routes,NULL);
+#endif
+
+	sqlite3_bind_int(s_routes,1,id);
+}
+
 static void insert_route(uuid_t p1, uuid_t p2) {
 	sqlite3_stmt *add_route;
 
@@ -398,7 +414,7 @@ static uuid_t* select_route(uuid_t p) {
 			temp = sqlite3_column_blob(select_route,2);
 		}
 
-		uuid_copy(uuid[i],*((uuid_t*)temp));
+		uuid_copy(list[i],*((uuid_t*)temp));
 
 		++i;
 		if (i > size) {

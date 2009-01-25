@@ -56,6 +56,10 @@ static void remove_route(uuid_t p1, uuid_t p2);
  */
 static BANG_linked_list* select_route(uuid_t p);
 
+void insert_peer(int id);
+
+void remove_peer(int id);
+
 static void catch_peer_added(int signal, int num_peers, void **p);
 
 static void catch_peer_removed(int signal, int num_peers, void **p);
@@ -499,6 +503,33 @@ BANG_linked_list* select_route(uuid_t p) {
 	return list;
 }
 
+void insert_peer(int id) {
+	sqlite3_stmt *insert;
+#ifdef NEW_SQLITE
+	sqlite3_prepare_v2(db,INSERT_PEER,-1,&insert,NULL);
+#else
+	sqlite3_prepare(db,INSERT_PEER,-1,&insert,NULL);
+#endif
+	sqlite3_bind_int(insert,1,id);
+
+	sqlite3_step(insert);
+	sqlite3_finalize(insert);
+}
+
+void remove_peer(int id) {
+	sqlite3_stmt *delete;
+
+#ifdef NEW_SQLITE
+	sqlite3_prepare_v2(db,DELETE_PEER,-1,&delete,NULL);
+#else
+	sqlite3_prepare(db,DELETE_PEER,-1,&delete,NULL);
+#endif
+	sqlite3_bind_int(delete,1,id);
+
+	sqlite3_step(delete);
+	sqlite3_finalize(delete);
+}
+
 /*
  * Catching the signals.
  */
@@ -508,19 +539,9 @@ static void catch_peer_added(int signal, int num_peers, void **p) {
 
 	if (signal == BANG_PEER_ADDED) {
 		int i = 0;
-		sqlite3_stmt *insert;
 
 		for (; i < num_peers; ++i) {
-#ifdef NEW_SQLITE
-			sqlite3_prepare_v2(db,INSERT_PEER,-1,&insert,NULL);
-#else
-			sqlite3_prepare(db,INSERT_PEER,-1,&insert,NULL);
-#endif
-			sqlite3_bind_int(insert,1,*(peers[i]));
-
-			sqlite3_step(insert);
-			sqlite3_finalize(insert);
-
+			insert_peer(*(peers[i]));
 			free(peers[i]);
 			peers[i] = NULL;
 		}
@@ -535,7 +556,6 @@ static void catch_peer_removed(int signal, int num_peers, void **p) {
 
 	if (signal == BANG_PEER_ADDED) {
 		int i;
-		sqlite3_stmt *delete;
 		BANG_linked_list *lst, *route_list;
 		uuid_t *route, *remote_route;
 
@@ -553,19 +573,8 @@ static void catch_peer_removed(int signal, int num_peers, void **p) {
 
 				free(route);
 			}
-		}
 
-		for (i = 0; i < num_peers; ++i) {
-#ifdef NEW_SQLITE
-			sqlite3_prepare_v2(db,DELETE_PEER,-1,&delete,NULL);
-#else
-			sqlite3_prepare(db,DELETE_PEER,-1,&delete,NULL);
-#endif
-			sqlite3_bind_int(delete,1,*(peers[i]));
-
-			sqlite3_step(delete);
-			sqlite3_finalize(delete);
-
+			remove_peer(*(peers[i]));
 			free(peers[i]);
 			peers[i] = NULL;
 		}

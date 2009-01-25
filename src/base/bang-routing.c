@@ -39,7 +39,7 @@ static void insert_mapping(uuid_t uuid, int remote, BANG_module *module, int pee
 
 static sqlite3_stmt* prepare_select_statement(uuid_t uuid);
 
-static uuid_t* select_routes_from_id(int id);
+static BANG_linked_list* select_routes_from_id(int id);
 
 static void insert_route(uuid_t p1, uuid_t p2);
 
@@ -346,7 +346,7 @@ void BANG_route_close() {
 	sqlite3_close(db);
 }
 
-static uuid_t* select_routes_from_id(int id) {
+static BANG_linked_list* select_routes_from_id(int id) {
 	sqlite3_stmt *s_routes;
 
 #ifdef NEW_SQLITE
@@ -356,6 +356,13 @@ static uuid_t* select_routes_from_id(int id) {
 #endif
 
 	sqlite3_bind_int(s_routes,1,id);
+
+	BANG_linked_list* list = new_BANG_linked_list();
+	while (sqlite3_step(s_routes) == SQLITE_ROW) {
+		BANG_list_append(list,sqlite3_column_blob(s_routes,1));
+	}
+
+	return list;
 }
 
 static void insert_route(uuid_t p1, uuid_t p2) {

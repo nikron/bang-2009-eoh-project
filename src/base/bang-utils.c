@@ -56,21 +56,7 @@ int BANG_module_name_cmp(const char *m1, const char *m2) {
 	return cmp;
 }
 
-void BANG_acquire_read_lock(int *readers, pthread_mutex_t *readers_lock, pthread_mutex_t *writers_lock) {
-	pthread_mutex_lock(readers_lock);
-	if (*readers++ == 1)
-		pthread_mutex_lock(writers_lock);
-	pthread_mutex_unlock(readers_lock);
-}
-
-void BANG_release_read_lock(int *readers, pthread_mutex_t *readers_lock, pthread_mutex_t *writers_lock) {
-	pthread_mutex_lock(readers_lock);
-	if (*readers-- == 0)
-		pthread_mutex_unlock(writers_lock);
-	pthread_mutex_unlock(readers_lock);
-}
-
-BANG_node* new_BANG_node(void *data) {
+BANG_node* new_BANG_node(const void *data) {
 	BANG_node *node = calloc(1,sizeof(BANG_node));
 
 	node->data = data;
@@ -78,10 +64,17 @@ BANG_node* new_BANG_node(void *data) {
 	return node;
 }
 
-void* BANG_list_pop(BANG_linked_list *lst) {
+BANG_linked_list* new_BANG_linked_list() {
+	/* calloc sets everything to 0 */
+	BANG_linked_list *new = calloc(1,sizeof(BANG_linked_list));
+
+	return new;
+}
+
+const void* BANG_list_pop(BANG_linked_list *lst) {
 	if (lst == NULL || lst->head == NULL || lst->tail == NULL) return NULL;
 
-	void *data = lst->head->data;
+	const void *data = lst->head->data;
 
 	if (lst->head == lst->tail) {
 		lst->head = NULL;
@@ -96,14 +89,19 @@ void* BANG_list_pop(BANG_linked_list *lst) {
 	return data;
 }
 
-void BANG_list_append(BANG_linked_list *lst, void *data) {
-	if (lst == NULL || lst->head == NULL || lst->tail == NULL) return;
+void BANG_list_append(BANG_linked_list *lst, const void *data) {
+	if (lst == NULL) return;
 
 	BANG_node *node = new_BANG_node(data);
 
-	lst->tail->next = node;
-	node->prev = lst->tail;
-	lst->tail = node;
+	if (lst->head && lst->tail) {
+		lst->tail->next = node;
+		node->prev = lst->tail;
+		lst->tail = node;
+	} else {
+		lst->head = node;
+		lst->tail = node;
+	}
 
 	lst->size++;
 }
@@ -111,4 +109,18 @@ void BANG_list_append(BANG_linked_list *lst, void *data) {
 
 size_t BANG_list_get_size(BANG_linked_list *lst) {
 	return lst->size;
+}
+
+void BANG_acquire_read_lock(int *readers, pthread_mutex_t *readers_lock, pthread_mutex_t *writers_lock) {
+	pthread_mutex_lock(readers_lock);
+	if (*readers++ == 1)
+		pthread_mutex_lock(writers_lock);
+	pthread_mutex_unlock(readers_lock);
+}
+
+void BANG_release_read_lock(int *readers, pthread_mutex_t *readers_lock, pthread_mutex_t *writers_lock) {
+	pthread_mutex_lock(readers_lock);
+	if (*readers-- == 0)
+		pthread_mutex_unlock(writers_lock);
+	pthread_mutex_unlock(readers_lock);
 }

@@ -64,11 +64,30 @@ BANG_node* new_BANG_node(void *data) {
 	return node;
 }
 
+
+void free_BANG_node(BANG_node *node, void(*free_data)(void*)) {
+	free_data(node->data);
+	free(node);
+}
+
 BANG_linked_list* new_BANG_linked_list() {
 	/* calloc sets everything to 0 */
 	BANG_linked_list *new = calloc(1,sizeof(BANG_linked_list));
 
 	return new;
+}
+
+void free_BANG_linked_list(BANG_linked_list *lst, void(*free_data)(void*)) {
+	if (lst == NULL) return;
+
+	BANG_node *node = lst->head, *temp;
+	while (node) {
+		temp = node->next;
+		free_BANG_node(node,free_data);
+		node = temp;
+	}
+
+	free(lst);
 }
 
 void* BANG_linked_list_pop(BANG_linked_list *lst) {

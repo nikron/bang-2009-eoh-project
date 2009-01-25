@@ -31,6 +31,7 @@ typedef struct {
 } BANG_linked_list;
 
 BANG_node* new_BANG_node(void *data);
+void free_BANG_node(BANG_node *node, void(*free_data)(void*));
 BANG_linked_list* new_BANG_linked_list();
 void free_BANG_linked_list(BANG_linked_list *lst, void(*free_data)(void*));
 void* BANG_linked_list_pop(BANG_linked_list *lst);

@@ -45,6 +45,11 @@ static void insert_route(uuid_t p1, uuid_t p2);
 
 static void remove_route(uuid_t p1, uuid_t p2);
 
+/**
+ * \param p The peer you want to find a route of.
+ *
+ * \return A linked list of routes of the peer.
+ */
 static BANG_linked_list* select_route(uuid_t p);
 
 static BANG_request construct_send_job_request(int type, uuid_t auth, uuid_t peer, int job_number, unsigned int job_length, void *data);
@@ -222,7 +227,6 @@ void BANG_route_new_peer(uuid_t peer, uuid_t new_peer) {
 	assert(!uuid_is_null(new_peer));
 
 	insert_route(peer,new_peer);
-	insert_route(new_peer,peer);
 
 	sqlite3_stmt *get_peer_route = prepare_select_statement(peer);
 
@@ -519,15 +523,22 @@ static void catch_peer_removed(int signal, int num_peers, void **p) {
 	if (signal == BANG_PEER_ADDED) {
 		int i;
 		sqlite3_stmt *delete;
-		BANG_linked_list *lst;
-		uuid_t *route;
+		BANG_linked_list *lst, *route_list;
+		uuid_t *route, *remote_route;
 
 		for (i = 0; i < num_peers; ++i) {
 			lst = select_routes_from_id(*(peers[i]));
 
 			while ((route = BANG_linked_list_pop(lst)) != NULL) {
 				/* TODO: tell them that route is being removed. */
-				select_route(*route);
+				route_list = select_route(*route);
+
+				while ((remote_route = BANG_linked_list_pop(route_list)) != NULL) {
+					BANG_route_remove_peer(*remote_route,*route);
+					free(remote_route);
+				}
+
+				free(route);
 			}
 		}
 

@@ -32,8 +32,10 @@ typedef struct {
 
 BANG_node* new_BANG_node(void *data);
 BANG_linked_list* new_BANG_linked_list();
-void free_BANG_linked_list(BANG_linked_list *lst);
+void free_BANG_linked_list(BANG_linked_list *lst, void(*free_data)(void*));
 void* BANG_linked_list_pop(BANG_linked_list *lst);
+void* BANG_linked_list_peek(BANG_linked_list *lst);
+void BANG_linked_list_push(BANG_linked_list *lst, void *data);
 void BANG_linked_list_append(BANG_linked_list *lst, void *data);
 size_t BANG_linked_list_get_size(BANG_linked_list *lst);
 

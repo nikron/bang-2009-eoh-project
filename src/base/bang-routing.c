@@ -14,8 +14,10 @@
 
 #define CREATE_MAPPINGS "CREATE TABLE mappings(route_uuid blob unique primary key, remote integer, peer_id int, module blob, name text, version blob)"
 #define CREATE_PEER_LIST "CREATE TABLE peers(id int)"
+#define CREATE_ROUTES "CRATE TABLE routes(fst_peer blob, snd_peer blob)"
 #define INSERT_STATEMENT "INSERT INTO mappings(route_uuid,remote,module,peer_id,name,text) VALUES (?,?,?,?,?)"
 #define INSERT_PEER "INSERT INTO peers(id) VALUES (?)"
+#define INSERT_ROUTE "INSERT INTO routes(fst_peer,snd_peer) VALUES (?,?)"
 #define DELETE_PEER "DELETE FROM peers WHERE ? = id"
 #define SELECT_STATEMENT "SELECT remote,module,peer_id,name,version FROM mappings WHERE ? = route_uuid"
 #define DB_FILE ":memory:"
@@ -28,7 +30,9 @@ static sqlite3 *db;
 
 static sqlite3_stmt* prepare_select_statement(uuid_t uuid);
 
-static void insert_route(uuid_t uuid, int remote, BANG_module *module, int peer_id, char *module_name, unsigned char *module_version);
+static void insert_mapping(uuid_t uuid, int remote, BANG_module *module, int peer_id, char *module_name, unsigned char *module_version);
+
+static void insert_route(uuid_t p1, uuid_t p2);
 
 static BANG_request construct_send_job_request(int type, uuid_t auth, uuid_t peer, int job_number, unsigned int job_length, void *data);
 
@@ -196,9 +200,27 @@ void BANG_route_assertion_of_authority(uuid_t authority, uuid_t peer) {
 	}
 }
 
+static void insert_route(uuid_t p1, uuid_t p2) {
+	sqlite3_stmt *add_route;
+
+#ifdef NEW_SQLITE
+	sqlite3_prepare_v2(db,INSERT_ROUTE,-1,&add_route,NULL);
+#else
+	sqlite3_prepare(db,INSERT_ROUTE,-1,&add_route,NULL);
+#endif
+
+	sqlite3_bind_blob(add_route,1,p1,sizeof(uuid_t),SQLITE_STATIC);
+	sqlite3_bind_blob(add_route,2,p2,sizeof(uuid_t),SQLITE_STATIC);
+	sqlite3_step(add_route);
+	sqlite3_finalize(add_route);
+}
+
 void BANG_route_new_peer(uuid_t peer, uuid_t new_peer) {
 	assert(!uuid_is_null(peer));
 	assert(!uuid_is_null(new_peer));
+
+	insert_route(peer,new_peer);
+	insert_route(new_peer,peer);
 
 	sqlite3_stmt *get_peer_route = prepare_select_statement(peer);
 
@@ -211,6 +233,7 @@ void BANG_route_new_peer(uuid_t peer, uuid_t new_peer) {
 			BANG_module_new_peer(module,peer,new_peer);
 		}
 	}
+
 }
 
 void BANG_route_remove_peer(uuid_t peer, uuid_t old_peer) {
@@ -285,7 +308,7 @@ int** BANG_not_route_get_peer_id(uuid_t *uuids) {
 	return peer_ids;
 }
 
-static void insert_route(uuid_t uuid, int remote, BANG_module *module, int peer_id, char *module_name, unsigned char *module_version) {
+static void insert_mapping(uuid_t uuid, int remote, BANG_module *module, int peer_id, char *module_name, unsigned char *module_version) {
 	assert(!uuid_is_null(uuid));
 	assert(remote == LOCAL_ROUTE || remote == REMOTE_ROUTE);
 	assert(peer_id >= 0);
@@ -323,7 +346,7 @@ void BANG_register_module_route(BANG_module *module) {
 	module->info->peers_info->validity[module->info->my_id] = 1;
 
 	/* Insert the route in the database. */
-	insert_route(module->info->peers_info->uuids[module->info->my_id],LOCAL_ROUTE,module,-1,module->module_name,module->module_version);
+	insert_mapping(module->info->peers_info->uuids[module->info->my_id],LOCAL_ROUTE,module,-1,module->module_name,module->module_version);
 }
 
 
@@ -333,7 +356,7 @@ void BANG_register_peer_route(uuid_t uuid, int peer, char *module_name, unsigned
 	assert(module_name != NULL);
 	assert(module_version != NULL);
 
-	insert_route(uuid,REMOTE_ROUTE,NULL,peer,module_name,module_version);
+	insert_mapping(uuid,REMOTE_ROUTE,NULL,peer,module_name,module_version);
 }
 
 void BANG_route_close() {

@@ -35,6 +35,10 @@
  * TODO: START ERROR CHECKING THE SQL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
 
+static BANG_request construct_send_job_request(int type, uuid_t auth, uuid_t peer, int job_number, unsigned int job_length, void *data);
+
+static void mem_append(void *dst, void *src, int length, int *pos);
+
 static void insert_mapping(uuid_t uuid, int remote, BANG_module *module, int peer_id, char *module_name, unsigned char *module_version);
 
 static sqlite3_stmt* prepare_select_statement(uuid_t uuid);
@@ -52,57 +56,11 @@ static void remove_route(uuid_t p1, uuid_t p2);
  */
 static BANG_linked_list* select_route(uuid_t p);
 
-static BANG_request construct_send_job_request(int type, uuid_t auth, uuid_t peer, int job_number, unsigned int job_length, void *data);
-
-static void mem_append(void *dst, void *src, int length, int *pos);
-
 static void catch_peer_added(int signal, int num_peers, void **p);
 
 static void catch_peer_removed(int signal, int num_peers, void **p);
 
 static sqlite3 *db;
-
-static void mem_append(void *dst, void *src, int length, int *pos) {
-	memcpy(dst + *pos,src,length);
-	*pos += length;
-}
-
-static BANG_request construct_send_job_request(int type, uuid_t auth, uuid_t peer, int job_number, unsigned int job_length, void *data) {
-	BANG_request req;
-	req.type = type;
-
-	req.length = sizeof(uuid_t)  * 2 +
-		LENGTH_OF_LENGTHS +
-		4 /* A MAGIC NUMBER! */ +
-		job_length;
-
-	req.request = malloc(req.length);
-	int pos = 0;
-
-	mem_append(req.request,auth,sizeof(uuid_t),&pos);
-	mem_append(req.request,peer,sizeof(uuid_t),&pos);
-	mem_append(req.request,&(job_number),4,&pos);
-	mem_append(req.request,&(job_length),LENGTH_OF_LENGTHS,&pos);
-	mem_append(req.request,data,job_length,&pos);
-
-	return req;
-}
-
-static sqlite3_stmt* prepare_select_statement(uuid_t uuid) {
-	assert(!uuid_is_null(uuid));
-
-	sqlite3_stmt *get_peer_route;
-	/* God dammit, ews needs to update sqlite */
-#ifdef NEW_SQLITE
-	sqlite3_prepare_v2(db,SELECT_STATEMENT,-1,&get_peer_route,NULL);
-#else
-	sqlite3_prepare(db,SELECT_STATEMENT,90,&get_peer_route,NULL);
-#endif
-
-	sqlite3_bind_blob(get_peer_route,1,uuid,sizeof(uuid_t),SQLITE_STATIC);
-
-	return get_peer_route;
-}
 
 /* TODO: Many elements in the functions are the same, consolidate somehow. DRY, afterall*/
 
@@ -350,6 +308,102 @@ void BANG_route_close() {
 	sqlite3_close(db);
 }
 
+void BANG_route_init() {
+#ifdef BDEBUG_1
+	fprintf(stderr,"BANG route initializing.\n");
+#endif
+
+	/* Keep the mappings database in memory. */
+#ifdef NEW_SQLITE
+	sqlite3_open_v2(DB_FILE,&db,SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX,NULL);
+#else
+	/* Dcl needs to update their sqlite3 libraries =/ */
+	sqlite3_open(DB_FILE,&db);
+#endif
+
+	/*TODO: check for errors.
+	 * Create database.
+	 */
+	sqlite3_exec(db,CREATE_MAPPINGS,NULL,NULL,NULL);
+	sqlite3_exec(db,CREATE_PEER_LIST,NULL,NULL,NULL);
+	sqlite3_exec(db,CREATE_ROUTES,NULL,NULL,NULL);
+
+	BANG_install_sighandler(BANG_PEER_ADDED,&catch_peer_added);
+	BANG_install_sighandler(BANG_PEER_REMOVED,&catch_peer_removed);
+}
+
+static void mem_append(void *dst, void *src, int length, int *pos) {
+	memcpy(dst + *pos,src,length);
+	*pos += length;
+}
+
+static BANG_request construct_send_job_request(int type, uuid_t auth, uuid_t peer, int job_number, unsigned int job_length, void *data) {
+	BANG_request req;
+	req.type = type;
+
+	req.length = sizeof(uuid_t)  * 2 +
+		LENGTH_OF_LENGTHS +
+		4 /* A MAGIC NUMBER! */ +
+		job_length;
+
+	req.request = malloc(req.length);
+	int pos = 0;
+
+	mem_append(req.request,auth,sizeof(uuid_t),&pos);
+	mem_append(req.request,peer,sizeof(uuid_t),&pos);
+	mem_append(req.request,&(job_number),4,&pos);
+	mem_append(req.request,&(job_length),LENGTH_OF_LENGTHS,&pos);
+	mem_append(req.request,data,job_length,&pos);
+
+	return req;
+}
+
+/*
+ * SQL functions.
+ * Functions dealing with the mappings table.
+ */
+
+static void insert_mapping(uuid_t uuid, int remote, BANG_module *module, int peer_id, char *module_name, unsigned char *module_version) {
+	assert(!uuid_is_null(uuid));
+	assert(remote == LOCAL_ROUTE || remote == REMOTE_ROUTE);
+	assert(peer_id >= 0);
+	assert(module_name != NULL);
+	assert(module_version != NULL);
+
+	sqlite3_stmt *insert;
+
+#ifdef NEW_SQLITE
+	sqlite3_prepare_v2(db,INSERT_STATMENT,-1,&insert,NULL);
+#else
+	sqlite3_prepare(db,INSERT_STATEMENT,-1,&insert,NULL);
+#endif
+	sqlite3_bind_blob(insert,1,uuid,sizeof(uuid_t),SQLITE_STATIC);
+	sqlite3_bind_int(insert,2,remote);
+	sqlite3_bind_blob(insert,3,module,sizeof(BANG_module*),SQLITE_STATIC);
+	sqlite3_bind_int(insert,4,peer_id);
+	sqlite3_bind_text(insert,5,module_name,-1,SQLITE_STATIC);
+	sqlite3_bind_blob(insert,6,module_version,LENGTH_OF_VERSION,SQLITE_STATIC);
+
+	sqlite3_step(insert);
+	sqlite3_finalize(insert);
+}
+
+static sqlite3_stmt* prepare_select_statement(uuid_t uuid) {
+	assert(!uuid_is_null(uuid));
+
+	sqlite3_stmt *get_peer_route;
+	/* God dammit, ews needs to update sqlite */
+#ifdef NEW_SQLITE
+	sqlite3_prepare_v2(db,SELECT_STATEMENT,-1,&get_peer_route,NULL);
+#else
+	sqlite3_prepare(db,SELECT_STATEMENT,90,&get_peer_route,NULL);
+#endif
+
+	sqlite3_bind_blob(get_peer_route,1,uuid,sizeof(uuid_t),SQLITE_STATIC);
+
+	return get_peer_route;
+}
+
 static BANG_linked_list* select_routes_from_id(int id) {
 	sqlite3_stmt *s_routes;
 
@@ -375,6 +429,10 @@ static BANG_linked_list* select_routes_from_id(int id) {
 
 	return list;
 }
+
+/*
+ * Functions dealing with the routes table.
+ */
 
 static void insert_route(uuid_t p1, uuid_t p2) {
 	sqlite3_stmt *add_route;
@@ -441,54 +499,9 @@ BANG_linked_list* select_route(uuid_t p) {
 	return list;
 }
 
-static void insert_mapping(uuid_t uuid, int remote, BANG_module *module, int peer_id, char *module_name, unsigned char *module_version) {
-	assert(!uuid_is_null(uuid));
-	assert(remote == LOCAL_ROUTE || remote == REMOTE_ROUTE);
-	assert(peer_id >= 0);
-	assert(module_name != NULL);
-	assert(module_version != NULL);
-
-	sqlite3_stmt *insert;
-
-#ifdef NEW_SQLITE
-	sqlite3_prepare_v2(db,INSERT_STATMENT,-1,&insert,NULL);
-#else
-	sqlite3_prepare(db,INSERT_STATEMENT,-1,&insert,NULL);
-#endif
-	sqlite3_bind_blob(insert,1,uuid,sizeof(uuid_t),SQLITE_STATIC);
-	sqlite3_bind_int(insert,2,remote);
-	sqlite3_bind_blob(insert,3,module,sizeof(BANG_module*),SQLITE_STATIC);
-	sqlite3_bind_int(insert,4,peer_id);
-	sqlite3_bind_text(insert,5,module_name,-1,SQLITE_STATIC);
-	sqlite3_bind_blob(insert,6,module_version,LENGTH_OF_VERSION,SQLITE_STATIC);
-
-	sqlite3_step(insert);
-	sqlite3_finalize(insert);
-}
-
-void BANG_route_init() {
-#ifdef BDEBUG_1
-	fprintf(stderr,"BANG route initializing.\n");
-#endif
-
-	/* Keep the mappings database in memory. */
-#ifdef NEW_SQLITE
-	sqlite3_open_v2(DB_FILE,&db,SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX,NULL);
-#else
-	/* Dcl needs to update their sqlite3 libraries =/ */
-	sqlite3_open(DB_FILE,&db);
-#endif
-
-	/*TODO: check for errors.
-	 * Create database.
-	 */
-	sqlite3_exec(db,CREATE_MAPPINGS,NULL,NULL,NULL);
-	sqlite3_exec(db,CREATE_PEER_LIST,NULL,NULL,NULL);
-	sqlite3_exec(db,CREATE_ROUTES,NULL,NULL,NULL);
-
-	BANG_install_sighandler(BANG_PEER_ADDED,&catch_peer_added);
-	BANG_install_sighandler(BANG_PEER_REMOVED,&catch_peer_removed);
-}
+/*
+ * Catching the signals.
+ */
 
 static void catch_peer_added(int signal, int num_peers, void **p) {
 	int **peers = (int**) p;

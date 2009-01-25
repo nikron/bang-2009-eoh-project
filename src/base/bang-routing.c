@@ -13,20 +13,23 @@
 #include<uuid/uuid.h>
 
 #define CREATE_MAPPINGS "CREATE TABLE mappings(route_uuid blob unique primary key, remote integer, peer_id int, module blob, name text, version blob)"
-#define CREATE_PEER_LIST "CREATE TABLE peers(id int)"
-#define CREATE_ROUTES "CRATE TABLE routes(fst_peer blob, snd_peer blob)"
 #define INSERT_STATEMENT "INSERT INTO mappings(route_uuid,remote,module,peer_id,name,text) VALUES (?,?,?,?,?)"
-#define INSERT_PEER "INSERT INTO peers(id) VALUES (?)"
-#define INSERT_ROUTE "INSERT INTO routes(fst_peer,snd_peer) VALUES (?,?)"
-#define DELETE_PEER "DELETE FROM peers WHERE ? = id"
 #define SELECT_STATEMENT "SELECT remote,module,peer_id,name,version FROM mappings WHERE ? = route_uuid"
+
+#define CREATE_PEER_LIST "CREATE TABLE peers(id int)"
+#define INSERT_PEER "INSERT INTO peers(id) VALUES (?)"
+#define DELETE_PEER "DELETE FROM peers WHERE ? = id"
+
+#define CREATE_ROUTES "CREATE TABLE routes(fst_peer blob, snd_peer blob)"
+#define INSERT_ROUTE "INSERT INTO routes(fst_peer,snd_peer) VALUES (?,?)"
+
 #define DB_FILE ":memory:"
 #define REMOTE_ROUTE 2
 #define LOCAL_ROUTE 1
 
-static sqlite3 *db;
-
-/* TODO: Many elements in the functions are the same, consolidate somehow. DRY, afterall*/
+/**
+ * TODO: START ERROR CHECKING THE SQL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ */
 
 static sqlite3_stmt* prepare_select_statement(uuid_t uuid);
 
@@ -41,6 +44,8 @@ static void mem_append(void *dst, void *src, int length, int *pos);
 static void catch_peer_added(int signal, int num_peers, void **p);
 
 static void catch_peer_removed(int signal, int num_peers, void **p);
+
+static sqlite3 *db;
 
 static void mem_append(void *dst, void *src, int length, int *pos) {
 	memcpy(dst + *pos,src,length);
@@ -83,6 +88,8 @@ static sqlite3_stmt* prepare_select_statement(uuid_t uuid) {
 
 	return get_peer_route;
 }
+
+/* TODO: Many elements in the functions are the same, consolidate somehow. DRY, afterall*/
 
 void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 	assert(!uuid_is_null(authority));

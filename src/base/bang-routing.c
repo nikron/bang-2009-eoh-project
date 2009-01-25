@@ -22,6 +22,7 @@
 
 #define CREATE_ROUTES "CREATE TABLE routes(fst_peer blob, snd_peer blob)"
 #define INSERT_ROUTE "INSERT INTO routes(fst_peer,snd_peer) VALUES (?,?)"
+#define REMOVE_ROUTE "DELETE FROM routes WHERE (? = fst_peer AND ? = snd_peer) OR (? = fst_peer AND ? = snd_peer)"
 
 #define DB_FILE ":memory:"
 #define REMOTE_ROUTE 2
@@ -222,6 +223,24 @@ static void insert_route(uuid_t p1, uuid_t p2) {
 	sqlite3_finalize(add_route);
 }
 
+static void remove_route(uuid_t p1, uuid_t p2) {
+	sqlite3_stmt *remove_route;
+
+#ifdef NEW_SQLITE
+	sqlite3_prepare_v2(db,REMOVE_ROUTE,-1,&remove_route,NULL);
+#else
+	sqlite3_prepare(db,REMOVE_ROUTE,-1,&remove_route,NULL);
+#endif
+
+	sqlite3_bind_blob(remove_route,1,p1,sizeof(uuid_t),SQLITE_STATIC);
+	sqlite3_bind_blob(remove_route,2,p2,sizeof(uuid_t),SQLITE_STATIC);
+	sqlite3_bind_blob(remove_route,3,p2,sizeof(uuid_t),SQLITE_STATIC);
+	sqlite3_bind_blob(remove_route,4,p1,sizeof(uuid_t),SQLITE_STATIC);
+
+	sqlite3_step(remove_route);
+	sqlite3_finalize(remove_route);
+}
+
 void BANG_route_new_peer(uuid_t peer, uuid_t new_peer) {
 	assert(!uuid_is_null(peer));
 	assert(!uuid_is_null(new_peer));
@@ -258,6 +277,8 @@ void BANG_route_remove_peer(uuid_t peer, uuid_t old_peer) {
 			BANG_module_remove_peer(module,peer,old_peer);
 		}
 	}
+
+	remove_route(peer,old_peer);
 }
 
 void BANG_route_send_message(uuid_t uuid, char *message) {
@@ -378,6 +399,7 @@ void BANG_route_init() {
 #ifdef BDEBUG_1
 	fprintf(stderr,"BANG route initializing.\n");
 #endif
+
 	/* Keep the mappings database in memory. */
 #ifdef NEW_SQLITE
 	sqlite3_open_v2(DB_FILE,&db,SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX,NULL);

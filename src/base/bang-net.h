@@ -64,6 +64,13 @@ char BANG_is_server_running();
  */
 void BANG_server_start(char *server_port);
 
+/**
+ * \param new_port The new port of the server.
+ *
+ * \brief Set the port of the server, does not change
+ * the running status of the server.
+ */
+void BANG_server_set_port(char *new_port);
 
 /**
  * \brief Attempts to stop the server.

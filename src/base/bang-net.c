@@ -185,7 +185,7 @@ void* BANG_connect_thread(void *addr) {
 
 void BANG_server_start(char *server_port) {
 	pthread_mutex_lock(&server_status_lock);
-	if (server_port != NULL) 
+	if (server_port != NULL)
 		port = server_port;
 
 	if (server_thread == NULL) {
@@ -200,16 +200,12 @@ void BANG_server_start(char *server_port) {
 
 void BANG_server_set_port(char *new_port) {
 	pthread_mutex_lock(&server_status_lock);
+
 	if (new_port != NULL && !strcmp(port,new_port)) {
-		pthread_mutex_unlock(&server_status_lock);
-		if (BANG_is_server_running()) {
-			BANG_server_stop();
-			BANG_server_start(new_port);
-		}
-	} else {
-		pthread_mutex_unlock(&server_status_lock);
+		port = new_port;
 	}
 
+	pthread_mutex_unlock(&server_status_lock);
 }
 
 void BANG_server_stop() {

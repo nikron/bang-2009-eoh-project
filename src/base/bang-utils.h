@@ -18,6 +18,23 @@ typedef struct {
 	int readers;
 } BANG_rw_syncro;
 
+typedef struct _BANG_node{
+	struct _BANG_node *prev;
+	struct _BANG_node *next;
+	void *data;
+} BANG_node;
+
+typedef struct {
+	BANG_node *head;
+	BANG_node *tail;
+	size_t size;
+} BANG_linked_list;
+
+BANG_node* new_BANG_node(void *data);
+void* BANG_list_pop(BANG_linked_list *lst);
+void BANG_list_append(BANG_linked_list *lst, void *data);
+size_t BANG_list_get_size(BANG_linked_list *lst);
+
 /**
  * \param v1 A bang version.
  * \param v2 Another bang version.
@@ -25,7 +42,7 @@ typedef struct {
  * \return A comparsion of the two versions.
  *
  * \brief Compares the two versions, 0 if equal, - if less than, + if greater than.
- */ 
+ */
 int BANG_version_cmp(const unsigned char *v1, const unsigned char *v2);
 
 /**
@@ -83,7 +100,6 @@ BANG_rw_syncro* new_BANG_rw_syncro();
  * \brief Frees and destroys a lock.
  */
 void free_BANG_rw_syncro(BANG_rw_syncro *lck);
-
 
 void BANG_acquire_read_lock(int *readers, pthread_mutex_t *readers_lock, pthread_mutex_t *writers_lock);
 void BANG_release_read_lock(int *readers, pthread_mutex_t *readers_lock, pthread_mutex_t *writers_lock);

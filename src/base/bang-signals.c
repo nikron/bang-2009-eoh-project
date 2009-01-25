@@ -38,9 +38,7 @@ typedef struct _signal_node signal_node;
  * Another read-writer problem, multiple threads can send out the same signal at the same time, but only one thread
  * should be allowed add a signal handler.
  */
-static pthread_mutex_t send_sig_lock[BANG_NUM_SIGS];
-static pthread_mutex_t add_handler_lock[BANG_NUM_SIGS];
-static int sig_senders[BANG_NUM_SIGS];
+BANG_rw_syncro *(sig_locks[BANG_NUM_SIGS]);
 
 /**
  * \brief The handlers for each of the signals is kept in a linked list stored
@@ -79,19 +77,19 @@ static void recursive_sig_free(signal_node *head) {
 }
 
 static void acquire_sig_lock(int signal) {
-	BANG_acquire_read_lock(&(sig_senders[signal]),&(send_sig_lock[signal]),&(add_handler_lock[signal]));
+	BANG_read_lock(sig_locks[signal]);
 }
 
 static void release_sig_lock(int signal) {
-	BANG_release_read_lock(&(sig_senders[signal]),&(send_sig_lock[signal]),&(add_handler_lock[signal]));
+	BANG_read_unlock(sig_locks[signal]);
 }
 
 void BANG_sig_init() {
 	int i;
 
-	signal_handlers = (signal_node**) calloc(BANG_NUM_SIGS,sizeof(signal_node*));
 	for (i = 0; i < BANG_NUM_SIGS; ++i) {
 		signal_handlers[i] = NULL;
+		sig_locks[i] = new_BANG_rw_syncro();
 	}
 }
 
@@ -102,22 +100,22 @@ void BANG_sig_close() {
 	int i;
 	for (i = 0; i < BANG_NUM_SIGS; ++i) {
 		recursive_sig_free(signal_handlers[i]);
+		free_BANG_rw_syncro(sig_locks[i]);
 	}
-	free(signal_handlers);
-	signal_handlers = NULL;
 }
 
 int BANG_install_sighandler(int signal, BANGSignalHandler handler) {
 	/* We need to get a lock on the signal so that people aren't creating
 	 * more that one signal at a time */
-	pthread_mutex_lock(&add_handler_lock[signal]);
+	BANG_write_lock(sig_locks[signal]);
 
 	if (signal_handlers[signal] == NULL) {
 		/* Create a head node if there is none. */
 		signal_handlers[signal] = (signal_node*) malloc(sizeof(signal_node));
 		signal_handlers[signal]->handler = handler;
 		signal_handlers[signal]->next = NULL;
-		pthread_mutex_unlock(&add_handler_lock[signal]);
+
+		BANG_write_unlock(sig_locks[signal]);
 		return 0;
 	} else {
 		signal_node *cur;
@@ -127,13 +125,14 @@ int BANG_install_sighandler(int signal, BANGSignalHandler handler) {
 				cur->next =(signal_node*) malloc(sizeof(signal_node));
 				cur->next->handler = handler;
 				cur->next->next = NULL;
-				pthread_mutex_unlock(&add_handler_lock[signal]);
+
+				BANG_write_unlock(sig_locks[signal]);
 				return 0;
 			}
 		}
 	}
-	///How could it possibly come here!?1?!?
-	pthread_mutex_unlock(&add_handler_lock[signal]);
+	/* How could it possibly come here!?1?!? */
+	BANG_write_unlock(sig_locks[signal]);
 	return -1;
 }
 

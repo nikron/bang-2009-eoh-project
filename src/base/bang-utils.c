@@ -69,3 +69,46 @@ void BANG_release_read_lock(int *readers, pthread_mutex_t *readers_lock, pthread
 		pthread_mutex_unlock(writers_lock);
 	pthread_mutex_unlock(readers_lock);
 }
+
+BANG_node* new_BANG_node(void *data) {
+	BANG_node *node = calloc(1,sizeof(BANG_node));
+
+	node->data = data;
+
+	return node;
+}
+
+void* BANG_list_pop(BANG_linked_list *lst) {
+	if (lst == NULL || lst->head == NULL || lst->tail == NULL) return NULL;
+
+	void *data = lst->head->data;
+
+	if (lst->head == lst->tail) {
+		lst->head = NULL;
+		lst->tail = NULL;
+	} else if (lst->head->next) {
+		lst->head->next->prev = NULL;
+		lst->head = lst->head->next;
+	}
+
+	lst->size--;
+
+	return data;
+}
+
+void BANG_list_append(BANG_linked_list *lst, void *data) {
+	if (lst == NULL || lst->head == NULL || lst->tail == NULL) return;
+
+	BANG_node *node = new_BANG_node(data);
+
+	lst->tail->next = node;
+	node->prev = lst->tail;
+	lst->tail = node;
+
+	lst->size++;
+}
+
+
+size_t BANG_list_get_size(BANG_linked_list *lst) {
+	return lst->size;
+}

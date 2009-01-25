@@ -56,7 +56,7 @@ int BANG_module_name_cmp(const char *m1, const char *m2) {
 	return cmp;
 }
 
-BANG_node* new_BANG_node(const void *data) {
+BANG_node* new_BANG_node(void *data) {
 	BANG_node *node = calloc(1,sizeof(BANG_node));
 
 	node->data = data;
@@ -71,10 +71,10 @@ BANG_linked_list* new_BANG_linked_list() {
 	return new;
 }
 
-const void* BANG_list_pop(BANG_linked_list *lst) {
+void* BANG_linked_list_pop(BANG_linked_list *lst) {
 	if (lst == NULL || lst->head == NULL || lst->tail == NULL) return NULL;
 
-	const void *data = lst->head->data;
+	void *data = lst->head->data;
 
 	if (lst->head == lst->tail) {
 		lst->head = NULL;
@@ -89,7 +89,7 @@ const void* BANG_list_pop(BANG_linked_list *lst) {
 	return data;
 }
 
-void BANG_list_append(BANG_linked_list *lst, const void *data) {
+void BANG_linked_list_append(BANG_linked_list *lst, void *data) {
 	if (lst == NULL) return;
 
 	BANG_node *node = new_BANG_node(data);
@@ -106,8 +106,7 @@ void BANG_list_append(BANG_linked_list *lst, const void *data) {
 	lst->size++;
 }
 
-
-size_t BANG_list_get_size(BANG_linked_list *lst) {
+size_t BANG_linked_list_get_size(BANG_linked_list *lst) {
 	return lst->size;
 }
 

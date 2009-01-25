@@ -45,7 +45,7 @@ static void insert_route(uuid_t p1, uuid_t p2);
 
 static void remove_route(uuid_t p1, uuid_t p2);
 
-static uuid_t* select_route(uuid_t p);
+static BANG_linked_list* select_route(uuid_t p);
 
 static BANG_request construct_send_job_request(int type, uuid_t auth, uuid_t peer, int job_number, unsigned int job_length, void *data);
 
@@ -67,9 +67,9 @@ static BANG_request construct_send_job_request(int type, uuid_t auth, uuid_t pee
 	req.type = type;
 
 	req.length = sizeof(uuid_t)  * 2 +
-	    LENGTH_OF_LENGTHS +
-	    4 /* A MAGIC NUMBER! */ +
-	    job_length;
+		LENGTH_OF_LENGTHS +
+		4 /* A MAGIC NUMBER! */ +
+		job_length;
 
 	req.request = malloc(req.length);
 	int pos = 0;
@@ -115,12 +115,12 @@ void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 
 			BANG_request request =
 				construct_send_job_request(
-					BANG_SEND_JOB_REQUEST,
-					authority,
-					peer,
-					job->job_number,
-					job->length,
-					job->data);
+						BANG_SEND_JOB_REQUEST,
+						authority,
+						peer,
+						job->job_number,
+						job->length,
+						job->data);
 
 			BANG_request_peer_id(sqlite3_column_int(get_peer_route,3),request);
 
@@ -145,12 +145,12 @@ void BANG_route_finished_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 		if (sqlite3_column_int(get_auth_route,1) == REMOTE_ROUTE) {
 			BANG_request request =
 				construct_send_job_request(
-					BANG_SEND_FINISHED_JOB_REQUEST,
-					authority,
-					peer,
-					job->job_number,
-					job->length,
-					job->data);
+						BANG_SEND_FINISHED_JOB_REQUEST,
+						authority,
+						peer,
+						job->job_number,
+						job->length,
+						job->data);
 
 			BANG_request_peer_id(sqlite3_column_int(get_auth_route,3),request);
 
@@ -358,8 +358,15 @@ static BANG_linked_list* select_routes_from_id(int id) {
 	sqlite3_bind_int(s_routes,1,id);
 
 	BANG_linked_list* list = new_BANG_linked_list();
+	const void *temp;
+	uuid_t *route;
+
 	while (sqlite3_step(s_routes) == SQLITE_ROW) {
-		BANG_list_append(list,sqlite3_column_blob(s_routes,1));
+		temp = sqlite3_column_blob(s_routes,1);
+		route = malloc(sizeof(uuid_t));
+		uuid_copy(*route,*((uuid_t*)temp));
+
+		BANG_linked_list_append(list,route);
 	}
 
 	return list;
@@ -398,7 +405,7 @@ static void remove_route(uuid_t p1, uuid_t p2) {
 	sqlite3_finalize(remove_route);
 }
 
-static uuid_t* select_route(uuid_t p) {
+BANG_linked_list* select_route(uuid_t p) {
 	sqlite3_stmt *select_route;
 
 #ifdef NEW_SQLITE
@@ -409,10 +416,9 @@ static uuid_t* select_route(uuid_t p) {
 
 	sqlite3_bind_blob(select_route,1,p,sizeof(uuid_t),SQLITE_STATIC);
 
-	int i = 0;
-	int size = 2;
 	const void *temp;
-	uuid_t *list = malloc(2 * sizeof(uuid_t));
+	uuid_t *route;
+	BANG_linked_list *list = new_BANG_linked_list();
 
 	while (sqlite3_step(select_route) == SQLITE_ROW) {
 		temp = sqlite3_column_blob(select_route,1);
@@ -421,16 +427,10 @@ static uuid_t* select_route(uuid_t p) {
 			temp = sqlite3_column_blob(select_route,2);
 		}
 
-		uuid_copy(list[i],*((uuid_t*)temp));
+		uuid_copy(*route,*((uuid_t*)temp));
 
-		++i;
-		if (i > size) {
-			size *= 2;
-			list = realloc(list,size * sizeof(uuid_t));
-		}
+		BANG_linked_list_append(list,route);
 	}
-
-	uuid_clear(list[i]);
 
 	sqlite3_finalize(select_route);
 
@@ -480,6 +480,7 @@ void BANG_route_init() {
 	 */
 	sqlite3_exec(db,CREATE_MAPPINGS,NULL,NULL,NULL);
 	sqlite3_exec(db,CREATE_PEER_LIST,NULL,NULL,NULL);
+	sqlite3_exec(db,CREATE_ROUTES,NULL,NULL,NULL);
 
 	BANG_install_sighandler(BANG_PEER_ADDED,&catch_peer_added);
 	BANG_install_sighandler(BANG_PEER_REMOVED,&catch_peer_removed);
@@ -518,8 +519,16 @@ static void catch_peer_removed(int signal, int num_peers, void **p) {
 	if (signal == BANG_PEER_ADDED) {
 		int i;
 		sqlite3_stmt *delete;
+		BANG_linked_list *lst;
+		uuid_t *route;
 
 		for (i = 0; i < num_peers; ++i) {
+			lst = select_routes_from_id(*(peers[i]));
+
+			while ((route = BANG_linked_list_pop(lst)) != NULL) {
+				/* TODO: tell them that route is being removed. */
+				select_route(*route);
+			}
 		}
 
 		for (i = 0; i < num_peers; ++i) {

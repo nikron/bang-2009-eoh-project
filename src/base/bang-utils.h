@@ -21,7 +21,7 @@ typedef struct {
 typedef struct _BANG_node{
 	struct _BANG_node *prev;
 	struct _BANG_node *next;
-	const void *data;
+	void *data;
 } BANG_node;
 
 typedef struct {
@@ -30,11 +30,12 @@ typedef struct {
 	size_t size;
 } BANG_linked_list;
 
-BANG_node* new_BANG_node(const void *data);
+BANG_node* new_BANG_node(void *data);
 BANG_linked_list* new_BANG_linked_list();
-const void* BANG_list_pop(BANG_linked_list *lst);
-void BANG_list_append(BANG_linked_list *lst, const void *data);
-size_t BANG_list_get_size(BANG_linked_list *lst);
+void free_BANG_linked_list(BANG_linked_list *lst);
+void* BANG_linked_list_pop(BANG_linked_list *lst);
+void BANG_linked_list_append(BANG_linked_list *lst, void *data);
+size_t BANG_linked_list_get_size(BANG_linked_list *lst);
 
 /**
  * \param v1 A bang version.

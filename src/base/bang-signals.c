@@ -44,7 +44,7 @@ BANG_rw_syncro *(sig_locks[BANG_NUM_SIGS]);
  * \brief The handlers for each of the signals is kept in a linked list stored
  *  in an array which is index by the signal's number
  */
-static signal_node **signal_handlers;
+static signal_node *(signal_handlers[BANG_NUM_SIGS]);
 
 /**
  * \param head The head of the signal_node list.

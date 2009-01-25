@@ -23,6 +23,7 @@
 #define CREATE_ROUTES "CREATE TABLE routes(fst_peer blob, snd_peer blob)"
 #define INSERT_ROUTE "INSERT INTO routes(fst_peer,snd_peer) VALUES (?,?)"
 #define REMOVE_ROUTE "DELETE FROM routes WHERE (? = fst_peer AND ? = snd_peer) OR (? = fst_peer AND ? = snd_peer)"
+#define SELECT_ROUTE "SELECT fst_peer, snd_peer FROM routes WHERE ? = fst_peer OR ? = snd_peer"
 
 #define DB_FILE ":memory:"
 #define REMOTE_ROUTE 2
@@ -37,6 +38,10 @@ static sqlite3_stmt* prepare_select_statement(uuid_t uuid);
 static void insert_mapping(uuid_t uuid, int remote, BANG_module *module, int peer_id, char *module_name, unsigned char *module_version);
 
 static void insert_route(uuid_t p1, uuid_t p2);
+
+static void remove_route(uuid_t p1, uuid_t p2);
+
+static uuid_t* select_route(uuid_t p);
 
 static BANG_request construct_send_job_request(int type, uuid_t auth, uuid_t peer, int job_number, unsigned int job_length, void *data);
 
@@ -208,39 +213,6 @@ void BANG_route_assertion_of_authority(uuid_t authority, uuid_t peer) {
 	}
 }
 
-static void insert_route(uuid_t p1, uuid_t p2) {
-	sqlite3_stmt *add_route;
-
-#ifdef NEW_SQLITE
-	sqlite3_prepare_v2(db,INSERT_ROUTE,-1,&add_route,NULL);
-#else
-	sqlite3_prepare(db,INSERT_ROUTE,-1,&add_route,NULL);
-#endif
-
-	sqlite3_bind_blob(add_route,1,p1,sizeof(uuid_t),SQLITE_STATIC);
-	sqlite3_bind_blob(add_route,2,p2,sizeof(uuid_t),SQLITE_STATIC);
-	sqlite3_step(add_route);
-	sqlite3_finalize(add_route);
-}
-
-static void remove_route(uuid_t p1, uuid_t p2) {
-	sqlite3_stmt *remove_route;
-
-#ifdef NEW_SQLITE
-	sqlite3_prepare_v2(db,REMOVE_ROUTE,-1,&remove_route,NULL);
-#else
-	sqlite3_prepare(db,REMOVE_ROUTE,-1,&remove_route,NULL);
-#endif
-
-	sqlite3_bind_blob(remove_route,1,p1,sizeof(uuid_t),SQLITE_STATIC);
-	sqlite3_bind_blob(remove_route,2,p2,sizeof(uuid_t),SQLITE_STATIC);
-	sqlite3_bind_blob(remove_route,3,p2,sizeof(uuid_t),SQLITE_STATIC);
-	sqlite3_bind_blob(remove_route,4,p1,sizeof(uuid_t),SQLITE_STATIC);
-
-	sqlite3_step(remove_route);
-	sqlite3_finalize(remove_route);
-}
-
 void BANG_route_new_peer(uuid_t peer, uuid_t new_peer) {
 	assert(!uuid_is_null(peer));
 	assert(!uuid_is_null(new_peer));
@@ -336,31 +308,6 @@ int** BANG_not_route_get_peer_id(uuid_t *uuids) {
 	return peer_ids;
 }
 
-static void insert_mapping(uuid_t uuid, int remote, BANG_module *module, int peer_id, char *module_name, unsigned char *module_version) {
-	assert(!uuid_is_null(uuid));
-	assert(remote == LOCAL_ROUTE || remote == REMOTE_ROUTE);
-	assert(peer_id >= 0);
-	assert(module_name != NULL);
-	assert(module_version != NULL);
-
-	sqlite3_stmt *insert;
-
-#ifdef NEW_SQLITE
-	sqlite3_prepare_v2(db,INSERT_STATMENT,-1,&insert,NULL);
-#else
-	sqlite3_prepare(db,INSERT_STATEMENT,-1,&insert,NULL);
-#endif
-	sqlite3_bind_blob(insert,1,uuid,sizeof(uuid_t),SQLITE_STATIC);
-	sqlite3_bind_int(insert,2,remote);
-	sqlite3_bind_blob(insert,3,module,sizeof(BANG_module*),SQLITE_STATIC);
-	sqlite3_bind_int(insert,4,peer_id);
-	sqlite3_bind_text(insert,5,module_name,-1,SQLITE_STATIC);
-	sqlite3_bind_blob(insert,6,module_version,LENGTH_OF_VERSION,SQLITE_STATIC);
-
-	sqlite3_step(insert);
-	sqlite3_finalize(insert);
-}
-
 void BANG_register_module_route(BANG_module *module) {
 	assert(module != NULL);
 
@@ -393,6 +340,103 @@ void BANG_route_close() {
 #endif
 
 	sqlite3_close(db);
+}
+
+static void insert_route(uuid_t p1, uuid_t p2) {
+	sqlite3_stmt *add_route;
+
+#ifdef NEW_SQLITE
+	sqlite3_prepare_v2(db,INSERT_ROUTE,-1,&add_route,NULL);
+#else
+	sqlite3_prepare(db,INSERT_ROUTE,-1,&add_route,NULL);
+#endif
+
+	sqlite3_bind_blob(add_route,1,p1,sizeof(uuid_t),SQLITE_STATIC);
+	sqlite3_bind_blob(add_route,2,p2,sizeof(uuid_t),SQLITE_STATIC);
+	sqlite3_step(add_route);
+	sqlite3_finalize(add_route);
+}
+
+static void remove_route(uuid_t p1, uuid_t p2) {
+	sqlite3_stmt *remove_route;
+
+#ifdef NEW_SQLITE
+	sqlite3_prepare_v2(db,REMOVE_ROUTE,-1,&remove_route,NULL);
+#else
+	sqlite3_prepare(db,REMOVE_ROUTE,-1,&remove_route,NULL);
+#endif
+
+	sqlite3_bind_blob(remove_route,1,p1,sizeof(uuid_t),SQLITE_STATIC);
+	sqlite3_bind_blob(remove_route,2,p2,sizeof(uuid_t),SQLITE_STATIC);
+	sqlite3_bind_blob(remove_route,3,p2,sizeof(uuid_t),SQLITE_STATIC);
+	sqlite3_bind_blob(remove_route,4,p1,sizeof(uuid_t),SQLITE_STATIC);
+
+	sqlite3_step(remove_route);
+	sqlite3_finalize(remove_route);
+}
+
+static uuid_t* select_route(uuid_t p) {
+	sqlite3_stmt *select_route;
+
+#ifdef NEW_SQLITE
+	sqlite3_prepare_v2(db,SELECT_ROUTE,-1,&select_route,NULL);
+#else
+	sqlite3_prepare(db,SELECT_ROUTE,-1,&select_route,NULL);
+#endif
+
+	sqlite3_bind_blob(select_route,1,p,sizeof(uuid_t),SQLITE_STATIC);
+
+	int i = 0;
+	int size = 2;
+	const void *temp;
+	uuid_t *list = malloc(2 * sizeof(uuid_t));
+
+	while (sqlite3_step(select_route) == SQLITE_ROW) {
+		temp = sqlite3_column_blob(select_route,1);
+
+		if (uuid_compare(p,*((uuid_t*)temp)) == 0) {
+			temp = sqlite3_column_blob(select_route,2);
+		}
+
+		uuid_copy(uuid[i],*((uuid_t*)temp));
+
+		++i;
+		if (i > size) {
+			size *= 2;
+			list = realloc(list,size * sizeof(uuid_t));
+		}
+	}
+
+	uuid_clear(list[i]);
+
+	sqlite3_finalize(select_route);
+
+	return list;
+}
+
+static void insert_mapping(uuid_t uuid, int remote, BANG_module *module, int peer_id, char *module_name, unsigned char *module_version) {
+	assert(!uuid_is_null(uuid));
+	assert(remote == LOCAL_ROUTE || remote == REMOTE_ROUTE);
+	assert(peer_id >= 0);
+	assert(module_name != NULL);
+	assert(module_version != NULL);
+
+	sqlite3_stmt *insert;
+
+#ifdef NEW_SQLITE
+	sqlite3_prepare_v2(db,INSERT_STATMENT,-1,&insert,NULL);
+#else
+	sqlite3_prepare(db,INSERT_STATEMENT,-1,&insert,NULL);
+#endif
+	sqlite3_bind_blob(insert,1,uuid,sizeof(uuid_t),SQLITE_STATIC);
+	sqlite3_bind_int(insert,2,remote);
+	sqlite3_bind_blob(insert,3,module,sizeof(BANG_module*),SQLITE_STATIC);
+	sqlite3_bind_int(insert,4,peer_id);
+	sqlite3_bind_text(insert,5,module_name,-1,SQLITE_STATIC);
+	sqlite3_bind_blob(insert,6,module_version,LENGTH_OF_VERSION,SQLITE_STATIC);
+
+	sqlite3_step(insert);
+	sqlite3_finalize(insert);
 }
 
 void BANG_route_init() {
@@ -449,10 +493,13 @@ static void catch_peer_removed(int signal, int num_peers, void **p) {
 	int **peers = (int**) p;
 
 	if (signal == BANG_PEER_ADDED) {
-		int i = 0;
+		int i;
 		sqlite3_stmt *delete;
 
-		for (; i < num_peers; ++i) {
+		for (i = 0; i < num_peers; ++i) {
+		}
+
+		for (i = 0; i < num_peers; ++i) {
 #ifdef NEW_SQLITE
 			sqlite3_prepare_v2(db,DELETE_PEER,-1,&delete,NULL);
 #else

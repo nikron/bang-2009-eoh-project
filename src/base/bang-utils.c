@@ -66,7 +66,9 @@ BANG_node* new_BANG_node(void *data) {
 
 
 void free_BANG_node(BANG_node *node, void(*free_data)(void*)) {
-	free_data(node->data);
+	if (node) {
+		free_data(node->data);
+	}
 	free(node);
 }
 

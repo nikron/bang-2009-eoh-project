@@ -30,14 +30,75 @@ typedef struct {
 	size_t size;
 } BANG_linked_list;
 
+/**
+ * \param data The information to be included in the node.
+ *
+ * \brief Creates a new node out of some data.
+ */
 BANG_node* new_BANG_node(void *data);
+
+/**
+ * \param node The node whoose resources to free.
+ * \param free_data The function that will free the data.
+ *
+ * \brief Deallocates a bang node.
+ */
 void free_BANG_node(BANG_node *node, void(*free_data)(void*));
+
+/**
+ * \brief Creates a linked list.
+ */
 BANG_linked_list* new_BANG_linked_list();
+
+/**
+ * \param lst Linked list to free.
+ * \param free_data The function that will free data in the list.
+ *
+ * \brief Frees a linked list.
+ */
 void free_BANG_linked_list(BANG_linked_list *lst, void(*free_data)(void*));
+
+/**
+ * \param lst A valid linked list.
+ *
+ * \return The first element of the list.
+ *
+ * \brief Removes and returns the first element of the list.
+ */
 void* BANG_linked_list_pop(BANG_linked_list *lst);
+
+/**
+ * \param lst A valid linked lst.
+ *
+ * \return The first element of the list.
+ *
+ * \brief Returns the first element of the list.
+ */
 void* BANG_linked_list_peek(BANG_linked_list *lst);
+
+/**
+ * \param lst A valid linked list.
+ * \param data The data to add to the list.
+ *
+ * \brief Puts data on top of the linked list.
+ */
 void BANG_linked_list_push(BANG_linked_list *lst, void *data);
+
+/**
+ * \param lst A valid linked list.
+ * \param data The data to add to the list.
+ *
+ * \brief Puts the data at the end of the list.
+ */
 void BANG_linked_list_append(BANG_linked_list *lst, void *data);
+
+/**
+ * \param lst A valid linked list.
+ *
+ * \return The number of elements in the linked list.
+ *
+ * \brief Returns the number of elements in the linked list.
+ */
 size_t BANG_linked_list_get_size(BANG_linked_list *lst);
 
 /**

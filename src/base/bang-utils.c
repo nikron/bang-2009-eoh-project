@@ -1,4 +1,5 @@
 #include"bang-utils.h"
+#include"bang-types.h"
 #include<stdlib.h>
 #include<string.h>
 
@@ -80,6 +81,34 @@ BANG_linked_list* new_BANG_linked_list() {
 	return new;
 }
 
+BANG_node* BANG_node_extract_data(BANG_node *node, void **data) {
+	*data = node->data;
+
+	if (node->prev != NULL) {
+		if (node->next != NULL) {
+			node->prev->next  = node->next;
+			node->next->prev = node->prev;
+		} else {
+			node->prev->next = NULL;
+		}
+	}
+
+	if (node->next != NULL) {
+		if (node->prev != NULL) {
+			node->next->prev = node->prev;
+			node->prev->next = node->next;
+		} else {
+			node->next->prev = NULL;
+		}
+	}
+
+	BANG_node *to_ret = (node->next != NULL) ? node->next : node->prev;
+
+	free(node);
+
+	return to_ret;
+}
+
 void free_BANG_linked_list(BANG_linked_list *lst, void(*free_data)(void*)) {
 	if (lst == NULL) return;
 
@@ -103,14 +132,12 @@ void* BANG_linked_list_pop(BANG_linked_list *lst) {
 
 	BANG_write_lock(lst->lck);
 
-	void *data = lst->head->data;
+	void *data;
 
-	if (lst->head == lst->tail) {
-		lst->head = NULL;
+	lst->head = BANG_node_extract_data(lst->head,&data);
+
+	if (lst->head == NULL) {
 		lst->tail = NULL;
-	} else if (lst->head->next) {
-		lst->head->next->prev = NULL;
-		lst->head = lst->head->next;
 	}
 
 	lst->size--;
@@ -118,6 +145,47 @@ void* BANG_linked_list_pop(BANG_linked_list *lst) {
 	BANG_write_unlock(lst->lck);
 
 	return data;
+}
+
+void* BANG_linked_list_dequeue(BANG_linked_list *lst) {
+	if (lst == NULL || lst->head == NULL || lst->tail == NULL) return NULL;
+
+	BANG_write_lock(lst->lck);
+
+	void *data;
+
+	lst->tail = BANG_node_extract_data(lst->head,&data);
+
+	if (lst->tail == NULL) {
+		lst->head = NULL;
+	}
+
+	lst->size--;
+
+	BANG_write_unlock(lst->lck);
+
+	return data;
+}
+
+void BANG_linked_list_push(BANG_linked_list *lst, void *data) {
+	if (lst == NULL) return;
+
+	BANG_write_lock(lst->lck);
+
+	BANG_node *node = new_BANG_node(data);
+
+	if (lst->head && lst->tail) {
+		lst->head->prev = node;
+		node->next = lst->head;
+		lst->tail = node;
+	} else {
+		lst->head = node;
+		lst->tail = node;
+	}
+
+	lst->size++;
+
+	BANG_write_unlock(lst->lck);
 }
 
 void BANG_linked_list_append(BANG_linked_list *lst, void *data) {
@@ -136,7 +204,6 @@ void BANG_linked_list_append(BANG_linked_list *lst, void *data) {
 		lst->tail = node;
 	}
 
-
 	lst->size++;
 
 	BANG_write_unlock(lst->lck);
@@ -144,6 +211,22 @@ void BANG_linked_list_append(BANG_linked_list *lst, void *data) {
 
 size_t BANG_linked_list_get_size(BANG_linked_list *lst) {
 	return lst->size;
+}
+
+BANG_request* new_BANG_request(int type, void *data, int length) {
+	BANG_request *new = calloc(1,sizeof(BANG_request));
+
+	new->type = type;
+	new->request = data;
+	new->length = length;
+
+	return new;
+}
+
+void free_BANG_request(void *req) {
+	BANG_request *r = req;
+	free(r->request);
+	free(r);
 }
 
 void BANG_acquire_read_lock(int *readers, pthread_mutex_t *readers_lock, pthread_mutex_t *writers_lock) {

@@ -5,10 +5,10 @@
  *
  * \brief  Small utility functions used throughout the library.
  */
+
 #ifndef __BANG_UTILS_H
 #define __BANG_UTILS_H
 #include<pthread.h>
-
 /**
  * An object to do read - writing sycing
  */
@@ -53,6 +53,8 @@ BANG_node* new_BANG_node(void *data);
  */
 void free_BANG_node(BANG_node *node, void(*free_data)(void*));
 
+BANG_node* BANG_node_extract_data(BANG_node *node, void **data);
+
 /**
  * \brief Creates a linked list.
  */
@@ -74,6 +76,8 @@ void free_BANG_linked_list(BANG_linked_list *lst, void(*free_data)(void*));
  * \brief Removes and returns the first element of the list.
  */
 void* BANG_linked_list_pop(BANG_linked_list *lst);
+
+void* BANG_linked_list_dequeue(BANG_linked_list *lst);
 
 /**
  * \param lst A valid linked lst.

@@ -36,7 +36,7 @@
  * TODO: START ERROR CHECKING THE SQL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
 
-static BANG_request construct_send_job_request(int type, uuid_t auth, uuid_t peer, int job_number, unsigned int job_length, void *data);
+static BANG_request* construct_send_job_request(int type, uuid_t auth, uuid_t peer, int job_number, unsigned int job_length, void *data);
 
 static void mem_append(void *dst, void *src, int length, int *pos);
 
@@ -83,7 +83,7 @@ void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 	if (sqlite3_step(get_peer_route) == SQLITE_ROW) {
 		if (sqlite3_column_int(get_peer_route,1) == REMOTE_ROUTE) {
 
-			BANG_request request =
+			BANG_request *request =
 				construct_send_job_request(
 						BANG_SEND_JOB_REQUEST,
 						authority,
@@ -113,7 +113,7 @@ void BANG_route_finished_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 
 	if (sqlite3_step(get_auth_route) == SQLITE_ROW) {
 		if (sqlite3_column_int(get_auth_route,1) == REMOTE_ROUTE) {
-			BANG_request request =
+			BANG_request *request =
 				construct_send_job_request(
 						BANG_SEND_FINISHED_JOB_REQUEST,
 						authority,
@@ -143,13 +143,15 @@ void BANG_route_request_job(uuid_t peer, uuid_t authority) {
 
 	if (sqlite3_step(get_auth_route) == SQLITE_ROW) {
 		if (sqlite3_column_int(get_auth_route,1) == REMOTE_ROUTE) {
-			BANG_request request;
-			request.type = BANG_SEND_REQUEST_JOB_REQUEST;
-			request.length = sizeof(uuid_t) * 2;
-			request.request = malloc(request.length);
+
+			int length = sizeof(uuid_t) * 2;
+			void *data = malloc(length);
+
 			int pos = 0;
-			mem_append(request.request,authority,sizeof(uuid_t),&pos);
-			mem_append(request.request,peer,sizeof(uuid_t),&pos);
+			mem_append(data,authority,sizeof(uuid_t),&pos);
+			mem_append(data,peer,sizeof(uuid_t),&pos);
+
+			BANG_request *request = new_BANG_request(BANG_SEND_REQUEST_JOB_REQUEST,data,length);
 
 			BANG_request_peer_id(sqlite3_column_int(get_auth_route,3),request);
 
@@ -170,13 +172,15 @@ void BANG_route_assertion_of_authority(uuid_t authority, uuid_t peer) {
 
 	if (sqlite3_step(get_peer_route) == SQLITE_ROW) {
 		if (sqlite3_column_int(get_peer_route,1) == REMOTE_ROUTE) {
-			BANG_request request;
-			request.type = BANG_SEND_AVAILABLE_JOB_REQUEST;
-			request.length = sizeof(uuid_t) * 2;
-			request.request = malloc(request.length);
+
+			int length = sizeof(uuid_t) * 2;
+			void *data = malloc(length);
+
 			int pos = 0;
-			mem_append(request.request,authority,sizeof(uuid_t),&pos);
-			mem_append(request.request,peer,sizeof(uuid_t),&pos);
+			mem_append(data,authority,sizeof(uuid_t),&pos);
+			mem_append(data,peer,sizeof(uuid_t),&pos);
+
+			BANG_request *request = new_BANG_request(BANG_SEND_AVAILABLE_JOB_REQUEST,data,length);
 
 			BANG_request_peer_id(sqlite3_column_int(get_peer_route,3),request);
 
@@ -260,6 +264,7 @@ int BANG_route_get_peer_id(uuid_t uuid) {
 
 int** BANG_not_route_get_peer_id(uuid_t *uuids) {
 	if (uuids == NULL) return NULL;
+
 	int i = 0, j = 0;
 	int peer_id, **peer_ids = NULL;
 
@@ -350,23 +355,23 @@ static void mem_append(void *dst, void *src, int length, int *pos) {
 	*pos += length;
 }
 
-static BANG_request construct_send_job_request(int type, uuid_t auth, uuid_t peer, int job_number, unsigned int job_length, void *data) {
-	BANG_request req;
-	req.type = type;
+static BANG_request* construct_send_job_request(int type, uuid_t auth, uuid_t peer, int job_number, unsigned int job_length, void *data) {
 
-	req.length = sizeof(uuid_t)  * 2 +
+	int length = sizeof(uuid_t)  * 2 +
 		LENGTH_OF_LENGTHS +
 		4 /* A MAGIC NUMBER! */ +
 		job_length;
 
-	req.request = malloc(req.length);
-	int pos = 0;
+	void *request_data = malloc(length);
 
-	mem_append(req.request,auth,sizeof(uuid_t),&pos);
-	mem_append(req.request,peer,sizeof(uuid_t),&pos);
-	mem_append(req.request,&(job_number),4,&pos);
-	mem_append(req.request,&(job_length),LENGTH_OF_LENGTHS,&pos);
-	mem_append(req.request,data,job_length,&pos);
+	int pos = 0;
+	mem_append(request_data,auth,sizeof(uuid_t),&pos);
+	mem_append(request_data,peer,sizeof(uuid_t),&pos);
+	mem_append(request_data,&(job_number),4,&pos);
+	mem_append(request_data,&(job_length),LENGTH_OF_LENGTHS,&pos);
+	mem_append(request_data,data,job_length,&pos);
+
+	BANG_request *req = new_BANG_request(type,request_data,length);
 
 	return req;
 }

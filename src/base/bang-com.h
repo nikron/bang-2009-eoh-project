@@ -46,14 +46,14 @@ void* BANG_write_peer_thread(void *self_info);
  *
  * \brief Adds a request to the peer_id peer.
  */
-void BANG_request_peer_id(int peer_id, BANG_request request);
+void BANG_request_peer_id(int peer_id, BANG_request *request);
 
 /**
  * \param request The request to add.
  *
  * \brief Adds request to all peers.
  */
-void BANG_request_all(BANG_request request);
+void BANG_request_all(BANG_request *request);
 
 /**
  * \param peer_id Peer to remove.

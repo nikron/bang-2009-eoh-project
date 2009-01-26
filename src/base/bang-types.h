@@ -368,6 +368,8 @@ typedef struct {
 	unsigned int length;
 } BANG_request;
 
+BANG_request* new_BANG_request(int type, void *data, int length);
+void free_BANG_request(void *req);
 
 /**
  * When reading from a file, you should do it incremently at 1k bytes at a time!

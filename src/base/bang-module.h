@@ -38,6 +38,15 @@ void* BANG_get_symbol(BANG_module *module, char *symbol);
  */
 void BANG_run_module(BANG_module *module);
 
+/**
+ * \param module The module of the peer.
+ * \param job The job that is being sent to the module.
+ * \param auth The peer who sent the job to the module.
+ * \param peer The uuid of the module (hopefully.
+ *
+ * \brief If the peer and auth uuid checks out, then the job get sent to the module's
+ * callback.
+ */
 void BANG_module_callback_job(const BANG_module *module, BANG_job *job, uuid_t auth, uuid_t peer);
 
 /**
@@ -59,9 +68,31 @@ void BANG_module_callback_job_available(const BANG_module *module, uuid_t auth, 
  */
 void BANG_module_callback_job_request(const BANG_module *module, uuid_t auth, uuid_t peer);
 
+/**
+ * \param module The module of the auth.
+ * \param job The finished job.
+ * \param auth The uuid of the module authority.
+ * \param peer The uuid of the peer sending the module.
+ *
+ * \brief Sends a finished job to the module.
+ */
 void BANG_module_callback_job_finished(const BANG_module *module, BANG_job *job, uuid_t auth, uuid_t peer);
 
-void BANG_module_new_peer(const BANG_module *module, uuid_t peer,uuid_t new_peer);
+/**
+ * \param module The module getting a new peer.
+ * \param uuid The uuid of the module.
+ * \param new_peer The uuid of the new peer.
+ *
+ * \brief Informs the module that it has a new peer.
+ */
+void BANG_module_new_peer(const BANG_module *module, uuid_t peer, uuid_t new_peer);
 
+/**
+ * \param module The module losinga  peer.
+ * \param peer The uuid of the module.
+ * \param old_peer The peer that the module is losing.
+ *
+ * \brief Informs the module that is losing a peer.
+ */
 void BANG_module_remove_peer(const BANG_module *module, uuid_t peer,uuid_t old_peer);
 #endif

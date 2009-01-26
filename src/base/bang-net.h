@@ -13,14 +13,6 @@
 #define DEFAULT_PORT "7878"
 
 /**
- * \param new_port The new port that the server will run on.
- *
- * \brief Sets the port of the server.  Will attempt to restart the server.
- * This of course may fail for any number of reasons.
- */
-void BANG_set_server_port(char *new_port);
-
-/**
  * \param server_port The port the server should start at.
  * \param start_server If true, the server thread is started on init.
  *

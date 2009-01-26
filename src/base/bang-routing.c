@@ -585,9 +585,15 @@ static void catch_peer_removed(int signal, int num_peers, void **p) {
 		uuid_t *route, *remote_route;
 
 		for (i = 0; i < num_peers; ++i) {
-			lst = select_routes_from_id(*(peers[i]));
+			/* Get routes associated with this peer. */
+			assoc_routes = select_routes_from_id(*(peers[i]));
 
-			while ((route = BANG_linked_list_pop(lst)) != NULL) {
+			/* For each route associated with this peer,
+			 * remove any connections, and then remove the route.
+			 */
+			while ((route = BANG_linked_list_pop(assoc_routes)) != NULL) {
+
+				/* Get the routes connecting to this one. */
 				route_list = select_route(*route);
 
 				while ((remote_route = BANG_linked_list_pop(route_list)) != NULL) {

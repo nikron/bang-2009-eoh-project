@@ -581,7 +581,7 @@ static void catch_peer_removed(int signal, int num_peers, void **p) {
 
 	if (signal == BANG_PEER_ADDED) {
 		int i;
-		BANG_linked_list *lst, *route_list;
+		BANG_linked_list *assoc_routes, *route_list;
 		uuid_t *route, *remote_route;
 
 		for (i = 0; i < num_peers; ++i) {

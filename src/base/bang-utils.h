@@ -18,13 +18,21 @@ typedef struct {
 	int readers;
 } BANG_rw_syncro;
 
+/**
+ * A node in an BANG linked list.
+ */
 typedef struct _BANG_node{
 	struct _BANG_node *prev;
 	struct _BANG_node *next;
 	void *data;
 } BANG_node;
 
+/**
+ * A linked list structure, also a stack/queue.
+ * This structure is susposed to be thread safe.
+ */
 typedef struct {
+	BANG_rw_syncro *lck;
 	BANG_node *head;
 	BANG_node *tail;
 	size_t size;
@@ -167,6 +175,13 @@ BANG_rw_syncro* new_BANG_rw_syncro();
  */
 void free_BANG_rw_syncro(BANG_rw_syncro *lck);
 
+/**
+ * \brief Locks a mutex for reading given the assocaited reading lock, and pointer to readers.
+ */
 void BANG_acquire_read_lock(int *readers, pthread_mutex_t *readers_lock, pthread_mutex_t *writers_lock);
+
+/**
+ * \brief Unlocks a mutex for reading given the assocaited reading lock, and pointer to readers.
+ */
 void BANG_release_read_lock(int *readers, pthread_mutex_t *readers_lock, pthread_mutex_t *writers_lock);
 #endif

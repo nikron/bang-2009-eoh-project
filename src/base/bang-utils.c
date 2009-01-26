@@ -75,12 +75,15 @@ void free_BANG_node(BANG_node *node, void(*free_data)(void*)) {
 BANG_linked_list* new_BANG_linked_list() {
 	/* calloc sets everything to 0 */
 	BANG_linked_list *new = calloc(1,sizeof(BANG_linked_list));
+	new->lck = new_BANG_rw_syncro();
 
 	return new;
 }
 
 void free_BANG_linked_list(BANG_linked_list *lst, void(*free_data)(void*)) {
 	if (lst == NULL) return;
+
+	BANG_write_lock(lst->lck);
 
 	BANG_node *node = lst->head, *temp;
 	while (node) {
@@ -89,11 +92,16 @@ void free_BANG_linked_list(BANG_linked_list *lst, void(*free_data)(void*)) {
 		node = temp;
 	}
 
+	BANG_write_unlock(lst->lck);
+
+	free_BANG_rw_syncro(lst->lck);
 	free(lst);
 }
 
 void* BANG_linked_list_pop(BANG_linked_list *lst) {
 	if (lst == NULL || lst->head == NULL || lst->tail == NULL) return NULL;
+
+	BANG_write_lock(lst->lck);
 
 	void *data = lst->head->data;
 
@@ -107,11 +115,15 @@ void* BANG_linked_list_pop(BANG_linked_list *lst) {
 
 	lst->size--;
 
+	BANG_write_unlock(lst->lck);
+
 	return data;
 }
 
 void BANG_linked_list_append(BANG_linked_list *lst, void *data) {
 	if (lst == NULL) return;
+
+	BANG_write_lock(lst->lck);
 
 	BANG_node *node = new_BANG_node(data);
 
@@ -124,7 +136,10 @@ void BANG_linked_list_append(BANG_linked_list *lst, void *data) {
 		lst->tail = node;
 	}
 
+
 	lst->size++;
+
+	BANG_write_unlock(lst->lck);
 }
 
 size_t BANG_linked_list_get_size(BANG_linked_list *lst) {

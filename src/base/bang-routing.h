@@ -115,6 +115,13 @@ void BANG_register_module_route(BANG_module *module);
 void BANG_register_peer_route(uuid_t uuid, int peer, char *module_name, unsigned char* module_version);
 
 /**
+ * \param uuid The identifier to deregister.
+ *
+ * \brief Deregisters a uuid.
+ */
+void BANG_deregister_route(uuid_t uid);
+
+/**
  * \brief Starts the routing part of the library.
  */
 void BANG_route_init();

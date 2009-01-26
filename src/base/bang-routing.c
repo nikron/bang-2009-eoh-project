@@ -14,9 +14,10 @@
 #include<uuid/uuid.h>
 
 #define CREATE_MAPPINGS "CREATE TABLE mappings(route_uuid blob unique primary key, remote integer, peer_id int, module blob, name text, version blob)"
-#define INSERT_STATEMENT "INSERT INTO mappings(route_uuid,remote,module,peer_id,name,text) VALUES (?,?,?,?,?)"
-#define SELECT_STATEMENT "SELECT remote,module,peer_id,name,version FROM mappings WHERE ? = route_uuid"
+#define INSERT_MAPPING "INSERT INTO mappings(route_uuid,remote,module,peer_id,name,text) VALUES (?,?,?,?,?)"
+#define SELECT_MAPPING "SELECT remote,module,peer_id,name,version FROM mappings WHERE ? = route_uuid"
 #define SELECT_UUID "SELECT route_uuid WHERE ? = peer_id"
+#define REMOVE_MAPPING "DELETE FROM mappings WHERE ? = route_uuid"
 
 #define CREATE_PEER_LIST "CREATE TABLE peers(id int)"
 #define INSERT_PEER "INSERT INTO peers(id) VALUES (?)"
@@ -40,6 +41,8 @@ static BANG_request construct_send_job_request(int type, uuid_t auth, uuid_t pee
 static void mem_append(void *dst, void *src, int length, int *pos);
 
 static void insert_mapping(uuid_t uuid, int remote, BANG_module *module, int peer_id, char *module_name, unsigned char *module_version);
+
+static void remove_mapping(uuid_t uuid);
 
 static sqlite3_stmt* prepare_select_statement(uuid_t uuid);
 
@@ -304,6 +307,12 @@ void BANG_register_peer_route(uuid_t uuid, int peer, char *module_name, unsigned
 	insert_mapping(uuid,REMOTE_ROUTE,NULL,peer,module_name,module_version);
 }
 
+void BANG_deregister_route(uuid_t uuid) {
+	assert(!uuid_is_null(uuid));
+
+	remove_mapping(uuid);
+}
+
 void BANG_route_close() {
 #ifdef BDEBUG_1
 	fprintf(stderr,"BANG route closing.\n");
@@ -377,9 +386,9 @@ static void insert_mapping(uuid_t uuid, int remote, BANG_module *module, int pee
 	sqlite3_stmt *insert;
 
 #ifdef NEW_SQLITE
-	sqlite3_prepare_v2(db,INSERT_STATMENT,-1,&insert,NULL);
+	sqlite3_prepare_v2(db,INSERT_MAPPING,-1,&insert,NULL);
 #else
-	sqlite3_prepare(db,INSERT_STATEMENT,-1,&insert,NULL);
+	sqlite3_prepare(db,INSERT_MAPPING,-1,&insert,NULL);
 #endif
 	sqlite3_bind_blob(insert,1,uuid,sizeof(uuid_t),SQLITE_STATIC);
 	sqlite3_bind_int(insert,2,remote);
@@ -392,15 +401,31 @@ static void insert_mapping(uuid_t uuid, int remote, BANG_module *module, int pee
 	sqlite3_finalize(insert);
 }
 
+static void remove_mapping(uuid_t uuid) {
+	assert(!uuid_is_null(uuid));
+
+	sqlite3_stmt *remove;
+
+#ifdef NEW_SQLITE
+	sqlite3_prepare_v2(db,REMOVE_MAPPING,-1,&remove,NULL);
+#else
+	sqlite3_prepare(db,REMOVE_MAPPING,-1,&remove,NULL);
+#endif
+
+	sqlite3_bind_blob(remove,1,uuid,sizeof(uuid_t),SQLITE_STATIC);
+	sqlite3_step(remove);
+	sqlite3_finalize(remove);
+}
+
 static sqlite3_stmt* prepare_select_statement(uuid_t uuid) {
 	assert(!uuid_is_null(uuid));
 
 	sqlite3_stmt *get_peer_route;
 	/* God dammit, ews needs to update sqlite */
 #ifdef NEW_SQLITE
-	sqlite3_prepare_v2(db,SELECT_STATEMENT,-1,&get_peer_route,NULL);
+	sqlite3_prepare_v2(db,SELECT_MAPPING,-1,&get_peer_route,NULL);
 #else
-	sqlite3_prepare(db,SELECT_STATEMENT,90,&get_peer_route,NULL);
+	sqlite3_prepare(db,SELECT_MAPPING,-1,&get_peer_route,NULL);
 #endif
 
 	sqlite3_bind_blob(get_peer_route,1,uuid,sizeof(uuid_t),SQLITE_STATIC);
@@ -563,7 +588,6 @@ static void catch_peer_removed(int signal, int num_peers, void **p) {
 			lst = select_routes_from_id(*(peers[i]));
 
 			while ((route = BANG_linked_list_pop(lst)) != NULL) {
-				/* TODO: tell them that route is being removed. */
 				route_list = select_route(*route);
 
 				while ((remote_route = BANG_linked_list_pop(route_list)) != NULL) {
@@ -571,6 +595,7 @@ static void catch_peer_removed(int signal, int num_peers, void **p) {
 					free(remote_route);
 				}
 
+				BANG_deregister_route(*route);
 				free(route);
 			}
 

@@ -16,80 +16,16 @@
 #include<string.h>
 
 /**
- * A list of handlers for each signal is stored in linked list.
- */
-struct _signal_node {
-	/**
-	 * A handler for the signal.
-	 */
-	BANGSignalHandler handler;
-	/**
-	 * Next node in the list.
-	 */
-	struct _signal_node *next;
-};
-
-/**
- * A simple typedef of _signal_node.
- */
-typedef struct _signal_node signal_node;
-
-/**
- * Another read-writer problem, multiple threads can send out the same signal at the same time, but only one thread
- * should be allowed add a signal handler.
- */
-BANG_rw_syncro *(sig_locks[BANG_NUM_SIGS]);
-
-/**
  * \brief The handlers for each of the signals is kept in a linked list stored
  *  in an array which is index by the signal's number
  */
-static signal_node *(signal_handlers[BANG_NUM_SIGS]);
-
-/**
- * \param head The head of the signal_node list.
- *
- * \brief Frees a signal node linked list.
- */
-static void recursive_sig_free(signal_node *head);
-
-/**
- * \param signal The signal whose lock you want to acquire.
- *
- * \brief Acquires a read lock on a signal.
- */
-static void acquire_sig_lock(int signal);
-
-/**
- * \param signal The signal whose lock you want to release.
- *
- * \brief Releases a read lock on a signal.
- */
-static void release_sig_lock(int signal);
-
-static void recursive_sig_free(signal_node *head) {
-	if (head == NULL) return;
-	if (head->next != NULL) {
-		recursive_sig_free(head->next);
-	}
-	free(head);
-	head = NULL;
-}
-
-static void acquire_sig_lock(int signal) {
-	BANG_read_lock(sig_locks[signal]);
-}
-
-static void release_sig_lock(int signal) {
-	BANG_read_unlock(sig_locks[signal]);
-}
+BANG_linked_list *(signal_handlers[BANG_NUM_SIGS]);
 
 void BANG_sig_init() {
 	int i;
 
 	for (i = 0; i < BANG_NUM_SIGS; ++i) {
-		signal_handlers[i] = NULL;
-		sig_locks[i] = new_BANG_rw_syncro();
+		signal_handlers[i] = new_BANG_linked_list();
 	}
 }
 
@@ -99,41 +35,16 @@ void BANG_sig_close() {
 #endif
 	int i;
 	for (i = 0; i < BANG_NUM_SIGS; ++i) {
-		recursive_sig_free(signal_handlers[i]);
-		free_BANG_rw_syncro(sig_locks[i]);
+		free_BANG_linked_list(signal_handlers[i],NULL);
 	}
 }
 
 int BANG_install_sighandler(int signal, BANGSignalHandler handler) {
 	/* We need to get a lock on the signal so that people aren't creating
 	 * more that one signal at a time */
-	BANG_write_lock(sig_locks[signal]);
 
-	if (signal_handlers[signal] == NULL) {
-		/* Create a head node if there is none. */
-		signal_handlers[signal] = (signal_node*) malloc(sizeof(signal_node));
-		signal_handlers[signal]->handler = handler;
-		signal_handlers[signal]->next = NULL;
-
-		BANG_write_unlock(sig_locks[signal]);
-		return 0;
-	} else {
-		signal_node *cur;
-		/* Append the handler if there is a head. */
-		for (cur = signal_handlers[signal]; cur != NULL; cur = cur->next) {
-			if (cur->next == NULL) {
-				cur->next =(signal_node*) malloc(sizeof(signal_node));
-				cur->next->handler = handler;
-				cur->next->next = NULL;
-
-				BANG_write_unlock(sig_locks[signal]);
-				return 0;
-			}
-		}
-	}
-	/* How could it possibly come here!?1?!? */
-	BANG_write_unlock(sig_locks[signal]);
-	return -1;
+	BANG_linked_list_append(signal_handlers[signal],handler);
+	return 0;
 }
 
 
@@ -157,6 +68,12 @@ typedef struct {
 	int num_handler_args;
 } send_signal_args;
 
+typedef struct {
+	BANG_sigargs *args;
+	int num_args;
+	int signal;
+} iterate_data;
+
 /**
  * This is so that each signal can be sent in its own thread, and the signal caller
  * does not have to wait for handler to end.
@@ -168,6 +85,34 @@ static void* threaded_send_signal(void *thread_args) {
 	return NULL;
 }
 
+static void send_signal(void *c, void *d) {
+	iterate_data *data = d;
+	pthread_t signal_thread;
+	int i;
+
+	/* Used to transfer data to the thread. */
+	send_signal_args *thread_args = malloc(sizeof(send_signal_args));
+
+	thread_args->handler = c;
+	thread_args->signal = data->signal;
+
+	/* Each signal handler must have its own copy of the arguments. */
+	thread_args->handler_args = calloc(data->num_args,sizeof(void*));
+
+	for (i = 0; i < data->num_args; ++i) {
+		thread_args->handler_args[i] = malloc(data->args[i].length);
+		memcpy(thread_args->handler_args[i],data->args[i].args,data->args[i].length);
+	}
+
+	thread_args->num_handler_args = data->num_args;
+
+
+	pthread_create(&signal_thread,NULL,threaded_send_signal,(void*)thread_args);
+
+	/* We wont try to keep track of these threads */
+	pthread_detach(signal_thread);
+}
+
 int BANG_send_signal(int signal, BANG_sigargs *args, int num_args) {
 
 #ifdef BDEBUG_1
@@ -175,36 +120,8 @@ int BANG_send_signal(int signal, BANG_sigargs *args, int num_args) {
 	fprintf(stderr,"The signal_node is %p.\n",signal_handlers[signal]);
 #endif
 
-	signal_node *cur;
-	send_signal_args *thread_args;
-	pthread_t signal_thread;
-	int i = 0;
+	iterate_data d = { args, num_args, signal };
+	BANG_linked_list_iterate(signal_handlers[signal],&send_signal,&d);
 
-
-	/* Grab a read lock so the amount of signal handlers does not change */
-	acquire_sig_lock(signal);
-
-	for (cur = signal_handlers[signal]; cur != NULL; cur = cur->next) {
-		/* Used to transfer data to the thread. */
-		thread_args = (send_signal_args*) calloc(1,sizeof(send_signal_args));
-
-		thread_args->handler_args = calloc(num_args,sizeof(void*));
-
-		/* Each signal handler must have its own copy of the arguments. */
-		for (i = 0; i < num_args; ++i) {
-			thread_args->handler_args[i] = calloc(args[i].length,1);
-			memcpy(thread_args->handler_args[i],args[i].args,args[i].length);
-		}
-
-		thread_args->signal = signal;
-		thread_args->handler = cur->handler;
-		thread_args->num_handler_args = num_args;
-
-		pthread_create(&signal_thread,NULL,threaded_send_signal,(void*)thread_args);
-		/* We wont try to keep track of these threads */
-		pthread_detach(signal_thread);
-	}
-
-	release_sig_lock(signal);
 	return 0;
 }

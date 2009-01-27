@@ -213,6 +213,17 @@ size_t BANG_linked_list_get_size(BANG_linked_list *lst) {
 	return lst->size;
 }
 
+void BANG_linked_list_iterate(BANG_linked_list *lst, void (*it_callback) (void*,void*), void* data) {
+	BANG_node *node;
+	BANG_read_lock(lst->lck);
+
+	for (node = lst->head; node != NULL; node = node->next) {
+		it_callback(node->data,data);
+	}
+
+	BANG_read_unlock(lst->lck);
+}
+
 BANG_request* new_BANG_request(int type, void *data, int length) {
 	BANG_request *new = calloc(1,sizeof(BANG_request));
 

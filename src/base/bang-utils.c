@@ -85,20 +85,18 @@ BANG_node* BANG_node_extract_data(BANG_node *node, void **data) {
 	*data = node->data;
 
 	if (node->prev != NULL) {
+		node->prev->next  = node->next;
+
 		if (node->next != NULL) {
-			node->prev->next  = node->next;
 			node->next->prev = node->prev;
-		} else {
-			node->prev->next = NULL;
 		}
 	}
 
 	if (node->next != NULL) {
+		node->next->prev = node->prev;
+
 		if (node->prev != NULL) {
-			node->next->prev = node->prev;
 			node->prev->next = node->next;
-		} else {
-			node->next->prev = NULL;
 		}
 	}
 
@@ -177,7 +175,7 @@ void BANG_linked_list_push(BANG_linked_list *lst, void *data) {
 	if (lst->head && lst->tail) {
 		lst->head->prev = node;
 		node->next = lst->head;
-		lst->tail = node;
+		lst->head = node;
 	} else {
 		lst->head = node;
 		lst->tail = node;
@@ -219,6 +217,18 @@ void BANG_linked_list_iterate(BANG_linked_list *lst, void (*it_callback) (void*,
 
 	for (node = lst->head; node != NULL; node = node->next) {
 		it_callback(node->data,data);
+	}
+
+	BANG_read_unlock(lst->lck);
+}
+
+void BANG_linked_list_enumerate(BANG_linked_list *lst, void (*it_callback) (void*,void*,int), void* data) {
+	BANG_node *node;
+	int i;
+	BANG_read_lock(lst->lck);
+
+	for (i = 0, node = lst->head; node != NULL; i++, node = node->next) {
+		it_callback(node->data,data,i);
 	}
 
 	BANG_read_unlock(lst->lck);

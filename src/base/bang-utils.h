@@ -140,6 +140,8 @@ size_t BANG_linked_list_get_size(BANG_linked_list *lst);
  */
 void BANG_linked_list_iterate(BANG_linked_list *lst, void (*it_callback) (void*,void*), void* data);
 
+void BANG_linked_list_enumerate(BANG_linked_list *lst, void (*it_callback) (void*,void*,int), void* data);
+
 /**
  * \param v1 A bang version.
  * \param v2 Another bang version.

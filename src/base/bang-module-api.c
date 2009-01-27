@@ -90,7 +90,7 @@ void BANG_get_me_peers(BANG_module_info *info) {
 
 int BANG_number_of_active_peers(BANG_module_info *info) {
 	/* The way we store ids may change in the future, so this is a simple
-	 * wrapper function 
+	 * wrapper function
 	 */
 	int i = 0,j = 0;
 
@@ -142,7 +142,7 @@ void BANG_assert_authority_to_peer(BANG_module_info *info, int authority, int pe
 
 void BANG_request_job(BANG_module_info *info, int id) {
 #ifdef BDEBUG_1
-	fprintf(stderr,"Requesting a job from authority %d with blocking at %d!\n",id,blocking);
+	fprintf(stderr,"Requesting a job from authority %d!\n",id);
 #endif
 	uuid_t auth, me;
 	get_uuid_from_id(auth,id,info);
@@ -155,6 +155,10 @@ void BANG_request_job(BANG_module_info *info, int id) {
 }
 
 void BANG_finished_request(BANG_module_info *info, BANG_job *job) {
+#ifdef BDEBUG_1
+	fprintf(stderr,"Finished a job from authority %d!\n",job->authority);
+#endif
+
 	uuid_t auth,peer;
 	get_uuid_from_id(auth,job->authority,info);
 	get_uuid_from_id(peer,job->peer,info);

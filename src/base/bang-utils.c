@@ -252,14 +252,14 @@ void free_BANG_request(void *req) {
 
 void BANG_acquire_read_lock(int *readers, pthread_mutex_t *readers_lock, pthread_mutex_t *writers_lock) {
 	pthread_mutex_lock(readers_lock);
-	if (*readers++ == 1)
+	if (++(*readers) == 1)
 		pthread_mutex_lock(writers_lock);
 	pthread_mutex_unlock(readers_lock);
 }
 
 void BANG_release_read_lock(int *readers, pthread_mutex_t *readers_lock, pthread_mutex_t *writers_lock) {
 	pthread_mutex_lock(readers_lock);
-	if (*readers-- == 0)
+	if (--(*readers) == 0)
 		pthread_mutex_unlock(writers_lock);
 	pthread_mutex_unlock(readers_lock);
 }

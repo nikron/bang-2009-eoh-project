@@ -47,7 +47,6 @@ int BANG_install_sighandler(int signal, BANGSignalHandler handler) {
 	return 0;
 }
 
-
 /**
  * Each signal must be sent in its own thread, so BANG_send_signal creates this structure
  * in order to pass arguments to a thread_send_signal pthread.

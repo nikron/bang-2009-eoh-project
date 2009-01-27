@@ -3,7 +3,7 @@
 #include"../base/bang.h"
 
 
-static GtkWidget *statusbar;
+static GtkWidget *statusbar = NULL;
 
 static void bang_status(int signal, int num_args, void **args);
 

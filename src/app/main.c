@@ -43,6 +43,7 @@
 #include"../base/bang.h"
 #include"preferences.h"
 #include"statusbar.h"
+#include"server-menu.h"
 #include<stdio.h>
 #include<stdlib.h>
 #include<glib.h>
@@ -61,14 +62,6 @@ static GtkWidget *menubar;
 static GtkWidget *file;
 static GtkWidget *filemenu;
 static GtkWidget *open_module;
-
-static GtkWidget *server;
-static GtkWidget *servermenu;
-/**
- * Start Stop Server
- */
-static GtkWidget *ssserver;
-static GtkWidget *server_pref;
 
 static GtkWidget *peers_item;
 static GtkWidget *peersmenu;
@@ -102,17 +95,6 @@ static void open_bang_module() {
 		register_new_module(module);
 	}
 	gtk_widget_destroy(get_module);
-}
-
-static void change_server_status(GtkWidget *widget) {
-	///Just make the stop button inactive.  We'll make it active when we get the signal.
-	if(BANG_is_server_running()) {
-		BANG_server_stop();
-		gtk_widget_set_sensitive(widget,FALSE);
-	} else {
-		BANG_server_start(NULL);
-		gtk_widget_set_sensitive(widget,FALSE);
-	}
 }
 
 /**
@@ -182,17 +164,7 @@ int main(int argc, char **argv) {
 	gtk_menu_shell_append(GTK_MENU_SHELL(filemenu),open_module);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(file),filemenu);
 
-	server = gtk_menu_item_new_with_label("Server");
-	servermenu = gtk_menu_new();
-	ssserver = gtk_image_menu_item_new_from_stock(GTK_STOCK_CONNECT,NULL);
-	gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(ssserver))),"Start Server");
-	g_signal_connect(G_OBJECT(ssserver), "activate", G_CALLBACK(change_server_status), NULL);
-
-	server_pref = gtk_image_menu_item_new_from_stock(GTK_STOCK_PREFERENCES,NULL);
-
-	gtk_menu_shell_append(GTK_MENU_SHELL(servermenu),ssserver);
-	gtk_menu_shell_append(GTK_MENU_SHELL(servermenu),server_pref);
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM(server),servermenu);
+	GtkWidget *server_menu = BMACHINE_setup_server_menu();
 
 	peers_item = gtk_menu_item_new_with_label("Peers");
 	peersmenu = gtk_menu_new();
@@ -203,7 +175,7 @@ int main(int argc, char **argv) {
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(peers_item),peersmenu);
 
 	gtk_menu_append(menubar,file);
-	gtk_menu_append(menubar,server);
+	gtk_menu_append(menubar,server_menu);
 	gtk_menu_append(menubar,peers_item);
 
 	/*

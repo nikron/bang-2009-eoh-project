@@ -31,10 +31,12 @@ LSRC=src/base/bang-com$(SRCEXT) \
      src/base/bang-routing$(SRCEXT)
 
 AOBJS=preferences$(OBJEXT) \
-      main$(OBJEXT)
+      main$(OBJEXT) \
+      statusbar$(OBJEXT)
 
 ASRC=src/app/preferences$(SRCEXT) \
-      src/app/main$(SRCEXT)
+      src/app/main$(SRCEXT) \
+      src/app/statusbar$(SRCEXT)
 
 LIBRARIES=libbang.so $(MODULES)
 MODULES=test-module.so matrix-mult-module.so

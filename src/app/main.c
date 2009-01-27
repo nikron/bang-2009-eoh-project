@@ -42,6 +42,7 @@
  */
 #include"../base/bang.h"
 #include"preferences.h"
+#include"statusbar.h"
 #include<stdio.h>
 #include<stdlib.h>
 #include<glib.h>
@@ -54,7 +55,6 @@ static GtkWidget *window;
 static GtkWidget *vbox;
 static GtkWidget *notebook;
 static GtkWidget *peers_page_label;
-static GtkWidget *statusbar;
 
 static GtkWidget *menubar;
 
@@ -73,75 +73,6 @@ static GtkWidget *server_pref;
 static GtkWidget *peers_item;
 static GtkWidget *peersmenu;
 static GtkWidget *connect_peer;
-
-/**
- * \param signal The signal from the BANG library.
- * \param num_args The number of arguements of the signal
- * \param args Different depending on what signal this function caught.
- *
- * \brief Updates the statusbar depending on what signals it catches.
- */
-static void server_status(int signal, int num_args, void **args) {
-
-	gdk_threads_enter();
-	if (statusbar == NULL) {
-		gdk_threads_leave();
-		return;
-	}
-
-	guint context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar),"server_status");
-	gtk_statusbar_pop(GTK_STATUSBAR(statusbar),context_id);
-	if (signal == BANG_BIND_SUC) {
-		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine has been bound.");
-	} else if (signal == BANG_BIND_FAIL){
-		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine could not bind.");
-		gtk_widget_set_sensitive(ssserver,TRUE);
-		gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(ssserver))),"Start Server");
-	} else if (signal == BANG_SERVER_STARTED) {
-		gtk_widget_set_sensitive(ssserver,TRUE);
-		gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(ssserver))),"Stop Server");
-		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine server started.");
-	} else {
-		gtk_widget_set_sensitive(ssserver,TRUE);
-		gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(ssserver))),"Start Server");
-		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine server stopped.");
-	}
-	/* It's recommended to flush before calling the leave function. */
-	gdk_flush();
-	gdk_threads_leave();
-
-	int i = 0;
-	for (i = 0; i < num_args; ++i) {
-		free(args[i]);
-	}
-	free(args);
-}
-
-/* bang callback, gtk needs to be locked */
-static void client_con(int signal, int num_args, void **args) {
-
-	gdk_threads_enter();
-	if (statusbar == NULL) {
-		gdk_threads_leave();
-		return;
-	}
-
-	guint context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar),"peer_status");
-	gtk_statusbar_pop(GTK_STATUSBAR(statusbar),context_id);
-	if (signal == BANG_PEER_ADDED) {
-		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"A peer has been added.");
-	} else {
-		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"A peer has been removed.");
-	}
-	gdk_flush();
-	gdk_threads_leave();
-
-	int i = 0;
-	for (i = 0; i < num_args; ++i) {
-		free(args[i]);
-	}
-	free(args);
-}
 
 /**
  * \param module The module to register.
@@ -213,12 +144,6 @@ static void destroy() {
 int main(int argc, char **argv) {
 	/* Set up our library. */
 	BANG_init(&argc,argv);
-	BANG_install_sighandler(BANG_BIND_SUC,&server_status);
-	BANG_install_sighandler(BANG_BIND_FAIL,&server_status);
-	BANG_install_sighandler(BANG_SERVER_STARTED,&server_status);
-	BANG_install_sighandler(BANG_SERVER_STOPPED,&server_status);
-	BANG_install_sighandler(BANG_PEER_ADDED,&client_con);
-	BANG_install_sighandler(BANG_PEER_REMOVED,&client_con);
 
 	/* Note:  gtk expects that as a process, you do not need to free its memory
 	 So, it lets the operating system free all memory when the process closes. */
@@ -243,8 +168,7 @@ int main(int argc, char **argv) {
 	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(notebook),TRUE);
 	gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook),TRUE);
 
-	/* Set up the statusbar */
-	statusbar = gtk_statusbar_new();
+	GtkWidget *statusbar = BMACHINE_setup_status_bar();
 
 	/* Set up the menubar */
 	menubar = gtk_menu_bar_new();

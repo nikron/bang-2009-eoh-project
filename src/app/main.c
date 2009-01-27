@@ -41,7 +41,7 @@
  * the peers and their status.  And then a tab for each module.
  */
 #include"../base/bang.h"
-#include"server-preferences.h"
+#include"preferences.h"
 #include<stdio.h>
 #include<stdlib.h>
 #include<glib.h>
@@ -299,36 +299,7 @@ int main(int argc, char **argv) {
 	 */
 	gtk_window_maximize(GTK_WINDOW(window));
 
-	/*
-	 * Show the menubar and its contents.
-	 */
-	gtk_widget_show(connect_peer);
-	gtk_widget_show(peers_item);
-	gtk_widget_show(server_pref);
-	gtk_widget_show(ssserver);
-	gtk_widget_show(servermenu);
-	gtk_widget_show(server);
-	gtk_widget_show(open_module);
-	gtk_widget_show(filemenu);
-	gtk_widget_show(file);
-	gtk_widget_show(menubar);
-
-	/*
-	 * Show the statusbar
-	 */
-	gtk_widget_show(statusbar);
-
-	/*
-	 * Show the notebook and its contents
-	 */
-	gtk_widget_show(peers_page_label);
-	gtk_widget_show(notebook);
-
-	/*
-	 * Show the window
-	 */
-	gtk_widget_show(vbox);
-	gtk_widget_show(window);
+	gtk_widget_show_all(window);
 
 	gtk_main();
 	return 0;

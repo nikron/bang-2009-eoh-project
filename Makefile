@@ -30,10 +30,10 @@ LSRC=src/base/bang-com$(SRCEXT) \
      src/base/bang-utils$(SRCEXT) \
      src/base/bang-routing$(SRCEXT)
 
-AOBJS=server-preferences$(OBJEXT) \
+AOBJS=preferences$(OBJEXT) \
       main$(OBJEXT)
 
-ASRC=src/app/server-preferences$(SRCEXT) \
+ASRC=src/app/preferences$(SRCEXT) \
       src/app/main$(SRCEXT)
 
 LIBRARIES=libbang.so $(MODULES)

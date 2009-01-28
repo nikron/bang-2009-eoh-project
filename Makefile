@@ -34,23 +34,28 @@ AOBJS=preferences$(OBJEXT) \
       main$(OBJEXT) \
       statusbar$(OBJEXT)\
       server-menu$(OBJEXT) \
-      bang-machine-utils$(OBJEXT)
+      bang-machine-utils$(OBJEXT) \
+      menus$(OBJEXT)
 
 ASRC=src/app/preferences$(SRCEXT) \
       src/app/main$(SRCEXT) \
       src/app/statusbar$(SRCEXT) \
       src/app/server-menu$(SRCEXT) \
-      src/app/bang-machine-utils$(SRCEXT)
+      src/app/bang-machine-utils$(SRCEXT)\
+      src/app/menus$(SRCEXT)
 
 LIBRARIES=libbang.so $(MODULES)
 MODULES=test-module.so matrix-mult-module.so
 
 .PHONY: doc modules commit
 
-all: $(EXENAME) $(LIBRARIES)
+all: $(EXENAME) $(LIBRARIES) menus.xml
 
 $(EXENAME): $(LOBJS) $(AOBJS)
 	$(CC) $(COPTS) $(GTKOPTS) $^ -o $(EXENAME)
+
+menus.xml:
+	cp src/app/menus.xml .
 
 $(AOBJS): $(ASRC)
 	$(CC) $(COPTS) $(GTKOPTS) -c $^

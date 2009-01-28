@@ -41,6 +41,7 @@
  * the peers and their status.  And then a tab for each module.
  */
 #include"../base/bang.h"
+#include"menus.h"
 #include"preferences.h"
 #include"statusbar.h"
 #include"server-menu.h"
@@ -56,46 +57,6 @@ static GtkWidget *window;
 static GtkWidget *vbox;
 static GtkWidget *notebook;
 static GtkWidget *peers_page_label;
-
-static GtkWidget *menubar;
-
-static GtkWidget *file;
-static GtkWidget *filemenu;
-static GtkWidget *open_module;
-
-static GtkWidget *peers_item;
-static GtkWidget *peersmenu;
-static GtkWidget *connect_peer;
-
-/**
- * \param module The module to register.
- *
- * \brief Registers a new module.
- */
-static void register_new_module(BANG_module *module) {
-	GUI_module_init gui_init = BANG_get_symbol(module,"GUI_init");
-	/* If it has a gui method run it. */
-	if (gui_init) {
-		GtkWidget *page = NULL,*label = NULL;
-
-		gui_init(&page,&label);
-
-		gtk_notebook_append_page(GTK_NOTEBOOK(notebook),page,label);
-	}
-	BANG_run_module(module);
-}
-
-static void open_bang_module() {
-	/* OMG THE LINE IS SO LONG,OH SHI-- */
-	GtkWidget *get_module = gtk_file_chooser_dialog_new("Open Module", GTK_WINDOW(window), GTK_FILE_CHOOSER_ACTION_OPEN, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
-	if (gtk_dialog_run(GTK_DIALOG(get_module)) == GTK_RESPONSE_ACCEPT) {
-		char *filename;
-		filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(get_module));
-		BANG_module *module = BANG_load_module(filename);
-		register_new_module(module);
-	}
-	gtk_widget_destroy(get_module);
-}
 
 /**
  * GTK callback when the window is about to be deleted, does not to be locked as that comes
@@ -147,42 +108,16 @@ int main(int argc, char **argv) {
 	peers_page_label = gtk_label_new("Peers");
 	/* gtk_notebook_append_page(GTK_NOTEBOOK(notebook),peers_page_label,peers_page_label); */
 
+
 	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(notebook),TRUE);
 	gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook),TRUE);
 
 	GtkWidget *statusbar = BMACHINE_setup_status_bar();
 
-	/* Set up the menubar */
-	menubar = gtk_menu_bar_new();
-
-	file = gtk_menu_item_new_with_label("File");
-	filemenu = gtk_menu_new();
-	open_module = gtk_image_menu_item_new_from_stock(GTK_STOCK_OPEN,NULL);
-	gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(open_module))),"Open Module");
-	g_signal_connect(G_OBJECT(open_module),"activate",G_CALLBACK(open_bang_module),NULL);
-
-	gtk_menu_shell_append(GTK_MENU_SHELL(filemenu),open_module);
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM(file),filemenu);
-
-	GtkWidget *server_menu = BMACHINE_setup_server_menu();
-
-	peers_item = gtk_menu_item_new_with_label("Peers");
-	peersmenu = gtk_menu_new();
-	connect_peer = gtk_image_menu_item_new_from_stock(GTK_STOCK_CONNECT,NULL);
-	gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(connect_peer))),"Connect to A Peer");
-
-	gtk_menu_shell_append(GTK_MENU_SHELL(peersmenu),connect_peer);
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM(peers_item),peersmenu);
-
-	gtk_menu_append(menubar,file);
-	gtk_menu_append(menubar,server_menu);
-	gtk_menu_append(menubar,peers_item);
-
 	/*
 	 * set up the layout of the top level window
 	 */
-	gtk_box_pack_start(GTK_BOX(vbox),menubar,FALSE,FALSE,0);
-	gtk_box_pack_start(GTK_BOX(vbox),notebook,FALSE,FALSE,0);
+	BMACHINE_create_menus(vbox,window);
 	gtk_box_pack_end(GTK_BOX(vbox),statusbar,FALSE,FALSE,0);
 
 	/*

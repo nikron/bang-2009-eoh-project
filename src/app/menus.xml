@@ -1,0 +1,13 @@
+<ui>
+	<menubar name="MainMenu">
+		<menu name="FileMenu" action="FileMenuAction">
+			<menuitem name="OpenModule" action="OpenModuleAction" />
+		</menu>
+		<menu name="EditMenu" action="EditMenuAction">
+			<menuitem name="Edit Preferences" action="EditPreferencesAction" />
+		</menu>
+		<menu name="ServerMenu" action="ServerMenuAction">
+			<menuitem name="SSServer" action="StartStopServerAction" />
+		</menu>
+	</menubar>
+</ui>

@@ -80,6 +80,7 @@ doc:
 clean:
 	rm -f $(EXENAME) $(LOBJS) $(AOBJS) $(LIBRARIES)
 	rm -Rf doc/dox
+	rm menus.xml
 
 commit:
 	git commit -a

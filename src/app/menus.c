@@ -9,8 +9,9 @@ static const GtkActionEntry entries[] =
 	{ "EditMenuAction", NULL, "_Edit", "", "Edit functionality.", NULL },
 	{ "EditPreferencesAction", GTK_STOCK_PREFERENCES, "_Edit Prefrences", "<control>e", "Edit your prefrences.", NULL },
 
-	{ "ServerMenuAction", NULL, "_Server", "", "Control the bang server.", NULL },
-	{ "StartStopServerAction", GTK_STOCK_CONNECT, "_Start Server", "<control>s", "Start or stop the the server.", NULL }
+	{ "NetworkMenuAction", NULL, "_Network", "", "Control the bang networking.", NULL },
+	{ "StartStopServerAction", GTK_STOCK_CONNECT, "_Start Server", "<control>s", "Start or stop the the server.", NULL },
+	{ "ConnectPeerAction", GTK_STOCK_CONNECT, "_Connect to Peer", "<control>p", "Connect to a peer.", NULL }
 };
 
 static const guint n_entries = G_N_ELEMENTS(entries);

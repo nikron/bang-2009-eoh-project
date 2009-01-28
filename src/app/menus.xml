@@ -4,10 +4,11 @@
 			<menuitem name="OpenModule" action="OpenModuleAction" />
 		</menu>
 		<menu name="EditMenu" action="EditMenuAction">
-			<menuitem name="Edit Preferences" action="EditPreferencesAction" />
+			<menuitem name="EditPreferences" action="EditPreferencesAction" />
 		</menu>
-		<menu name="ServerMenu" action="ServerMenuAction">
+		<menu name="NetworkMenu" action="NetworkMenuAction">
 			<menuitem name="SSServer" action="StartStopServerAction" />
+			<menuitem name="ConnectPeer" action="ConnectPeerAction" />
 		</menu>
 	</menubar>
 </ui>

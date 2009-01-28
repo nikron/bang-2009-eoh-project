@@ -33,12 +33,14 @@ LSRC=src/base/bang-com$(SRCEXT) \
 AOBJS=preferences$(OBJEXT) \
       main$(OBJEXT) \
       statusbar$(OBJEXT)\
-      server-menu$(OBJEXT)
+      server-menu$(OBJEXT) \
+      bang-machine-utils$(OBJEXT)
 
 ASRC=src/app/preferences$(SRCEXT) \
       src/app/main$(SRCEXT) \
       src/app/statusbar$(SRCEXT) \
       src/app/server-menu$(SRCEXT) \
+      src/app/bang-machine-utils$(SRCEXT)
 
 LIBRARIES=libbang.so $(MODULES)
 MODULES=test-module.so matrix-mult-module.so

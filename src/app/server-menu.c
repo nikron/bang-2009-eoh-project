@@ -1,10 +1,13 @@
+#include"bang-machine-utils.h"
 #include"../base/bang.h"
 #include<gtk/gtk.h>
+#include<stdlib.h>
 
 /**
  * Start Stop Server
  */
 static GtkWidget *ssserver = NULL;
+
 
 static void server_status(int signal, int num_args, void **args) {
 
@@ -16,14 +19,15 @@ static void server_status(int signal, int num_args, void **args) {
 
 	switch (signal) {
 		case BANG_LISTEN_FAIL:
+			BMACHINE_error_dialog("The server could not listen to its port.");
 			break;
 		case BANG_BIND_FAIL:
+			BMACHINE_error_dialog("The server could not bind to its port.");
 			break;
 		case BANG_BIND_SUC:
 			break;
 		case BANG_GADDRINFO_FAIL:
-			break;
-		case BANG_BIND_SUC:
+			BMACHINE_error_dialog("The server could not fetch the address information.");
 			break;
 		case BANG_SERVER_STARTED:
 			break;
@@ -40,7 +44,7 @@ static void server_status(int signal, int num_args, void **args) {
 	free(args);
 }
 
-static void change_server_status(GtkWidget widget) {
+static void change_server_status(GtkWidget *widget) {
 	if(BANG_is_server_running()) {
 		BANG_server_stop();
 		gtk_widget_set_sensitive(widget,FALSE);
@@ -60,12 +64,13 @@ GtkWidget* BMACHINE_setup_server_menu() {
 
 	gtk_menu_shell_append(GTK_MENU_SHELL(servermenu),ssserver);
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(server),servermenu);
-	BANG_install_sighandler(BANG_LISTEN_FAIL,&change_server_status);
-	BANG_install_sighandler(BANG_BIND_FAIL,&change_server_status);
-	BANG_install_sighandler(BANG_BIND_SUC,&change_server_status);
-	BANG_install_sighandler(BANG_GADDRINFO_FAIL,&change_server_status);
-	BANG_install_sighandler(BANG_BIND_SUC,&change_server_status);
-	BANG_install_sighandler(BANG_SERVER_STARTED,&change_server_status);
+
+	BANG_install_sighandler(BANG_LISTEN_FAIL,&server_status);
+	BANG_install_sighandler(BANG_BIND_FAIL,&server_status);
+	BANG_install_sighandler(BANG_BIND_SUC,&server_status);
+	BANG_install_sighandler(BANG_GADDRINFO_FAIL,&server_status);
+	BANG_install_sighandler(BANG_BIND_SUC,&server_status);
+	BANG_install_sighandler(BANG_SERVER_STARTED,&server_status);
 
 	return server;
 }

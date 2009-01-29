@@ -1,3 +1,4 @@
+#include"server-menu.h"
 #include<gtk/gtk.h>
 #include<stdio.h>
 
@@ -10,8 +11,9 @@ static const GtkActionEntry entries[] =
 	{ "EditPreferencesAction", GTK_STOCK_PREFERENCES, "_Edit Prefrences", "<control>e", "Edit your prefrences.", NULL },
 
 	{ "NetworkMenuAction", NULL, "_Network", "", "Control the bang networking.", NULL },
-	{ "StartStopServerAction", GTK_STOCK_CONNECT, "_Start Server", "<control>s", "Start or stop the the server.", NULL },
-	{ "ConnectPeerAction", GTK_STOCK_CONNECT, "_Connect to Peer", "<control>p", "Connect to a peer.", NULL }
+	{ "StartStopServerAction", GTK_STOCK_CONNECT, "_Start Server", "<control>s", "Start or stop the the server.", G_CALLBACK(BMAHCHINE_change_server_status) },
+	{ "ConnectPeerAction", GTK_STOCK_CONNECT, "_Connect to Peer", "<control>p", "Connect to a peer.", NULL },
+	{ "ScanAction", GTK_STOCK_NETWORK, "_Scan", "<control>c", "Scan for peers.", NULL }
 };
 
 static const guint n_entries = G_N_ELEMENTS(entries);

@@ -9,6 +9,7 @@
 		<menu name="NetworkMenu" action="NetworkMenuAction">
 			<menuitem name="SSServer" action="StartStopServerAction" />
 			<menuitem name="ConnectPeer" action="ConnectPeerAction" />
+			<menuitem name="Scan" action="ScanAction" />
 		</menu>
 	</menubar>
 </ui>

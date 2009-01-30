@@ -208,10 +208,13 @@ void BANG_linked_list_append(BANG_linked_list *lst, void *data) {
 }
 
 size_t BANG_linked_list_get_size(BANG_linked_list *lst) {
-	return lst->size;
+	if (lst == NULL) return 0;
+	else return lst->size;
 }
 
-void BANG_linked_list_iterate(BANG_linked_list *lst, void (*it_callback) (void*,void*), void* data) {
+void BANG_linked_list_iterate(BANG_linked_list *lst, void (*it_callback) (const void*,void*), void* data) {
+	if (lst == NULL || it_callback == NULL) return;
+
 	BANG_node *node;
 	BANG_read_lock(lst->lck);
 
@@ -222,7 +225,9 @@ void BANG_linked_list_iterate(BANG_linked_list *lst, void (*it_callback) (void*,
 	BANG_read_unlock(lst->lck);
 }
 
-void BANG_linked_list_enumerate(BANG_linked_list *lst, void (*it_callback) (void*,void*,int), void* data) {
+void BANG_linked_list_enumerate(BANG_linked_list *lst, void (*it_callback) (const void*,void*,int), void* data) {
+	if (lst == NULL || it_callback == NULL) return;
+
 	BANG_node *node;
 	int i;
 	BANG_read_lock(lst->lck);
@@ -232,6 +237,90 @@ void BANG_linked_list_enumerate(BANG_linked_list *lst, void (*it_callback) (void
 	}
 
 	BANG_read_unlock(lst->lck);
+}
+
+#define L_SHIFT 16
+#define L_MASK 0x0000ffff
+
+BANG_set* new_BANG_set() {
+	BANG_set *new = malloc(sizeof(BANG_set));
+
+	new->lck = new_BANG_rw_syncro();
+	new->size = 2;
+	new->current = 0;
+	new->count = 0;
+	new->members = calloc(new->size,sizeof(BANG_set_data));
+	new->free_space = new_BANG_linked_list();
+
+	return new;
+}
+
+int BANG_set_add(BANG_set *s, void *data) {
+	if (s == NULL) return -1;
+
+	int *free, key, pos;
+
+	BANG_write_lock(s->lck);
+
+	free = BANG_linked_list_pop(s->free_space);
+
+	pos = (free) ? *free : s->current++;
+
+	key = (pos << L_SHIFT) |  ++(s->count);
+
+
+	if ((unsigned int) s->current > s->size) {
+		s->size *= 2;
+		s->members = realloc(s->members,s->size * sizeof(BANG_set_data));
+	}
+
+	s->members[pos].key = s->count;
+	s->members[pos].data = data;
+
+	BANG_write_unlock(s->lck);
+
+	return key;
+}
+
+void* BANG_set_get(BANG_set *s, int key) {
+	if (s == NULL) return NULL;;
+
+	BANG_read_lock(s->lck);
+
+	int pos = key >> L_SHIFT;
+
+	if (pos > s->current || (s->members[pos].key != (key & L_MASK))) {
+		BANG_read_unlock(s->lck);
+
+		return NULL;
+	}
+
+	void *data = s->members[pos].data;
+
+	BANG_read_unlock(s->lck);
+
+	return data;
+
+}
+
+void* BANG_set_remove(BANG_set *s, int key) {
+	if (s == NULL) return NULL;
+
+	int pos = key >> L_SHIFT;
+	void *data = BANG_set_get(s,key);
+	
+	if (data == NULL) return NULL;
+
+	BANG_write_lock(s->lck);
+
+	s->members[pos].key = -1;
+	s->members[pos].data = NULL;
+	s->current--;
+	BANG_linked_list_push(s->free_space,&pos);
+
+	BANG_write_unlock(s->lck);
+
+	return data;
 }
 
 BANG_request* new_BANG_request(int type, void *data, int length) {

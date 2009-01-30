@@ -38,6 +38,20 @@ typedef struct {
 	size_t size;
 } BANG_linked_list;
 
+typedef struct {
+	int key;
+	void *data;
+} BANG_set_data;
+
+typedef struct {
+	BANG_rw_syncro *lck;
+	size_t size;
+	int current;
+	int count;
+	BANG_set_data *members;
+	BANG_linked_list *free_space;
+} BANG_set;
+
 /**
  * \param data The information to be included in the node.
  *
@@ -138,9 +152,17 @@ size_t BANG_linked_list_get_size(BANG_linked_list *lst);
  * \brief Iterates over a linked calling a function back with the node data and provided
  * data, if any.
  */
-void BANG_linked_list_iterate(BANG_linked_list *lst, void (*it_callback) (void*,void*), void* data);
+void BANG_linked_list_iterate(BANG_linked_list *lst, void (*it_callback) (const void*,void*), void* data);
 
-void BANG_linked_list_enumerate(BANG_linked_list *lst, void (*it_callback) (void*,void*,int), void* data);
+void BANG_linked_list_enumerate(BANG_linked_list *lst, void (*it_callback) (const void*,void*,int), void* data);
+
+BANG_set* new_BANG_set();
+
+int BANG_set_add(BANG_set *s, void *data);
+
+void* BANG_set_get(BANG_set *s, int key);
+
+void* BANG_set_remove(BANG_set *s, int key);
 
 /**
  * \param v1 A bang version.

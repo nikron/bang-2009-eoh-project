@@ -84,7 +84,7 @@ static void* threaded_send_signal(void *thread_args) {
 	return NULL;
 }
 
-static void send_signal(void *c, void *d) {
+static void send_signal(const void *c, void *d) {
 	iterate_data *data = d;
 	pthread_t signal_thread;
 	int i;

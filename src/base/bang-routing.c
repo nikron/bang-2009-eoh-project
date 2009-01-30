@@ -80,25 +80,40 @@ void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 	 * a peer. */
 	sqlite3_stmt *get_peer_route = prepare_select_statement(peer);
 
-	if (sqlite3_step(get_peer_route) == SQLITE_ROW) {
-		if (sqlite3_column_int(get_peer_route,1) == REMOTE_ROUTE) {
+	switch (sqlite3_step(get_peer_route)) {
+		case SQLITE_ROW:
+			if (sqlite3_column_int(get_peer_route,1) == REMOTE_ROUTE) {
 
-			BANG_request *request =
-				construct_send_job_request(
-						BANG_SEND_JOB_REQUEST,
-						authority,
-						peer,
-						job->job_number,
-						job->length,
-						job->data);
+				BANG_request *request =
+					construct_send_job_request(
+							BANG_SEND_JOB_REQUEST,
+							authority,
+							peer,
+							job->job_number,
+							job->length,
+							job->data);
 
-			BANG_request_peer_id(sqlite3_column_int(get_peer_route,3),request);
+				BANG_request_peer_id(sqlite3_column_int(get_peer_route,3),request);
 
 
-		} else {
-			const BANG_module *module = sqlite3_column_blob(get_peer_route,2);
-			BANG_module_callback_job(module,job,authority,peer);
-		}
+			} else {
+				const BANG_module *module = sqlite3_column_blob(get_peer_route,2);
+				BANG_module_callback_job(module,job,authority,peer);
+			}
+			break;
+
+		case SQLITE_BUSY:
+#ifdef BDEBUG_1
+			fprintf(stderr,"We got a busy route here.\n");
+#endif
+			break;
+		case SQLITE_DONE:
+			break;
+		default:
+#ifdef BDEBUG_1
+			fprintf(stderr,"%s\n"sqlite3_errmsg(get_peer_route));
+#endif
+			break;
 	}
 }
 
@@ -111,23 +126,37 @@ void BANG_route_finished_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 	 * to an authority. */
 	sqlite3_stmt *get_auth_route = prepare_select_statement(authority);
 
-	if (sqlite3_step(get_auth_route) == SQLITE_ROW) {
-		if (sqlite3_column_int(get_auth_route,1) == REMOTE_ROUTE) {
-			BANG_request *request =
-				construct_send_job_request(
-						BANG_SEND_FINISHED_JOB_REQUEST,
-						authority,
-						peer,
-						job->job_number,
-						job->length,
-						job->data);
+	switch (sqlite3_step(get_auth_route)) {
+		case SQLITE_ROW:
+			if (sqlite3_column_int(get_auth_route,1) == REMOTE_ROUTE) {
+				BANG_request *request =
+					construct_send_job_request(
+							BANG_SEND_FINISHED_JOB_REQUEST,
+							authority,
+							peer,
+							job->job_number,
+							job->length,
+							job->data);
 
-			BANG_request_peer_id(sqlite3_column_int(get_auth_route,3),request);
+				BANG_request_peer_id(sqlite3_column_int(get_auth_route,3),request);
 
-		} else {
-			const BANG_module *module = sqlite3_column_blob(get_auth_route,2);
-			BANG_module_callback_job_finished(module,job,authority,peer);
-		}
+			} else {
+				const BANG_module *module = sqlite3_column_blob(get_auth_route,2);
+				BANG_module_callback_job_finished(module,job,authority,peer);
+			}
+
+		case SQLITE_BUSY:
+#ifdef BDEBUG_1
+			fprintf(stderr,"We got a busy route here.\n");
+#endif
+			break;
+		case SQLITE_DONE:
+			break;
+		default:
+#ifdef BDEBUG_1
+			fprintf(stderr,"%s\n"sqlite3_errmsg(get_peer_route));
+#endif
+			break;
 	}
 }
 
@@ -141,24 +170,37 @@ void BANG_route_request_job(uuid_t peer, uuid_t authority) {
 	 * to an authority. */
 	sqlite3_stmt *get_auth_route = prepare_select_statement(authority);
 
-	if (sqlite3_step(get_auth_route) == SQLITE_ROW) {
-		if (sqlite3_column_int(get_auth_route,1) == REMOTE_ROUTE) {
+	switch (sqlite3_step(get_auth_route)) {
+		case SQLITE_ROW:
+			if (sqlite3_column_int(get_auth_route,1) == REMOTE_ROUTE) {
 
-			int length = sizeof(uuid_t) * 2;
-			void *data = malloc(length);
+				int length = sizeof(uuid_t) * 2;
+				void *data = malloc(length);
 
-			int pos = 0;
-			mem_append(data,authority,sizeof(uuid_t),&pos);
-			mem_append(data,peer,sizeof(uuid_t),&pos);
+				int pos = 0;
+				mem_append(data,authority,sizeof(uuid_t),&pos);
+				mem_append(data,peer,sizeof(uuid_t),&pos);
 
-			BANG_request *request = new_BANG_request(BANG_SEND_REQUEST_JOB_REQUEST,data,length);
+				BANG_request *request = new_BANG_request(BANG_SEND_REQUEST_JOB_REQUEST,data,length);
 
-			BANG_request_peer_id(sqlite3_column_int(get_auth_route,3),request);
+				BANG_request_peer_id(sqlite3_column_int(get_auth_route,3),request);
 
-		} else {
-			const BANG_module *module = sqlite3_column_blob(get_auth_route,2);
-			BANG_module_callback_job_request(module,authority,peer);
-		}
+			} else {
+				const BANG_module *module = sqlite3_column_blob(get_auth_route,2);
+				BANG_module_callback_job_request(module,authority,peer);
+			}
+		case SQLITE_BUSY:
+#ifdef BDEBUG_1
+			fprintf(stderr,"We got a busy route here.\n");
+#endif
+			break;
+		case SQLITE_DONE:
+			break;
+		default:
+#ifdef BDEBUG_1
+			fprintf(stderr,"%s\n"sqlite3_errmsg(get_peer_route));
+#endif
+			break;
 	}
 }
 
@@ -170,24 +212,37 @@ void BANG_route_assertion_of_authority(uuid_t authority, uuid_t peer) {
 	 * to an authority. */
 	sqlite3_stmt *get_peer_route = prepare_select_statement(peer);
 
-	if (sqlite3_step(get_peer_route) == SQLITE_ROW) {
-		if (sqlite3_column_int(get_peer_route,1) == REMOTE_ROUTE) {
+	switch (sqlite3_step(get_peer_route)) {
+		case SQLITE_ROW:
+			if (sqlite3_column_int(get_peer_route,1) == REMOTE_ROUTE) {
 
-			int length = sizeof(uuid_t) * 2;
-			void *data = malloc(length);
+				int length = sizeof(uuid_t) * 2;
+				void *data = malloc(length);
 
-			int pos = 0;
-			mem_append(data,authority,sizeof(uuid_t),&pos);
-			mem_append(data,peer,sizeof(uuid_t),&pos);
+				int pos = 0;
+				mem_append(data,authority,sizeof(uuid_t),&pos);
+				mem_append(data,peer,sizeof(uuid_t),&pos);
 
-			BANG_request *request = new_BANG_request(BANG_SEND_AVAILABLE_JOB_REQUEST,data,length);
+				BANG_request *request = new_BANG_request(BANG_SEND_AVAILABLE_JOB_REQUEST,data,length);
 
-			BANG_request_peer_id(sqlite3_column_int(get_peer_route,3),request);
+				BANG_request_peer_id(sqlite3_column_int(get_peer_route,3),request);
 
-		} else {
-			const BANG_module *module = sqlite3_column_blob(get_peer_route,2);
-			BANG_module_callback_job_available(module,authority,peer);
-		}
+			} else {
+				const BANG_module *module = sqlite3_column_blob(get_peer_route,2);
+				BANG_module_callback_job_available(module,authority,peer);
+			}
+		case SQLITE_BUSY:
+#ifdef BDEBUG_1
+			fprintf(stderr,"We got a busy route here.\n");
+#endif
+			break;
+		case SQLITE_DONE:
+			break;
+		default:
+#ifdef BDEBUG_1
+			fprintf(stderr,"%s\n"sqlite3_errmsg(get_peer_route));
+#endif
+			break;
 	}
 }
 

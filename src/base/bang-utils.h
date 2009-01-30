@@ -158,6 +158,8 @@ void BANG_linked_list_enumerate(BANG_linked_list *lst, void (*it_callback) (cons
 
 BANG_set* new_BANG_set();
 
+void free_BANG_set(BANG_set *set);
+
 int BANG_set_add(BANG_set *s, void *data);
 
 void* BANG_set_get(BANG_set *s, int key);

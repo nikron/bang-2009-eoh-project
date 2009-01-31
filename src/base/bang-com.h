@@ -13,7 +13,7 @@
  * peers list and corresponding structure.  There are two threads for each peer.  One to manage
  * incoming requests, and one to manage outgoing requests.
  */
-#include"bang.h"
+#include"bang-types.h"
 
 /**
  * \brief Initializes the bang-com part of BANG.
@@ -25,20 +25,6 @@ void BANG_com_init();
  * frees all the used memory.
  */
 void BANG_com_close();
-
-/**
- * \param self_info Information about the peer.
- *
- * \brief A peer connection thread.
- */
-void* BANG_read_peer_thread(void *self_info);
-
-/**
- * \param self_info Information about the peer.
- *
- * \brief A peer connection thread.
- */
-void* BANG_write_peer_thread(void *self_info);
 
 /**
  * \param peer_id The peer you want to add a request.

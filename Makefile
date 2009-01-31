@@ -19,7 +19,8 @@ LOBJS=bang-com$(OBJEXT) \
       bang-module-api$(OBJEXT) \
       bang-core$(OBJEXT) \
       bang-utils$(OBJEXT) \
-      bang-routing$(OBJEXT)
+      bang-routing$(OBJEXT) \
+      bang-peer-threads$(OBJEXT)
 
 LSRC=src/base/bang-com$(SRCEXT) \
      src/base/bang-net$(SRCEXT) \
@@ -28,7 +29,8 @@ LSRC=src/base/bang-com$(SRCEXT) \
      src/base/bang-module-api$(SRCEXT) \
      src/base/bang-core$(SRCEXT) \
      src/base/bang-utils$(SRCEXT) \
-     src/base/bang-routing$(SRCEXT)
+     src/base/bang-routing$(SRCEXT) \
+     src/base/bang-peer-threads$(SRCEXT)
 
 AOBJS=preferences$(OBJEXT) \
       main$(OBJEXT) \
@@ -80,7 +82,7 @@ doc:
 clean:
 	rm -f $(EXENAME) $(LOBJS) $(AOBJS) $(LIBRARIES)
 	rm -Rf doc/dox
-	rm menus.xml
+	rm -f menus.xml
 
 commit:
 	git commit -a

@@ -1,4 +1,7 @@
 #include"bang-peer.h"
+#include"bang-peer-threads.h"
+#include<stdlib.h>
+#include<unistd.h>
 
 /*
  * \return Returns an initialized BANGRequest pointer.
@@ -12,12 +15,26 @@ static BANG_requests* new_BANG_requests();
  */
 static void free_BANG_requests(BANG_requests *requests);
 
-BANG_peer* new_BANG_peer(int peer_id) {
+static BANG_requests* new_BANG_requests() {
+	BANG_requests *new = (BANG_requests*) calloc(1,sizeof(BANG_requests));
+
+	new->requests = new_BANG_linked_list();
+	sem_init(&(new->num_requests),0,0);
+
+	return new;
+}
+
+static void free_BANG_requests(BANG_requests *requests) {
+	sem_destroy(&(requests->num_requests));
+	free_BANG_linked_list(requests->requests,&free_BANG_request);
+}
+
+BANG_peer* new_BANG_peer(int socket) {
 	BANG_peer *new;
 
 	new = (BANG_peer*) calloc(1,sizeof(BANG_peer));
 
-	new->peer_id = peer_id;
+	new->socket = socket;
 
 	new->requests = new_BANG_requests();
 
@@ -38,6 +55,10 @@ void free_BANG_peer(BANG_peer *p) {
 	close(p->socket);
 
 	free(p);
+}
+
+void BANG_peer_set_peer_id(BANG_peer *p, int id) {
+	p->peer_id = id;
 }
 
 void BANG_request_peer(BANG_peer *to_be_requested, BANG_request *request) {

@@ -255,6 +255,14 @@ BANG_set* new_BANG_set() {
 	return new;
 }
 
+/* TODO: Make this do something valid... */
+void free_BANG_set(BANG_set *s) {
+	free_BANG_rw_syncro(s->lck);
+	free(s->members);
+	free_BANG_linked_list(s->free_space,NULL);
+	free(s);
+}
+
 int BANG_set_add(BANG_set *s, void *data) {
 	if (s == NULL) return -1;
 
@@ -321,6 +329,17 @@ void* BANG_set_remove(BANG_set *s, int key) {
 	BANG_write_unlock(s->lck);
 
 	return data;
+}
+
+void BANG_set_iterate(BANG_set *s, void (it_callback) (void*, void*), void *data) {
+	int i = 0;
+	BANG_read_lock(s->lck);
+	for(; i < s->current; ++i) {
+		if(s->members[i].key != -1) {
+			it_callback(s->members[i].data,data);
+		}
+	}
+	BANG_read_unlock(s->lck);
 }
 
 BANG_request* new_BANG_request(int type, void *data, int length) {

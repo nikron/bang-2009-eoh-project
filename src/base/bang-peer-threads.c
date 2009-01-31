@@ -1,3 +1,4 @@
+#include"bang-peer.h"
 #include"bang-peer-threads.h"
 #include"bang-routing.h"
 #include"bang-signals.h"
@@ -31,7 +32,6 @@ static unsigned int write_message(BANG_peer *self, void *message, unsigned int l
  * \brief Acts on an incoming BANG_HELLO.
  */
 static char peer_respond_hello(BANG_peer *self);
-
 /*
  * HERE THERE BE DRAGONS!
  *

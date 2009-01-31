@@ -166,6 +166,8 @@ void* BANG_set_get(BANG_set *s, int key);
 
 void* BANG_set_remove(BANG_set *s, int key);
 
+void BANG_set_iterate(BANG_set *s, void (it_callback) (void*, void*), void *data);
+
 /**
  * \param v1 A bang version.
  * \param v2 Another bang version.

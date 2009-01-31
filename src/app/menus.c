@@ -33,6 +33,8 @@ GtkUIManager* BMACHINE_create_menus(GtkWidget *vbox, GtkWidget *window) {
 	if (err)
 		printf("%s\n",err->message);
 
+	GtkWidget *ssserver = gtk_ui_manager_get_widget(m_manager,"/MainMenu/NetworkMenu/SSServer");
+	BMACHINE_setup_server_menu(ssserver);
 	GtkWidget *menu_bar = gtk_ui_manager_get_widget(m_manager,"/MainMenu");
 	gtk_box_pack_start(GTK_BOX(vbox),menu_bar,FALSE,FALSE,0);
 

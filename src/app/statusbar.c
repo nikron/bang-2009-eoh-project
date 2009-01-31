@@ -17,7 +17,7 @@ static void bang_status(int signal, int num_args, void **args);
 static void bang_status(int signal, int num_args, void **args) {
 
 	gdk_threads_enter();
-	if (statusbar == NULL) {
+	if (statusbar == NULL && GTK_IS_STATUSBAR(statusbar)) {
 		gdk_threads_leave();
 		return;
 	}

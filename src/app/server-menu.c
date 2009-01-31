@@ -43,13 +43,15 @@ static void server_status(int signal, int num_args, void **args) {
 	free(args);
 }
 
-void BMAHCHINE_change_server_status(GtkWidget *widget) {
-	if(BANG_is_server_running()) {
-		BANG_server_stop();
-		gtk_widget_set_sensitive(widget,FALSE);
-	} else {
-		BANG_server_start(NULL);
-		gtk_widget_set_sensitive(widget,FALSE);
+void BMAHCHINE_change_server_status() {
+	if (ssserver) {
+		if(BANG_is_server_running()) {
+			BANG_server_stop();
+			gtk_widget_set_sensitive(ssserver,FALSE);
+		} else {
+			BANG_server_start(NULL);
+			gtk_widget_set_sensitive(ssserver,FALSE);
+		}
 	}
 }
 

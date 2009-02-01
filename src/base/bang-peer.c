@@ -1,6 +1,7 @@
 #include"bang-peer.h"
 #include"bang-peer-threads.h"
 #include<stdlib.h>
+#include<stdio.h>
 #include<unistd.h>
 
 /*

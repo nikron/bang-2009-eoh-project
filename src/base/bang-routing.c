@@ -111,7 +111,7 @@ void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 			break;
 		default:
 #ifdef BDEBUG_1
-			fprintf(stderr,"%s\n"sqlite3_errmsg(get_peer_route));
+			fprintf(stderr,"%s\n",sqlite3_errmsg(db));
 #endif
 			break;
 	}
@@ -154,7 +154,7 @@ void BANG_route_finished_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 			break;
 		default:
 #ifdef BDEBUG_1
-			fprintf(stderr,"%s\n"sqlite3_errmsg(get_peer_route));
+			fprintf(stderr,"%s\n",sqlite3_errmsg(db));
 #endif
 			break;
 	}
@@ -198,7 +198,7 @@ void BANG_route_request_job(uuid_t peer, uuid_t authority) {
 			break;
 		default:
 #ifdef BDEBUG_1
-			fprintf(stderr,"%s\n"sqlite3_errmsg(get_peer_route));
+			fprintf(stderr,"%s\n",sqlite3_errmsg(db));
 #endif
 			break;
 	}
@@ -240,7 +240,7 @@ void BANG_route_assertion_of_authority(uuid_t authority, uuid_t peer) {
 			break;
 		default:
 #ifdef BDEBUG_1
-			fprintf(stderr,"%s\n"sqlite3_errmsg(get_peer_route));
+			fprintf(stderr,"%s\n",sqlite3_errmsg(db));
 #endif
 			break;
 	}

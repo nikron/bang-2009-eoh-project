@@ -79,7 +79,7 @@ void BANG_add_peer(int socket) {
 	int peer_id = BANG_set_add_peer(peers, socket);
 
 #ifdef BDEBUG_1
-	fprintf(stderr,"Threads being started at %d.\n",key);
+	fprintf(stderr,"Threads being started at %d.\n",peer_id);
 #endif
 
 	BANG_set_start_peer(peers,peer_id);

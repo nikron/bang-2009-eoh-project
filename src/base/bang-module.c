@@ -139,7 +139,7 @@ BANG_module* BANG_load_module(char *path) {
 		BANG_send_signal(BANG_MODULE_ERROR,&args,1);
 #ifdef BDEBUG_1
 		fprintf(stderr,"Could not find the module.\n");
-		//fprintf(stderr,(char*)args.args);
+		fprintf(stderr,"%s",(char*)args.args);
 		fprintf(stderr,"\n");
 #endif
 		return NULL;

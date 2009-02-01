@@ -24,6 +24,8 @@ static unsigned int write_message(BANG_peer *self, void *message, unsigned int l
  */
 static void write_module(BANG_peer *self, BANG_request *request);
 
+static void write_module_exists(BANG_peer *self, BANG_request *request);
+
 static unsigned int write_message(BANG_peer *self, void *message, unsigned int length) {
 	unsigned int written = 0;
 	int write_return = 0;

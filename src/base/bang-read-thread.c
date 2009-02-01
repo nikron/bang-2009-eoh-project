@@ -25,12 +25,20 @@ static void read_peer_thread_self_close(BANG_peer *self);
  */
 static void* read_message(BANG_peer *self, unsigned int length);
 
+static void read_uuid(BANG_peer *self,uuid_t uuid);
+
 /**
  * \param self The peer responding to BANG_HELLO.
  *
  * \brief Acts on an incoming BANG_HELLO.
  */
 static char read_hello(BANG_peer *self);
+
+static char read_debug_message(BANG_peer *self);
+
+static char read_module_message(BANG_peer *self);
+
+static char read_job_message(BANG_peer *self);
 
 static void read_peer_thread_self_close(BANG_peer *self) {
 	BANG_sigargs args;

@@ -81,9 +81,18 @@ void BANG_get_me_peers(BANG_module_info *info) {
 	/* This does not use routing...! */
 	uuid_t *valid_routes = get_valid_routes(info);
 
-	/*int **peers_to_bug =*/ BANG_not_route_get_peer_id(valid_routes);
+	int i = 0;
+	int **peers_to_bug = BANG_not_route_get_peer_id(valid_routes);
 
-	/*BANG_request req;*/
+	BANG_request req;
+	req.type = BANG_MODULE_PEER_REQUEST;
+	/* TODO: Put the module info inside the data... */
+	for (; peers_to_bug[i]; ++i) {
+		BANG_request_peer_id(*(peers_to_bug[i]),&req);
+		free(peers_to_bug[i]);
+		peers_to_bug[i] = NULL;
+	}
+	free(peers_to_bug);
 
 	free(valid_routes);
 }

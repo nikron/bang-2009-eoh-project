@@ -26,8 +26,8 @@
  */
 #define BANG_MINOR_VERSION 1
 
-static const unsigned char BANG_LIBRARY_VERSION[3] = { 
-	BANG_MAJOR_VERSION, 
+static const unsigned char BANG_LIBRARY_VERSION[3] = {
+	BANG_MAJOR_VERSION,
 	BANG_MIDDLE_VERSION,
 	BANG_MINOR_VERSION };
 
@@ -258,18 +258,18 @@ enum BANG_headers {
 	 * Asks the remote end if they want a module, if yes
 	 * they'll respond with a request
 	 * message:
-	 *	-BANG_WANT_MODULE (unsigned 4 bytes)
+	 *	-BANG_EXISTS_MODULE (unsigned 4 bytes)
 	 *	-name (char*)
 	 *	-'\0'
 	 *	-version	(unsigned 3 bytes)
 	 */
-	BANG_WANT_MODULE,
+	BANG_EXISTS_MODULE,
 	/**
 	 * Send a job to a uuid.  The read thread passes the data
 	 * off to a router after constructing a job.
 	 * message:
-	 * 	-BANG_SEND_JOB
-	 * 	-uuid (16 bytes)
+	 *	-BANG_SEND_JOB
+	 *	-uuid (16 bytes)
 	 */
 	BANG_SEND_JOB,
 	/**
@@ -319,7 +319,7 @@ enum BANG_request_types {
 	 * |  module_name | '\0' | 3 bytes module version|
 	 * BANG_request.length == length of name + 3 bytes
 	 * do:
-	 * 
+	 *
 	 */
 	BANG_MODULE_PEER_REQUEST,
 	/**
@@ -329,7 +329,7 @@ enum BANG_request_types {
 	 * | job_number | job_length | job data |
 	 *
 	 * do:
-	 * 	-send Out everything appended to a header.
+	 *	-send Out everything appended to a header.
 	 *
 	 */
 	BANG_SEND_JOB_REQUEST,

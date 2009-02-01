@@ -186,8 +186,8 @@ static void send_module(BANG_peer *self, BANG_request *request) {
 	fclose(fd);
 }
 
-static void send_module_peer_request(BANG_peer *self, BANG_request *request) {
-	BANG_header header = BANG_WANT_MODULE;
+static void send_module_exists(BANG_peer *self, BANG_request *request) {
+	BANG_header header = BANG_EXISTS_MODULE;
 	write_message(self,&header,LENGTH_OF_HEADER);
 	write_message(self,request->request,request->length);
 }
@@ -285,7 +285,7 @@ void* BANG_read_peer_thread(void *self_info) {
 					reading = read_module_message(self);
 					break;
 
-				case BANG_WANT_MODULE:
+				case BANG_EXISTS_MODULE:
 					/* TODO: Someone is asking us if we want a module... send out a signal! */
 					break;
 
@@ -363,7 +363,7 @@ void* BANG_write_peer_thread(void *self_info) {
 				break;
 
 			case BANG_MODULE_PEER_REQUEST:
-				send_module_peer_request(self,current->request);
+				send_module_exists(self,current->request);
 				break;
 
 			default:

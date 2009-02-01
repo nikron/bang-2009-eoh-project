@@ -45,6 +45,14 @@ static unsigned int write_message(BANG_peer *self, void *message, unsigned int l
 	return written;
 }
 
+static char write_bye(BANG_peer *self) {
+	BANG_header header = BANG_BYE;
+
+	write_message(self,&header,LENGTH_OF_HEADER);
+
+	return 0;
+}
+
 static void write_module(BANG_peer *self, BANG_request *request) {
 	FILE *fd = fopen((char*)request->request,"r");
 	if (fd == NULL) {
@@ -96,9 +104,7 @@ void* BANG_write_peer_thread(void *self_info) {
 		 */
 		switch (current->type) {
 			case BANG_CLOSE_REQUEST:
-				header = BANG_BYE;
-				write_message(self,&header,LENGTH_OF_HEADER);
-				sending = 0;
+				sending = write_bye(self);
 				break;
 
 			case BANG_SUDDEN_CLOSE_REQUEST:

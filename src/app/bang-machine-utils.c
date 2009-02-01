@@ -12,6 +12,7 @@ void BMACHINE_error_dialog(char *error) {
 				GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
 				GTK_MESSAGE_ERROR,
 				GTK_BUTTONS_OK,
+				"%s",
 				error);
 
 	}

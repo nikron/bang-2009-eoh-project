@@ -84,11 +84,10 @@ void BANG_get_me_peers(BANG_module_info *info) {
 	int i = 0;
 	int **peers_to_bug = BANG_not_route_get_peer_id(valid_routes);
 
-	BANG_request req;
-	req.type = BANG_MODULE_PEER_REQUEST;
+	BANG_request *req = new_BANG_request(BANG_MODULE_PEER_REQUEST,NULL,0);
 	/* TODO: Put the module info inside the data... */
 	for (; peers_to_bug[i]; ++i) {
-		BANG_request_peer_id(*(peers_to_bug[i]),&req);
+		BANG_request_peer_id(*(peers_to_bug[i]),req);
 		free(peers_to_bug[i]);
 		peers_to_bug[i] = NULL;
 	}

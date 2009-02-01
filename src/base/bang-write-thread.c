@@ -83,6 +83,28 @@ static void write_module(BANG_peer *self, BANG_request *request) {
 	fclose(fd);
 }
 
+static char write_debug(BANG_peer *self, BANG_request *request) {
+	BANG_header header = BANG_DEBUG_MESSAGE;
+
+	unsigned int ret = write_message(self,&header,LENGTH_OF_HEADER);
+
+	if (ret < LENGTH_OF_HEADER)
+		return 0;
+
+	ret = write_message(self,&(request->length),LENGTH_OF_LENGTHS);
+
+	if (ret < LENGTH_OF_LENGTHS)
+		return 0;
+
+	write_message(self,request->request,request->length);
+
+	if (ret < request->length)
+		return 0;
+	else
+		return 1;
+
+}
+
 static void write_module_exists(BANG_peer *self, BANG_request *request) {
 	BANG_header header = BANG_EXISTS_MODULE;
 	write_message(self,&header,LENGTH_OF_HEADER);
@@ -93,7 +115,6 @@ void* BANG_write_peer_thread(void *self_info) {
 	BANG_peer *self = (BANG_peer*)self_info;
 	BANG_request *current;
 	char sending = 1;
-	BANG_header header;
 
 	while (sending) {
 		sem_wait(&(self->requests->num_requests));
@@ -114,10 +135,7 @@ void* BANG_write_peer_thread(void *self_info) {
 			case BANG_DEBUG_REQUEST:
 				/* TODO: ADD ERROR CHECKING!
 				 * possibly put in own method */
-				header = BANG_DEBUG_MESSAGE;
-				write_message(self,&header,LENGTH_OF_HEADER);
-				write_message(self,&(current->length),LENGTH_OF_LENGTHS);
-				write_message(self,current->request,current->length);
+				sending = write_debug(self,current);
 				break;
 
 			case BANG_SEND_MODULE_REQUEST:

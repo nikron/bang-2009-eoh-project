@@ -2,6 +2,7 @@
 	<menubar name="MainMenu">
 		<menu name="FileMenu" action="FileMenuAction">
 			<menuitem name="OpenModule" action="OpenModuleAction" />
+			<menuitem name="CloseModule" action="CloseModuleAction" />
 			<menuitem name="Exit" action="ExitAction" />
 		</menu>
 		<menu name="EditMenu" action="EditMenuAction">

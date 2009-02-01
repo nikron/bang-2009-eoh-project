@@ -6,15 +6,16 @@ static const GtkActionEntry entries[] =
 {
 	{ "FileMenuAction", NULL, "_File", "", "Access external files relevant to this program.", NULL },
 	{ "OpenModuleAction", GTK_STOCK_OPEN, "_Open Module", "<control>o", "Open a module.", NULL },
-	{ "ExitAction", GTK_STOCK_QUIT, "E_xit", "<control>x", "Exit the program", NULL },
+	{ "CloseModuleAction", GTK_STOCK_CLOSE, "C_lose Module", "<control>l", "Close a module.", NULL },
+	{ "ExitAction", GTK_STOCK_QUIT, "E_xit", "<control>x", "Exit the program.", NULL },
 
 	{ "EditMenuAction", NULL, "_Edit", "", "Edit functionality.", NULL },
 	{ "EditPreferencesAction", GTK_STOCK_PREFERENCES, "_Edit Prefrences", "<control>e", "Edit your prefrences.", NULL },
 
 	{ "NetworkMenuAction", NULL, "_Network", "", "Control the bang networking.", NULL },
 	{ "StartStopServerAction", GTK_STOCK_CONNECT, "_Start Server", "<control>s", "Start or stop the the server.", G_CALLBACK(BMAHCHINE_change_server_status) },
-	{ "ConnectPeerAction", GTK_STOCK_CONNECT, "_Connect to Peer", "<control>p", "Connect to a peer.", NULL },
-	{ "ScanAction", GTK_STOCK_NETWORK, "_Scan", "<control>c", "Scan for peers.", NULL }
+	{ "ConnectPeerAction", GTK_STOCK_CONNECT, "Connect to _Peer", "<control>p", "Connect to a peer.", NULL },
+	{ "ScanAction", GTK_STOCK_NETWORK, "S_can", "<control>c", "Scan for peers.", NULL }
 };
 
 static const guint n_entries = G_N_ELEMENTS(entries);

@@ -1,6 +1,6 @@
 /**
  * \file main.c
- * \author Nikhil Bysani
+ * \author nikhil Bysani
  * \date Decemeber 20, 2009
  *
  * \brief The main function that sets up everything and contains most of the explanatory documentation.

@@ -6,6 +6,7 @@ static const GtkActionEntry entries[] =
 {
 	{ "FileMenuAction", NULL, "_File", "", "Access external files relevant to this program.", NULL },
 	{ "OpenModuleAction", GTK_STOCK_OPEN, "_Open Module", "<control>o", "Open a module.", NULL },
+	{ "ExitAction", GTK_STOCK_QUIT, "E_xit", "<control>x", "Exit the program", NULL },
 
 	{ "EditMenuAction", NULL, "_Edit", "", "Edit functionality.", NULL },
 	{ "EditPreferencesAction", GTK_STOCK_PREFERENCES, "_Edit Prefrences", "<control>e", "Edit your prefrences.", NULL },

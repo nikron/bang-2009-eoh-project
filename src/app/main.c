@@ -72,6 +72,7 @@ static gboolean delete_event() {
 	/* Change TRUE to FALSE and the main window will be destroyed with
 	 * a "delete_event". */
 	BANG_close();
+	BMACHINE_close_status_bar();
 	return FALSE;
 }
 
@@ -128,7 +129,8 @@ int main(int argc, char **argv) {
 	/*
 	 * Max the window for now rather than reading in last used
 	 */
-	gtk_window_maximize(GTK_WINDOW(window));
+	//gtk_window_maximize(GTK_WINDOW(window));
+
 
 	gtk_widget_show_all(window);
 

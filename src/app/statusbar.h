@@ -9,4 +9,5 @@
  * \return The bang statusbar that got set up.
  */
 GtkWidget* BMACHINE_setup_status_bar();
+void BMACHINE_close_status_bar();
 #endif

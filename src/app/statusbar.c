@@ -17,7 +17,7 @@ static void bang_status(int signal, int num_args, void **args);
 static void bang_status(int signal, int num_args, void **args) {
 
 	gdk_threads_enter();
-	if (statusbar == NULL && GTK_IS_STATUSBAR(statusbar)) {
+	if (statusbar == NULL || !GTK_IS_STATUSBAR(statusbar)) {
 		gdk_threads_leave();
 		return;
 	}
@@ -25,24 +25,31 @@ static void bang_status(int signal, int num_args, void **args) {
 	guint context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(statusbar),"bang_status");
 	gtk_statusbar_pop(GTK_STATUSBAR(statusbar),context_id);
 
-	if (signal == BANG_BIND_SUC) {
+	switch (signal) {
+		case BANG_BIND_SUC:
+			gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine has been bound.");
+			break;
 
-		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine has been bound.");
-	} else if (signal == BANG_BIND_FAIL){
+		case BANG_BIND_FAIL:
+			gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine could not bind.");
+			break;
 
-		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine could not bind.");
-	} else if (signal == BANG_SERVER_STARTED) {
+		case BANG_SERVER_STARTED:
+			gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine server started.");
+			break;
 
-		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine server started.");
-	} else if (signal == BANG_SERVER_STOPPED) {
+		case BANG_SERVER_STOPPED:
+			gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine server stopped.");
+			break;
 
-		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"!bang Machine server stopped.");
-	} else if (signal == BANG_PEER_ADDED) {
+		case BANG_PEER_ADDED:
+			gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"A peer has been added.");
+			break;
 
-		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"A peer has been added.");
-	} else if (signal == BANG_PEER_REMOVED) {
+		case BANG_PEER_REMOVED:
+			gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"A peer has been removed.");
+			break;
 
-		gtk_statusbar_push(GTK_STATUSBAR(statusbar),context_id,"A peer has been removed.");
 	}
 
 	/* It's recommended to flush before calling the leave function. */
@@ -68,4 +75,8 @@ GtkWidget* BMACHINE_setup_status_bar() {
 	BANG_install_sighandler(BANG_PEER_REMOVED,&bang_status);
 
 	return statusbar;
+}
+
+void BMACHINE_close_status_bar() {
+	statusbar = NULL;
 }

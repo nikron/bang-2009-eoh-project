@@ -80,11 +80,11 @@ static int bang_acknowledge(const char *reply_ip) {
 
 }
 
-int listen_for_announce_thread() {
+void listen_for_announce_thread(void *not_used) {
 	int sockfd;
-	struct addrinfo hints, *servinfo, *p;
 	int rv;
 	int numbytes;
+	struct addrinfo hints, *servinfo, *p;
 	struct sockaddr_storage their_addr;
 	char buf[MAXBUFLEN];
 	size_t addr_len;

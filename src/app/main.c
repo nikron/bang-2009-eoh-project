@@ -45,6 +45,7 @@
 #include"preferences.h"
 #include"statusbar.h"
 #include"server-menu.h"
+#include<locale.h>
 #include<stdio.h>
 #include<stdlib.h>
 #include<glib.h>
@@ -87,6 +88,7 @@ static void destroy() {
 
 int main(int argc, char **argv) {
 	/* Set up our library. */
+	setlocale(LC_ALL,"");
 	BANG_init(&argc,argv);
 
 	/* Note:  gtk expects that as a process, you do not need to free its memory

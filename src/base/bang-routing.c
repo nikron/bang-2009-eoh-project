@@ -30,7 +30,7 @@ typedef struct {
 
 static BANG_hashmap *routes = NULL;
 
-static BANG_request* create_request(uuid_t authority, uuid_t peer, BANG_job *job) {
+static BANG_request* create_request(enum BANG_request request, uuid_t authority, uuid_t peer, BANG_job *job) {
 	int request_length = job->length + 40;
 	void *request_data = malloc(request_length);
 
@@ -40,7 +40,7 @@ static BANG_request* create_request(uuid_t authority, uuid_t peer, BANG_job *job
 	memcpy(request_data + 36,&job->length,4);
 	memcpy(request_data + 40,&job->data,job->length);
 
-	return new_BANG_request(BANG_SEND_JOB_REQUEST,request_data,request_length);
+	return new_BANG_request(request,request_data,request_length);
 }
 
 void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job) {
@@ -55,7 +55,7 @@ void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 		BANG_module_callback_job(route->mr,job,authority,peer);
 	} else {
 
-		BANG_request_peer(pr->peer_id,create_request(authority,peer,job));
+		BANG_request_peer(pr->peer_id,create_request(BANG_SEND_JOB_REQUEST,authority,peer,job));
 	}
 }
 

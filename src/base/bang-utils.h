@@ -52,6 +52,16 @@ typedef struct {
 	BANG_linked_list *free_space;
 } BANG_set;
 
+typedef int (*BANG_hashcode) (void *);
+typedef int (*BANG_compare) (void*, void*);
+
+typedef struct {
+	BANG_linked_list *data;
+	int data_size;
+	BANG_hashcode hash_func;
+	BANG_compare compare_func;
+} BANG_hashmap;
+
 /**
  * \param data The information to be included in the node.
  *
@@ -167,6 +177,14 @@ void* BANG_set_get(BANG_set *s, int key);
 void* BANG_set_remove(BANG_set *s, int key);
 
 void BANG_set_iterate(BANG_set *s, void (it_callback) (void*, void*), void *data);
+
+BANG_hashmap*  new_BANG_hashmap(BANG_hashcode hash_func, BANG_compare comp_func);
+
+void free_BANG_hashmap(BANG_hashmap *hashmap);
+
+void* BANG_hashmap_get(BANG_hashmap *hashmap, void *key);
+
+void BANG_hashmap_set(BANG_hashmap *hashmap, void *key, void *item);
 
 /**
  * \param v1 A bang version.

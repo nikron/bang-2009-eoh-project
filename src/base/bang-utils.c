@@ -316,7 +316,7 @@ void* BANG_set_remove(BANG_set *s, int key) {
 
 	int pos = key >> L_SHIFT;
 	void *data = BANG_set_get(s,key);
-	
+
 	if (data == NULL) return NULL;
 
 	BANG_write_lock(s->lck);
@@ -340,6 +340,55 @@ void BANG_set_iterate(BANG_set *s, void (it_callback) (void*, void*), void *data
 		}
 	}
 	BANG_read_unlock(s->lck);
+}
+
+#define HASHMAP_DEFAULT_SIZE 100
+
+BANG_hashmap*  new_BANG_hashmap(BANG_hashcode hash_func, BANG_compare comp_func) {
+	BANG_hashmap *new = malloc(sizeof(BANG_hashmap));
+	new->data = calloc(HASHMAP_DEFAULT_SIZE,sizeof(BANG_linked_list));
+	new->data_size = HASHMAP_DEFAULT_SIZE;
+	new->hash_func = hash_func;
+	new->compare_func = comp_func;
+}
+
+void free_BANG_hashmap(BANG_hashmap *hashmap) {
+	int i = 0;
+	for (; i < new->data_size; ++i) {
+		free_BANG_linked_list(hashmap->data[i]);
+	}
+}
+
+typedef struct {
+	int key;
+	BANG_hashcode hash_func;
+	void *item;
+} hashmap_key_pair;
+
+static void find_item(const void *item, void *kp) {
+	hashmap_key_pair *hkp = kp;
+
+	if (hkp->hash_func(item) == hkp.key) {
+		hkp->item = item;
+	}
+}
+
+void* BANG_hashmap_get(BANG_hashmap *hashmap, void *key) {
+	hashmap_key_pair kp;
+	kp.key = hashmap->hashcode_func(key);
+	kp.hash_func = hashmap->hash_func;
+	kp.item = NULL;
+
+	int pos = key % new->data_size;
+
+	BANG_linked_list_iterate(hashmap->data[pos],&find_item,&kp);
+
+	return kp.item;
+}
+
+void BANG_hashmap_set(BANG_hashmap *hashmap, void *key, void *item){
+	int pos = hashmap->hashcode_func(key) % new->data_size;
+	BANG_linked_list_append(hashmap->data[pos],key);
 }
 
 BANG_request* new_BANG_request(int type, void *data, int length) {

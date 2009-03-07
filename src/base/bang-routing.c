@@ -39,6 +39,7 @@ void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 
 	if (route->remote == LOCAL) {
 		BANG_module_callback_job(route->mr,job,authority,peer);
+	} else {
 	}
 }
 

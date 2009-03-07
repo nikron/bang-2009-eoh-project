@@ -31,6 +31,8 @@ void BANG_com_close();
  * \param request The request you want to add to the peer.
  *
  * \brief Adds a request to the peer_id peer.
+ * YOU MUST PUT THE REQUEST ON THE HEAP, AND ALL OF ITS POINTERS. ALSO,
+ * IT WILL BE FREED BY THE THREAD WHEN IT iS DONE WITH IT.
  */
 void BANG_request_peer_id(int peer_id, BANG_request *request);
 
@@ -38,6 +40,8 @@ void BANG_request_peer_id(int peer_id, BANG_request *request);
  * \param request The request to add.
  *
  * \brief Adds request to all peers.
+ * YOU MUST PUT THE REQUEST ON THE HEAP, AND ALL OF ITS POINTERS. ALSO,
+ * IT WILL BE FREED BY THE THREAD WHEN IT iS DONE WITH IT.
  */
 void BANG_request_all(BANG_request *request);
 

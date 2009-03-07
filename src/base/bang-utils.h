@@ -52,11 +52,11 @@ typedef struct {
 	BANG_linked_list *free_space;
 } BANG_set;
 
-typedef int (*BANG_hashcode) (void *);
-typedef int (*BANG_compare) (void*, void*);
+typedef int (*BANG_hashcode) (const void *);
+typedef int (*BANG_compare) (const void*,const void*);
 
 typedef struct {
-	BANG_linked_list *data;
+	BANG_linked_list **data;
 	int data_size;
 	BANG_hashcode hash_func;
 	BANG_compare compare_func;

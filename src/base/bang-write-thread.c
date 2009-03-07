@@ -89,30 +89,37 @@ static void write_module_exists(BANG_peer *self, BANG_request *request) {
 
 
 
+//-----------------------------------------------------------------------------.
 static void write_send_job(BANG_peer *self, BANG_request *request) {
+	//BANG_SEND_JOB_REQUEST->BANG_SEND_JOB
 	BANG_header header = BANG_SEND_JOB;
 	write_message(self,&header,LENGTH_OF_HEADER);
 	write_message(self,request->request,request->length);
 }
 
-static void write_finished_job() {
-	BANG_header header = ;
-	write_message(self,&header,LENGTH_OF_HEADER);
 
+//TODO Change header "BANG_WRITE_FINISHED_JOB" to "BANG_FINISHED_JOB" TODO
+static void write_finished_job() {
+	//BANG_SEND_FINISHED_JOB_REQUEST->BANG_FINISHED_JOB
+	BANG_header header = BANG_FINISHED_JOB;
+	write_message(self,&header,LENGTH_OF_HEADER);
 }
 
 static void write_request_job() {
+	//BANG_SEND_REQUEST_JOB_REQUEST->BANG_REQUEST_JOB
 	BANG_header header = BANG_REQUEST_JOB;
 	write_message(self,&header,LENGTH_OF_HEADER);
 
 }
 
+//TODO Add header "BANG_AVAILABLE_JOB" to BANG_SEND_AVAILABLE_JOB_REQUEST TODO
 static void write_available_job() {
-	BANG_header header = ;
+	//BANG_SEND_AVAILABLE_JOB_REQUEST->BANG_AVAILABLE_JOB
+	BANG_header header = BANG_AVAILABLE_JOB; 
 	write_message(self,&header,LENGTH_OF_HEADER);
 
 }
-
+//-----------------------------------------------------------------------------'
 
 
 
@@ -147,7 +154,6 @@ static void write_module(BANG_peer *self, BANG_request *request) {
 
 	fclose(fd);
 }
-
 //----------------------Actions performed on requests--------------------------'
 
 
@@ -182,7 +188,7 @@ void* BANG_write_peer_thread(void *self_info) {
 			case BANG_MODULE_PEER_REQUEST:
 				write_module_exists(self,current->request);
 			break;
-//-----------------------------------------------------------------.
+//-----------------------------------------------------------------------------.
 			case BANG_SEND_JOB_REQUEST:
 				write_send_job();
 			break;
@@ -198,7 +204,7 @@ void* BANG_write_peer_thread(void *self_info) {
 			case BANG_SEND_AVAILABLE_JOB_REQUEST:
 				write_available_job();
 			break;
-//-----------------------------------------------------------------'
+//-----------------------------------------------------------------------------'
 			case BANG_SEND_MODULE_REQUEST:
 				write_module(self,current->request);
 			break;

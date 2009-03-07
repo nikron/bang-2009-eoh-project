@@ -9,6 +9,7 @@
 #define __BANG_TYPES_H
 #include"bang-module-api.h"
 #include<stdint.h>
+#include<uuid/uuid.h>
 
 /**
  * The major version of the library.

@@ -36,7 +36,10 @@ void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 	assert(!uuid_is_null(peer));
 
 	peer_or_module *route = BANG_hashmap_get(routes,&peer);
-	route = NULL;
+
+	if (route->remote == LOCAL) {
+		BANG_module_callback_job(route->mr,job,authority,peer);
+	}
 }
 
 void BANG_route_job_to_uuids(uuid_t authority, uuid_t *peers, BANG_job *job) {

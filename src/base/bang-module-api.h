@@ -9,7 +9,6 @@
 
 #ifndef __BANG_MODULE_API_H
 #define __BANG_MODULE_API_H
-
 #include"bang-module-api.h"
 #include"bang-utils.h"
 #include<uuid/uuid.h>
@@ -34,7 +33,7 @@ typedef struct {
  * The module should *not* touch this structure even
  * though it is fairly transparent.
  */
-typedef struct {
+typedef struct _BANG_module_info{
 	/**
 	 * Infomation about the peers of this module.
 	 */

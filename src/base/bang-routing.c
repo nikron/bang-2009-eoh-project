@@ -28,9 +28,22 @@ typedef struct {
 	BANG_module *mr;
 } peer_or_module;
 
+static BANG_request* create_request(enum BANG_request_types request, uuid_t authority, uuid_t peer);
+static BANG_request* create_request_with_job(enum BANG_request_types request, uuid_t authority, uuid_t peer, BANG_job *job);
+
 static BANG_hashmap *routes = NULL;
 
-static BANG_request* create_request_with_job(enum BANG_request request, uuid_t authority, uuid_t peer, BANG_job *job) {
+static BANG_request* create_request(enum BANG_request_types request, uuid_t authority, uuid_t peer) {
+	int request_length = 40;
+	void *request_data = malloc(request_length);
+
+	memcpy(request_data,authority,16);
+	memcpy(request_data + 16,peer,16);
+
+	return new_BANG_request(request,request_data,request_length);
+}
+
+static BANG_request* create_request_with_job(enum BANG_request_types request, uuid_t authority, uuid_t peer, BANG_job *job) {
 	int request_length = job->length + 40;
 	void *request_data = malloc(request_length);
 

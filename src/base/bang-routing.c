@@ -30,7 +30,7 @@ typedef struct {
 
 static BANG_hashmap *routes = NULL;
 
-static BANG_request* create_request(enum BANG_request request, uuid_t authority, uuid_t peer, BANG_job *job) {
+static BANG_request* create_request_with_job(enum BANG_request request, uuid_t authority, uuid_t peer, BANG_job *job) {
 	int request_length = job->length + 40;
 	void *request_data = malloc(request_length);
 
@@ -53,9 +53,11 @@ void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 
 	if (route->remote == LOCAL) {
 		BANG_module_callback_job(route->mr,job,authority,peer);
+
 	} else {
 
-		BANG_request_peer(pr->peer_id,create_request(BANG_SEND_JOB_REQUEST,authority,peer,job));
+		BANG_request *request = create_request_with_job(BANG_SEND_JOB_REQUEST,authority,peer,job);
+		BANG_request_peer(pr->peer_id,request);
 	}
 }
 
@@ -68,13 +70,6 @@ void BANG_route_job_to_uuids(uuid_t authority, uuid_t *peers, BANG_job *job) {
 	for (i = 0; !uuid_is_null(peers[i]); ++i) {
 		BANG_route_job(authority,peers[i],job);
 	}
-
-	if (route->remote == LOCAL) {
-		BANG_module_callback_job(route->mr,job,authority,peer);
-	} else {
-
-		BANG_request_peer(pr->peer_id,create_request(authority,peer,job));
-	}
 }
 
 void BANG_route_finished_job(uuid_t authority, uuid_t peer, BANG_job *job) {
@@ -84,6 +79,15 @@ void BANG_route_finished_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 	assert(!uuid_is_null(peer));
 
 	peer_or_module *route = BANG_hashmap_get(routes,&authority);
+
+	if (route->remote == LOCAL) {
+		BANG_module_callback_job_finished(route->mr,job,authority,peer);
+
+	} else {
+
+		BANG_request *request = create_request_with_job(BANG_SEND_FINISHED_JOB_RQUEST,authority,peer,job)
+		BANG_request_peer(pr->peer_id,request);
+	}
 }
 
 void BANG_route_request_job(uuid_t peer, uuid_t authority) {
@@ -92,7 +96,15 @@ void BANG_route_request_job(uuid_t peer, uuid_t authority) {
 	assert(!uuid_is_null(peer));
 
 	peer_or_module *route = BANG_hashmap_get(routes,&authority);
-	route = NULL;
+
+	if (route->remote == LOCAL) {
+		BANG_module_callback_job_requst(route->mr,authority,peer);
+
+	} else {
+
+		BANG_request *request = create_request(BANG_SEND_FINISHED_JOB_RQUEST,authority,peer);
+		BANG_request_peer(pr->peer_id,request);
+	}
 }
 
 void BANG_route_assertion_of_authority(uuid_t authority, uuid_t peer) {

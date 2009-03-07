@@ -230,7 +230,7 @@ enum BANG_headers {
 	 */
 	BANG_HELLO = 0,
 	/**
-	 * BANG_DEBUG_REQUEST (corresponding request type)
+	 * ->BANG_DEBUG_REQUEST (corresponding request type)
 	 * sends a debug message that should be printed out on the remote
 	 * end.
 	 * message:
@@ -240,6 +240,7 @@ enum BANG_headers {
 	 */
 	BANG_DEBUG_MESSAGE,
 	/**
+	 * ->BANG_SEND_MODULE_REQUEST (corresponding request type)
 	 * sends a module.  very rude to do this if you haven't
 	 * asked if they want it it, or if they have requested it.
 	 *
@@ -251,6 +252,7 @@ enum BANG_headers {
 	 */
 	BANG_SEND_MODULE,
 	/**
+	 * -> (corresponding request type)
 	 * Requests a module from the remote end
 	 * message:
 	 *	-BANG_REQUEST_MODULE (unsigned 4 bytes)
@@ -261,6 +263,7 @@ enum BANG_headers {
 	 */
 	BANG_REQUEST_MODULE,
 	/**
+	 * -> (corresponding request type)
 	 * Asks the remote end if they want a module, if yes
 	 * they'll respond with a request
 	 * message:
@@ -271,6 +274,7 @@ enum BANG_headers {
 	 */
 	BANG_EXISTS_MODULE,
 	/**
+	 * ->BANG_MODULE_PEER_REQUEST (corresponding request type)
 	 * Send a job to a uuid.  The read thread passes the data
 	 * off to a router after constructing a job.
 	 * message:
@@ -283,6 +287,7 @@ enum BANG_headers {
 	 */
 	BANG_SEND_JOB,
 	/**
+	 * ->BANG_SEND_JOB_REQUEST (corresponding request type)
 	 * Requests a job from a uuid.
 	 * message:
 	 *	-BANG_REQUEST_JOB 	(unsigned 4 bytes)
@@ -291,6 +296,7 @@ enum BANG_headers {
 	 */
 	BANG_REQUEST_JOB,
 	/**
+	 * ->BANG_SEND_REQUEST_JOB_REQUEST (corresponding request type)
 	 * tells the remote end that version is wrong, and that
 	 * they are hanging up
 	 * message:

@@ -203,18 +203,59 @@ static char read_module_exists(BANG_peer *self) {
 	if ((mod_name_length = (unsigned int*) read_message(self,4)) == NULL)
 		return 0;
 	
-	void *mod_args;
-	if ((mod_args = (void*) read_message(self, (*mod_name_length+4))) == NULL)
+	char *mod_args;
+	if ((mod_args = (char*) read_message(self, (*mod_name_length+4))) == NULL)
 		return 0;
+	
+	// create new buffer to hold peer_id plus module name and version
+	char *mod_buffer = (char*)malloc(*mod_name_length+4+sizeof(int));
+	
+	*mod_buffer = *mod_args;
+	
+	// Set last sizeof(int) bits to peer_id - may not be a good way to do this.
+	mod_buffer[*mod_name_length+4] = self->peer_id;
 	
 	BANG_sigargs mod_exists_args;
 	
-	mod_exists_args.args = mod_args;
-	mod_exists_args.length = *mod_name_length+4;
+	mod_exists_args.args = (void*) mod_buffer;
+	mod_exists_args.length = *mod_name_length+4+sizeof(int);
 	
 	free(mod_name_length);
 	
 	BANG_send_signal(BANG_MODULE_EXISTS,&mod_exists_args,1);
+	free(mod_buffer);
+	free(mod_args);
+	
+	return 1;
+}
+
+static char read_module_request(BANG_peer *self) {
+		
+	unsigned int *mod_name_length;
+	if ((mod_name_length = (unsigned int*) read_message(self,4)) == NULL)
+		return 0;
+	
+	char *mod_args;
+	if ((mod_args = (char*) read_message(self, (*mod_name_length+4))) == NULL)
+		return 0;
+	
+	// create new buffer to hold peer_id plus module name and version
+	char *mod_buffer = (char*)malloc(*mod_name_length+4+sizeof(int));
+	
+	*mod_buffer = *mod_args;
+	
+	// Set last sizeof(int) bits to peer_id - may not be a good way to do this.
+	mod_buffer[*mod_name_length+4] = self->peer_id;
+	
+	BANG_sigargs mod_exists_args;
+	
+	mod_exists_args.args = (void*) mod_buffer;
+	mod_exists_args.length = *mod_name_length+4+sizeof(int);
+	
+	free(mod_name_length);
+	
+	BANG_send_signal(BANG_MODULE_REQUEST,&mod_exists_args,1);
+	free(mod_buffer);
 	free(mod_args);
 	
 	return 1;
@@ -249,7 +290,8 @@ void* BANG_read_peer_thread(void *self_info) {
 					break;
 
 				case BANG_REQUEST_MODULE:
-					/* TODO: This may be pretty hard to do. */
+					/* Send signal to request the new module. */
+					reading = read_module_request(self);
 					break;
 
 				case BANG_SEND_JOB:

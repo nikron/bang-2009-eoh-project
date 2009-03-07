@@ -119,7 +119,13 @@ enum BANG_signals {
 	 */
 	BANG_RUNNING_MODULE,
 	/**
-	* Send request to get new module.
+	* Client sends a module to peer.
+	* arg: module_name | '\0' | module version (3 bytes) | peer_id (int)
+	*/
+	BANG_MODULE_REQUEST,
+	/**
+	* Send request to see if peer has module.
+	* arg: module_name | '\0' | module version (3 bytes) | peer_id (int)
 	*/
 	BANG_MODULE_EXISTS,
 	/**

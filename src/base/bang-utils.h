@@ -169,7 +169,25 @@ size_t BANG_linked_list_get_size(BANG_linked_list *lst);
  */
 void BANG_linked_list_iterate(BANG_linked_list *lst, void (*it_callback) (const void*,void*), void* data);
 
+/**
+ * \param lst The list to iterate over.
+ * \param it_callback The callback to call for every node.
+ * \param The extra data to call the callback with.
+ *
+ * \brief Iterates over a linked calling a function back with the node data, node number, and provided
+ * data, if any.
+ */
 void BANG_linked_list_enumerate(BANG_linked_list *lst, void (*it_callback) (const void*,void*,int), void* data);
+
+/**
+ * \param lst The list to iterate over.
+ * \param it_callback The callback to call for every node.
+ * \param The extra data to call the callback with.
+ *
+ * \brief Iterates over a linked calling a function back with the node data and provided
+ * data, if any.
+ */
+int BANG_linked_list_conditional_iterate(BANG_linked_list *lst, int (*it_callback) (const void*,void*), void *data);
 
 BANG_set* new_BANG_set();
 

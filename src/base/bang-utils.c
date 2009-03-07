@@ -239,6 +239,24 @@ void BANG_linked_list_enumerate(BANG_linked_list *lst, void (*it_callback) (cons
 	BANG_read_unlock(lst->lck);
 }
 
+int BANG_linked_list_conditional_iterate(BANG_linked_list *lst, int (*it_callback) (const void*,void*), void *data) {
+	if (lst == NULL || it_callback == NULL) return 0;
+
+	BANG_node *node;
+	BANG_read_lock(lst->lck);
+
+	for (node = lst->head; node != NULL; node = node->next) {
+		if(it_callback(node->data,data) == 0) {
+			BANG_read_unlock(lst->lck);
+			return 0;
+		}
+	}
+
+	BANG_read_unlock(lst->lck);
+
+	return 1;
+}
+
 #define L_SHIFT 16
 #define L_MASK 0x0000ffff
 
@@ -369,13 +387,30 @@ typedef struct {
 	void *item;
 } find_item_t;
 
-static void find_item(const void *item, void *kp) {
+static int find_item(const void *item, void *kp) {
 	find_item_t *fi = kp;
 	BANG_hashmap_pair *bhp = (void*) item;
 
 	if (fi->comp_func(bhp->key,fi->key) == 0) {
 		fi->item = bhp->item;
+
+		return 0;
 	}
+
+	return 1;
+}
+
+static int find_item_set(const void *item, void *kp) {
+	find_item_t *fi = kp;
+	BANG_hashmap_pair *bhp = (void*) item;
+
+	if (fi->comp_func(bhp->key,fi->key) == 0) {
+		bhp->item = fi->item;
+
+		return 0;
+	}
+
+	return 1;
 }
 
 void* BANG_hashmap_get(BANG_hashmap *hashmap, void *key) {
@@ -388,14 +423,22 @@ void* BANG_hashmap_get(BANG_hashmap *hashmap, void *key) {
 
 	int pos = key_hash % hashmap->data_size;
 
-	BANG_linked_list_iterate(hashmap->data[pos],&find_item,&fi);
+	BANG_linked_list_conditional_iterate(hashmap->data[pos],&find_item,&fi);
 
 	return fi.item;
 }
 
 void BANG_hashmap_set(BANG_hashmap *hashmap, void *key, void *item){
 	int pos = hashmap->hash_func(key) % hashmap->data_size;
-	BANG_linked_list_append(hashmap->data[pos],item);
+
+	find_item_t fi;
+	fi.comp_func = hashmap->compare_func;
+	fi.key = key;
+	fi.item = item;
+
+	if (BANG_linked_list_conditional_iterate(hashmap->data[pos],&find_item_set,&fi)) {
+		BANG_linked_list_append(hashmap->data[pos],item);
+	}
 }
 
 BANG_request* new_BANG_request(int type, void *data, int length) {

@@ -316,7 +316,13 @@ enum BANG_headers {
 	/**
 	 * -> (corresponding request type)
 	 */
-	BANG_WRITE_FINISHED_JOB,
+	BANG_FINISHED_JOB,
+
+	/**
+	 * ->BANG_SEND_AVAILABLE_JOB_REQUEST (corresponding request type)
+	 *
+	 */
+	BANG_AVAILABLE_JOB,
 
 	/**
 	 * tells the remote end that version is wrong, and that
@@ -396,6 +402,10 @@ enum BANG_request_types {
 	 */
 	BANG_SEND_REQUEST_JOB_REQUEST,
 
+	/**
+	 * <-BANG_AVAILABLE_JOB (corresponding header type)
+	 *
+	 */
 	BANG_SEND_AVAILABLE_JOB_REQUEST,
 
 	/**

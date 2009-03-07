@@ -104,8 +104,6 @@ static char write_send_job(BANG_peer *self, BANG_request *request) {
 	write_message(self,request->request,request->length);
 }
 
-
-///TODO Change header "BANG_WRITE_FINISHED_JOB" to "BANG_FINISHED_JOB" TODO
 //BANG_FINISHED_JOB->BANG_SEND_FINISHED_JOB_REQUEST
 static char write_finished_job() {
 	BANG_header header = BANG_FINISHED_JOB;

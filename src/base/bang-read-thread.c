@@ -197,6 +197,28 @@ static char read_job_message(BANG_peer *self) {
 	return 1;
 }
 
+static char read_module_exists(BANG_peer *self) {
+	
+	unsigned int *mod_name_length;
+	if (*mod_name_length = (unsigned int) read_message(self,4) == NULL)
+		return 0;
+	
+	void *mod_args;
+	if (*mod_args = (void*) read_message(self, (*mod_name_length+4)) == NULL)
+		return 0;
+	
+	BANG_sigargs *mod_exists_args;
+	
+	mod_exists_args->args = mod_args;
+	mod_exists_args->length = *mod_name_length+4;
+	
+	free(mod_name_length);
+	
+	BANG_send_signal(BANG_MODULE_EXISTS,(void*)mod_exists_args,2);
+	
+	return 1;
+}
+
 void* BANG_read_peer_thread(void *self_info) {
 	BANG_peer *self = (BANG_peer*)self_info;
 
@@ -221,7 +243,8 @@ void* BANG_read_peer_thread(void *self_info) {
 					break;
 
 				case BANG_EXISTS_MODULE:
-					/* TODO: Someone is asking us if we want a module... send out a signal! */
+					/* Someone is asking us if we want a module... send out a signal! */
+					reading = read_module_exists(self);
 					break;
 
 				case BANG_REQUEST_MODULE:

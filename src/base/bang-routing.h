@@ -36,7 +36,7 @@ void BANG_route_job_to_uuids(uuid_t authority, uuid_t *peers, BANG_job *job);
  *
  * \brief Routes a finished job through a route.
  */
-void BANG_route_finished_job(uuid_t auth, uuid_t peer, BANG_job *job);
+void BANG_route_finished_job(uuid_t authority, uuid_t peer, BANG_job *job);
 
 /**
  * \param uuid The route to request a job from.
@@ -68,7 +68,7 @@ void BANG_route_send_message(uuid_t uuid, char *message);
  *
  * \brief Gets the peer id from the route.
  */
-int BANG_route_get_peer_id(uuid_t uuid);
+int BANG_route_get_peer_id(uuid_t peer);
 
 /**
  * \param uuids The routes to peers, null terminated.
@@ -78,7 +78,7 @@ int BANG_route_get_peer_id(uuid_t uuid);
  * \brief Returns peer_ids not on the list.
  * memory: You must take care of it.
  */
-int** BANG_not_route_get_peer_id(uuid_t *uuids);
+int** BANG_not_route_get_peer_id(uuid_t *peers);
 
 /**
  * \param peer A running module peer.
@@ -117,9 +117,9 @@ void BANG_register_peer_route(uuid_t uuid, int peer, char *module_name, unsigned
 /**
  * \param uuid The identifier to deregister.
  *
- * \brief Deregisters a uuid.
+ * \brief Deregisters a route.
  */
-void BANG_deregister_route(uuid_t uid);
+void BANG_deregister_route(uuid_t route);
 
 /**
  * \brief Starts the routing part of the library.

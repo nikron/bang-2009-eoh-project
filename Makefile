@@ -22,7 +22,8 @@ LOBJS=bang-com$(OBJEXT) \
       bang-routing$(OBJEXT) \
       bang-write-thread$(OBJEXT) \
       bang-read-thread$(OBJEXT) \
-      bang-peer$(OBJEXT)
+      bang-peer$(OBJEXT) \
+      bang-scan$(OBJEXT)
 
 LSRC=src/base/bang-com$(SRCEXT) \
      src/base/bang-net$(SRCEXT) \
@@ -34,7 +35,8 @@ LSRC=src/base/bang-com$(SRCEXT) \
      src/base/bang-routing$(SRCEXT) \
      src/base/bang-read-thread$(SRCEXT) \
      src/base/bang-write-thread$(SRCEXT) \
-     src/base/bang-peer$(SRCEXT)
+     src/base/bang-peer$(SRCEXT) \
+     src/base/bang-scan$(SRCEXT)
 
 AOBJS=preferences$(OBJEXT) \
       main$(OBJEXT) \

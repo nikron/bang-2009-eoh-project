@@ -22,10 +22,12 @@ static unsigned int write_message(BANG_peer *self, void *message, unsigned int l
  * it may be possible that modules don't fit in memory though this seems
  * _very_ unlikely.
  */
+
 static void write_module(BANG_peer *self, BANG_request *request);
 
 static void write_module_exists(BANG_peer *self, BANG_request *request);
 
+//Does the actual writing
 static unsigned int write_message(BANG_peer *self, void *message, unsigned int length) {
 	unsigned int written = 0;
 	int write_return = 0;
@@ -45,6 +47,7 @@ static unsigned int write_message(BANG_peer *self, void *message, unsigned int l
 	return written;
 }
 
+//----------------------Actions performed on requests--------------------------.
 static char write_bye(BANG_peer *self) {
 	BANG_header header = BANG_BYE;
 
@@ -52,6 +55,68 @@ static char write_bye(BANG_peer *self) {
 
 	return 0;
 }
+
+
+static char write_debug(BANG_peer *self, BANG_request *request) {
+	BANG_header header = BANG_DEBUG_MESSAGE;
+
+	unsigned int ret = write_message(self,&header,LENGTH_OF_HEADER);
+
+	if (ret < LENGTH_OF_HEADER)
+		return 0;
+
+	ret = write_message(self,&(request->length),LENGTH_OF_LENGTHS);
+
+	if (ret < LENGTH_OF_LENGTHS)
+		return 0;
+
+	write_message(self,request->request,request->length);
+
+	if (ret < request->length)
+		return 0;
+	else
+		return 1;
+
+}
+
+static void write_module_exists(BANG_peer *self, BANG_request *request) {
+	BANG_header header = BANG_EXISTS_MODULE;
+	write_message(self,&header,LENGTH_OF_HEADER);
+	write_message(self,request->request,request->length);
+}
+
+
+
+
+
+static void write_send_job(BANG_peer *self, BANG_request *request) {
+	BANG_header header = BANG_SEND_JOB;
+	write_message(self,&header,LENGTH_OF_HEADER);
+	write_message(self,request->request,request->length);
+}
+
+static void write_finished_job() {
+	BANG_header header = ;
+	write_message(self,&header,LENGTH_OF_HEADER);
+
+}
+
+static void write_request_job() {
+	BANG_header header = BANG_REQUEST_JOB;
+	write_message(self,&header,LENGTH_OF_HEADER);
+
+}
+
+static void write_available_job() {
+	BANG_header header = ;
+	write_message(self,&header,LENGTH_OF_HEADER);
+
+}
+
+
+
+
+
 
 static void write_module(BANG_peer *self, BANG_request *request) {
 	FILE *fd = fopen((char*)request->request,"r");
@@ -83,34 +148,10 @@ static void write_module(BANG_peer *self, BANG_request *request) {
 	fclose(fd);
 }
 
-static char write_debug(BANG_peer *self, BANG_request *request) {
-	BANG_header header = BANG_DEBUG_MESSAGE;
+//----------------------Actions performed on requests--------------------------'
 
-	unsigned int ret = write_message(self,&header,LENGTH_OF_HEADER);
 
-	if (ret < LENGTH_OF_HEADER)
-		return 0;
-
-	ret = write_message(self,&(request->length),LENGTH_OF_LENGTHS);
-
-	if (ret < LENGTH_OF_LENGTHS)
-		return 0;
-
-	write_message(self,request->request,request->length);
-
-	if (ret < request->length)
-		return 0;
-	else
-		return 1;
-
-}
-
-static void write_module_exists(BANG_peer *self, BANG_request *request) {
-	BANG_header header = BANG_EXISTS_MODULE;
-	write_message(self,&header,LENGTH_OF_HEADER);
-	write_message(self,request->request,request->length);
-}
-
+//-------------------------Request processing----------------------------------.
 void* BANG_write_peer_thread(void *self_info) {
 	BANG_peer *self = (BANG_peer*)self_info;
 	BANG_request *current;
@@ -126,32 +167,48 @@ void* BANG_write_peer_thread(void *self_info) {
 		switch (current->type) {
 			case BANG_CLOSE_REQUEST:
 				sending = write_bye(self);
-				break;
+			break;
 
 			case BANG_SUDDEN_CLOSE_REQUEST:
 				sending = 0;
-				break;
+			break;
 
 			case BANG_DEBUG_REQUEST:
 				/* TODO: ADD ERROR CHECKING!
 				 * possibly put in own method */
 				sending = write_debug(self,current);
-				break;
-
-			case BANG_SEND_MODULE_REQUEST:
-				write_module(self,current->request);
-				break;
+			break;
 
 			case BANG_MODULE_PEER_REQUEST:
 				write_module_exists(self,current->request);
-				break;
+			break;
+//-----------------------------------------------------------------.
+			case BANG_SEND_JOB_REQUEST:
+				write_send_job();
+			break;
+
+			case BANG_SEND_FINISHED_JOB_REQUEST:
+				write_finished_job();
+			break;
+
+			case BANG_SEND_REQUEST_JOB_REQUEST:
+				write_request_job();
+			break;
+
+			case BANG_SEND_AVAILABLE_JOB_REQUEST:
+				write_available_job();
+			break;
+//-----------------------------------------------------------------'
+			case BANG_SEND_MODULE_REQUEST:
+				write_module(self,current->request);
+			break;
 
 			default:
 				/*ERROR!*/
 #ifdef BDEBUG_1
 				fprintf(stderr,"BANG ERROR:\t%d is not a request type that we take care of!\n",current->type);
 #endif
-				break;
+			break;
 		}
 
 		free_BANG_request(current);
@@ -162,3 +219,4 @@ void* BANG_write_peer_thread(void *self_info) {
 #endif
 	return NULL;
 }
+//-------------------------Request processing----------------------------------'

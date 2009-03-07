@@ -230,6 +230,7 @@ enum BANG_headers {
 	 */
 	BANG_HELLO = 0,
 	/**
+	 * BANG_DEBUG_REQUEST (corresponding request type)
 	 * sends a debug message that should be printed out on the remote
 	 * end.
 	 * message:
@@ -273,10 +274,22 @@ enum BANG_headers {
 	 * Send a job to a uuid.  The read thread passes the data
 	 * off to a router after constructing a job.
 	 * message:
-	 *	-BANG_SEND_JOB
-	 *	-uuid (16 bytes)
+	 *	-BANG_SEND_JOB 	(unsigned 4 bytes)
+	 * 	-Authority 	(16 bytes)
+	 * 	-Peer 		(16 bytes)
+	 * 	-Job_number 	(4 bytes)
+	 * 	-Job_length 	(unsigned 4 bytes)
+	 * 	-Job data	(...)
 	 */
 	BANG_SEND_JOB,
+	/**
+	 * Requests a job from a uuid.
+	 * message:
+	 *	-BANG_REQUEST_JOB 	(unsigned 4 bytes)
+	 *	-Authority		(16 bytes)
+	 *	-Peer			(16 bytes)
+	 */
+	BANG_REQUEST_JOB,
 	/**
 	 * tells the remote end that version is wrong, and that
 	 * they are hanging up
@@ -329,12 +342,12 @@ enum BANG_request_types {
 	BANG_MODULE_PEER_REQUEST,
 	/**
 	 * BANG_request.type == BANG_SEND_JOB_REQUEST
-	 * BAND_request.request:
-	 * | uuid_t auth | uuid_t peer |
+	 * BANG_request.request:
+	 * c
 	 * | job_number | job_length | job data |
 	 *
 	 * do:
-	 *	-send Out everything appended to a header.
+	 *	-send out everything appended to a header.
 	 *
 	 */
 	BANG_SEND_JOB_REQUEST,
@@ -350,7 +363,13 @@ enum BANG_request_types {
 	 */
 	BANG_SEND_FINISHED_JOB_REQUEST,
 	/**
-	 * haha!
+	 * BANG_request.type == BANG_SEND_REQUEST_JOB_REQUEST
+	 * BANG_request.request:
+	 * | uuid_t auth | uuid_t peer |
+	 *
+	 * do:
+	 *	-send formatted data appended to a header.
+	 *
 	 */
 	BANG_SEND_REQUEST_JOB_REQUEST,
 	BANG_SEND_AVAILABLE_JOB_REQUEST,

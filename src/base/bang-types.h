@@ -337,7 +337,7 @@ enum BANG_request_types {
 	BANG_SUDDEN_CLOSE_REQUEST,
 
 	/**
-	 * ->BANG_DEBUG_MESSAGE (corresponding header type)
+	 * <-BANG_DEBUG_MESSAGE (corresponding header type)
 	 * BANG_request.request:
 	 * | char* | '\0'|
 	 * BANG_request.length:
@@ -351,7 +351,7 @@ enum BANG_request_types {
 	BANG_DEBUG_REQUEST,
 
 	/**
-	 * ->BANG_EXISTS_MODULE (corresponding header type)
+	 * <-BANG_EXISTS_MODULE (corresponding header type)
 	 * BANG_request.type == BANG_MODULE_PEER_REQUEST
 	 * BANG_request.request:
 	 * |  module_name | '\0' | 3 bytes module version|
@@ -362,7 +362,7 @@ enum BANG_request_types {
 	BANG_MODULE_PEER_REQUEST,
 
 	/**
-	 * ->BANG_SEND_JOB (corresponding header type)
+	 * <-BANG_SEND_JOB (corresponding header type)
 	 * BANG_request.type == BANG_SEND_JOB_REQUEST
 	 * BANG_request.request:
 	 * | job_number | job_length | job data |
@@ -376,14 +376,15 @@ enum BANG_request_types {
 	BANG_SEND_FINISHED_JOB_REQUEST,
 
 	/**
-	 * haha!
+	 * <-BANG_REQUEST_JOB (corresponding header type)
+	 * BANG_request.type == BANG_SEND_REQUEST_JOB_REQUEST
 	 */
 	BANG_SEND_REQUEST_JOB_REQUEST,
 
 	BANG_SEND_AVAILABLE_JOB_REQUEST,
 
 	/**
-	 * ->BANG_SEND_MODULE (corresponding header type)
+	 * <-BANG_SEND_MODULE (corresponding header type)
 	 * do:
 	 *	-send BANG_SEND_MODULE
 	 *	-send length of module

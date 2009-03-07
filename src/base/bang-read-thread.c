@@ -207,14 +207,15 @@ static char read_module_exists(BANG_peer *self) {
 	if (*mod_args = (void*) read_message(self, (*mod_name_length+4)) == NULL)
 		return 0;
 	
-	BANG_sigargs *mod_exists_args;
+	BANG_sigargs mod_exists_args;
 	
-	mod_exists_args->args = mod_args;
-	mod_exists_args->length = *mod_name_length+4;
+	mod_exists_args.args = mod_args;
+	mod_exists_args.length = *mod_name_length+4;
 	
 	free(mod_name_length);
 	
-	BANG_send_signal(BANG_MODULE_EXISTS,(void*)mod_exists_args,2);
+	BANG_send_signal(BANG_MODULE_EXISTS,&mod_exists_args,1);
+	free(mod_args);
 	
 	return 1;
 }

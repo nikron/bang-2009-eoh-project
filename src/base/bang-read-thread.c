@@ -200,11 +200,11 @@ static char read_job_message(BANG_peer *self) {
 static char read_module_exists(BANG_peer *self) {
 	
 	unsigned int *mod_name_length;
-	if (*mod_name_length = (unsigned int) read_message(self,4) == NULL)
+	if ((mod_name_length = (unsigned int*) read_message(self,4)) == NULL)
 		return 0;
 	
 	void *mod_args;
-	if (*mod_args = (void*) read_message(self, (*mod_name_length+4)) == NULL)
+	if ((mod_args = (void*) read_message(self, (*mod_name_length+4))) == NULL)
 		return 0;
 	
 	BANG_sigargs mod_exists_args;

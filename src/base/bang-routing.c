@@ -30,12 +30,35 @@ typedef struct {
 
 static int uuid_hashcode(const void *uuid);
 static int uuid_ptr_compare(const void *uuid1, const void *uuid2);
+static peer_or_module *new_pom_module_route(BANG_module *module);
 static peer_or_module *new_pom_peer_route(int peer_id, char *module_name, unsigned char *module_version);
 static BANG_request* create_request(enum BANG_request_types request, uuid_t authority, uuid_t peer);
 static BANG_request* create_request_with_message(enum BANG_request_types request, char *message);
 static BANG_request* create_request_with_job(enum BANG_request_types request, uuid_t authority, uuid_t peer, BANG_job *job);
 
 static BANG_hashmap *routes = NULL;
+
+static int uuid_hashcode(const void *uuid) {
+	assert(uuid != NULL);
+
+	int hc = (*((uuid_t*)uuid)[0] << 2) & (*((uuid_t*)uuid)[15]);
+
+	return hc;
+}
+
+static int uuid_ptr_compare(const void *uuid1, const void *uuid2) {
+	return uuid_compare(*((uuid_t*)uuid1),*((uuid_t*)uuid2));
+}
+
+static peer_or_module *new_pom_module_route(BANG_module *module) {
+	peer_or_module *new = malloc(sizeof(peer_or_module));
+
+	new->remote = LOCAL;
+
+	new->mr = module;
+
+	return new;
+}
 
 static peer_or_module *new_pom_peer_route(int peer_id, char *module_name, unsigned char *module_version) {
 	peer_or_module *new = malloc(sizeof(peer_or_module));
@@ -223,7 +246,7 @@ void BANG_register_module_route(BANG_module *module) {
 
 void BANG_register_peer_route(uuid_t uuid, int peer_id, char *module_name, unsigned char* module_version) {
 	assert(routes != NULL);
-	assert(!uuid_is_null(&uuid));
+	assert(!uuid_is_null(uuid));
 	assert(peer_id != -1);
 
 	peer_or_module *pom = new_pom_peer_route(peer_id,module_name,module_version);
@@ -238,7 +261,7 @@ void BANG_deregister_route(uuid_t route) {
 }
 
 void BANG_route_init() {
-	routes = new_BANG_hashmap(NULL,NULL);
+	routes = new_BANG_hashmap(&uuid_hashcode,&uuid_ptr_compare);
 }
 
 void BANG_route_close() {

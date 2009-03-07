@@ -83,7 +83,7 @@ static int send_bang_reply(const char *reply_ip) {
 
 }
 
-static int listenForNewPeers() {
+static int listen_new_peers() {
 	int sockfd;
 	struct addrinfo hints, *servinfo, *p;
 	int rv;
@@ -163,7 +163,7 @@ static int listenForNewPeers() {
 
 }
 
-static int announceExistenceToLAN() {
+static int announce_existence() {
 	int sockfd;
 	struct sockaddr_in new_peer_addr; // connector's address information
 	struct hostent *he;
@@ -207,13 +207,13 @@ static int announceExistenceToLAN() {
 
 }
 
-static void *scanControl(void *dontUse) {
+static void *scan_control(void *dontUse) {
 	dontUse = NULL;
 	int retVal = 0;
 
-	announceExistenceToLAN();
-	while (1) {
-		if ((retVal = listenForNewPeers()) != 0)
+	announce_existence();
+	for (;;) {
+		if ((retVal = listen_new_peers()) != 0)
 			fprintf(stderr, "Fail on scan: %d\n", retVal);
 	}
 
@@ -225,7 +225,7 @@ static void *scanControl(void *dontUse) {
 
 //Create working thread
 void BANG_scan_init() {
-	pthread_create(&scanThread, NULL, scanControl, NULL);
+	pthread_create(&scanThread, NULL, scan_control, NULL);
 }
 
 //Kill working thread

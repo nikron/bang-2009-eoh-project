@@ -233,7 +233,9 @@ enum BANG_headers {
 	 *	-peer name (char*)
 	 */
 	BANG_HELLO = 0,
+
 	/**
+	 * ->BANG_DEBUG_REQUEST (corresponding request type)
 	 * sends a debug message that should be printed out on the remote
 	 * end.
 	 * message:
@@ -242,7 +244,9 @@ enum BANG_headers {
 	 *	-message (char*)
 	 */
 	BANG_DEBUG_MESSAGE,
+
 	/**
+	 * ->BANG_SEND_MODULE_REQUEST (corresponding request type)
 	 * sends a module.  very rude to do this if you haven't
 	 * asked if they want it it, or if they have requested it.
 	 *
@@ -253,7 +257,9 @@ enum BANG_headers {
 	 * NOTE: The file, not the struct.
 	 */
 	BANG_SEND_MODULE,
+
 	/**
+	 * -> (corresponding request type)
 	 * Requests a module from the remote end
 	 * message:
 	 *	-BANG_REQUEST_MODULE (unsigned 4 bytes)
@@ -263,7 +269,9 @@ enum BANG_headers {
 	 *	-version (unsigned 3 bytes)
 	 */
 	BANG_REQUEST_MODULE,
+
 	/**
+	 * ->BANG_MODULE_PEER_REQUEST (corresponding request type)=
 	 * Asks the remote end if they want a module, if yes
 	 * they'll respond with a request
 	 * message:
@@ -274,7 +282,9 @@ enum BANG_headers {
 	 *	-version	(unsigned 3 bytes)
 	 */
 	BANG_EXISTS_MODULE,
+
 	/**
+	 * ->BANG_SEND_JOB_REQUEST (corresponding request type)
 	 * Send a job to a uuid.  The read thread passes the data
 	 * off to a router after constructing a job.
 	 * message:
@@ -282,6 +292,17 @@ enum BANG_headers {
 	 *	-uuid (16 bytes)
 	 */
 	BANG_SEND_JOB,
+
+	/**
+	 * ->BANG_SEND_REQUEST_JOB_REQUEST (corresponding request type)
+	 * Requests a job from a uuid.
+	 * message:
+	 *	-BANG_REQUEST_JOB 	(unsigned 4 bytes)
+	 *	-Authority		(16 bytes)
+	 *	-Peer			(16 bytes)
+	 */
+	BANG_REQUEST_JOB,
+
 	/**
 	 * tells the remote end that version is wrong, and that
 	 * they are hanging up
@@ -290,6 +311,7 @@ enum BANG_headers {
 	 *	-our version (3 unsigned bytes)
 	 */
 	BANG_MISMATCH_VERSION,
+
 	/**
 	 * message:
 	 *	-BANG_BYE (unsigned 4 bytes)
@@ -297,6 +319,7 @@ enum BANG_headers {
 	 * TODO: This will most defintely have more things involved.
 	 */
 	BANG_BYE,
+
 	/**
 	 * Number of headers.*/
 	BANG_NUM_HEADERS
@@ -307,11 +330,14 @@ enum BANG_request_types {
 	 * Ask for the peer to start a sign off.
 	 */
 	BANG_CLOSE_REQUEST = 0,
+
 	/**
 	 * Just quit without doing anything.
 	 */
 	BANG_SUDDEN_CLOSE_REQUEST,
+
 	/**
+	 * ->BANG_DEBUG_MESSAGE (corresponding header type)
 	 * BANG_request.request:
 	 * | char* | '\0'|
 	 * BANG_request.length:
@@ -323,7 +349,9 @@ enum BANG_request_types {
 	 *	-send message
 	 */
 	BANG_DEBUG_REQUEST,
+
 	/**
+	 * ->BANG_EXISTS_MODULE (corresponding header type)
 	 * BANG_request.type == BANG_MODULE_PEER_REQUEST
 	 * BANG_request.request:
 	 * |  module_name | '\0' | 3 bytes module version|
@@ -332,24 +360,30 @@ enum BANG_request_types {
 	 *
 	 */
 	BANG_MODULE_PEER_REQUEST,
+
 	/**
+	 * ->BANG_SEND_JOB (corresponding header type)
 	 * BANG_request.type == BANG_SEND_JOB_REQUEST
-	 * BAND_request.request:
-	 * | uuid_t auth | uuid_t peer |
+	 * BANG_request.request:
 	 * | job_number | job_length | job data |
 	 *
 	 * do:
-	 *	-send Out everything appended to a header.
+	 *	-send out everything appended to a header.
 	 *
 	 */
 	BANG_SEND_JOB_REQUEST,
+
 	BANG_SEND_FINISHED_JOB_REQUEST,
+
 	/**
 	 * haha!
 	 */
 	BANG_SEND_REQUEST_JOB_REQUEST,
+
 	BANG_SEND_AVAILABLE_JOB_REQUEST,
+
 	/**
+	 * ->BANG_SEND_MODULE (corresponding header type)
 	 * do:
 	 *	-send BANG_SEND_MODULE
 	 *	-send length of module
@@ -357,6 +391,7 @@ enum BANG_request_types {
 	 *	NOTE:  NOT THE struct, the actual file.
 	 */
 	BANG_SEND_MODULE_REQUEST,
+
 	BANG_NUM_REQUESTS
 };
 

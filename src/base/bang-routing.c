@@ -28,6 +28,8 @@ typedef struct {
 	BANG_module *mr;
 } peer_or_module;
 
+static int uuid_hashcode(const void *uuid);
+static int uuid_ptr_compare(const void *uuid1, const void *uuid2);
 static peer_or_module *new_pom_peer_route(int peer_id, char *module_name, unsigned char *module_version);
 static BANG_request* create_request(enum BANG_request_types request, uuid_t authority, uuid_t peer);
 static BANG_request* create_request_with_message(enum BANG_request_types request, char *message);
@@ -211,19 +213,35 @@ void BANG_route_remove_peer(uuid_t peer, uuid_t old_peer) {
 void BANG_register_module_route(BANG_module *module) {
 	assert(routes != NULL);
 	assert(module != NULL);
+
+	uuid_t new_uuid;
+	uuid_generate(new_uuid);
+
+	peer_or_module *pom = new_pom_module_route(module);
+	BANG_hashmap_set(routes,&new_uuid,pom);
 }
 
 void BANG_register_peer_route(uuid_t uuid, int peer_id, char *module_name, unsigned char* module_version) {
+	assert(routes != NULL);
+	assert(!uuid_is_null(&uuid));
+	assert(peer_id != -1);
+
 	peer_or_module *pom = new_pom_peer_route(peer_id,module_name,module_version);
 	BANG_hashmap_set(routes,&uuid,pom);
 }
 
 void BANG_deregister_route(uuid_t route) {
 	assert(!uuid_is_null(route));
+	assert(routes != NULL);
+
+	BANG_hashmap_set(routes,&route,NULL);
 }
 
 void BANG_route_init() {
+	routes = new_BANG_hashmap(NULL,NULL);
 }
 
 void BANG_route_close() {
+	free_BANG_hashmap(routes);
+	routes = NULL;
 }

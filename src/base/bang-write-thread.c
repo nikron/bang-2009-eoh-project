@@ -56,7 +56,7 @@ static char write_bye(BANG_peer *self) {
 	return 0;
 }
 
-
+//BANG_DEBUG_MESSAGE->
 static char write_debug(BANG_peer *self, BANG_request *request) {
 	BANG_header header = BANG_DEBUG_MESSAGE;
 
@@ -79,7 +79,7 @@ static char write_debug(BANG_peer *self, BANG_request *request) {
 
 }
 
-static void write_module_exists(BANG_peer *self, BANG_request *request) {
+static char write_module_exists(BANG_peer *self, BANG_request *request) {
 	BANG_header header = BANG_EXISTS_MODULE;
 	write_message(self,&header,LENGTH_OF_HEADER);
 	write_message(self,request->request,request->length);
@@ -90,31 +90,38 @@ static void write_module_exists(BANG_peer *self, BANG_request *request) {
 
 
 //-----------------------------------------------------------------------------.
-static void write_send_job(BANG_peer *self, BANG_request *request) {
-	//BANG_SEND_JOB_REQUEST->BANG_SEND_JOB
+//BANG_SEND_JOB->BANG_SEND_JOB_REQUEST
+static char write_send_job(BANG_peer *self, BANG_request *request) {
+	 * message:
+	 *	-BANG_SEND_JOB		(4 unsigned bytes)
+	 *	-Authority		(16 bytes)
+	 *	-Peer			(16 bytes)
+	 *	-job_numer		(4 bytes)
+	 *	-job_length		(4 unsigned bytes)
+	 *	-job_data		(job_length bytes)
 	BANG_header header = BANG_SEND_JOB;
 	write_message(self,&header,LENGTH_OF_HEADER);
 	write_message(self,request->request,request->length);
 }
 
 
-//TODO Change header "BANG_WRITE_FINISHED_JOB" to "BANG_FINISHED_JOB" TODO
-static void write_finished_job() {
-	//BANG_SEND_FINISHED_JOB_REQUEST->BANG_FINISHED_JOB
+///TODO Change header "BANG_WRITE_FINISHED_JOB" to "BANG_FINISHED_JOB" TODO
+//BANG_FINISHED_JOB->BANG_SEND_FINISHED_JOB_REQUEST
+static char write_finished_job() {
 	BANG_header header = BANG_FINISHED_JOB;
 	write_message(self,&header,LENGTH_OF_HEADER);
 }
 
-static void write_request_job() {
-	//BANG_SEND_REQUEST_JOB_REQUEST->BANG_REQUEST_JOB
+//BANG_REQUEST_JOB->BANG_SEND_REQUEST_JOB_REQUEST
+static char write_request_job() {
 	BANG_header header = BANG_REQUEST_JOB;
 	write_message(self,&header,LENGTH_OF_HEADER);
 
 }
 
-//TODO Add header "BANG_AVAILABLE_JOB" to BANG_SEND_AVAILABLE_JOB_REQUEST TODO
-static void write_available_job() {
-	//BANG_SEND_AVAILABLE_JOB_REQUEST->BANG_AVAILABLE_JOB
+///TODO Add header "BANG_AVAILABLE_JOB" to BANG_SEND_AVAILABLE_JOB_REQUEST TODO
+//BANG_AVAILABLE_JOB->BANG_SEND_AVAILABLE_JOB_REQUEST
+static char write_available_job() {
 	BANG_header header = BANG_AVAILABLE_JOB; 
 	write_message(self,&header,LENGTH_OF_HEADER);
 
@@ -125,7 +132,7 @@ static void write_available_job() {
 
 
 
-static void write_module(BANG_peer *self, BANG_request *request) {
+static char write_module(BANG_peer *self, BANG_request *request) {
 	FILE *fd = fopen((char*)request->request,"r");
 	if (fd == NULL) {
 		return;
@@ -180,33 +187,31 @@ void* BANG_write_peer_thread(void *self_info) {
 			break;
 
 			case BANG_DEBUG_REQUEST:
-				/* TODO: ADD ERROR CHECKING!
-				 * possibly put in own method */
 				sending = write_debug(self,current);
 			break;
 
 			case BANG_MODULE_PEER_REQUEST:
-				write_module_exists(self,current->request);
+				sending = write_module_exists(self,current->request);
 			break;
 //-----------------------------------------------------------------------------.
 			case BANG_SEND_JOB_REQUEST:
-				write_send_job();
+				sending = write_send_job();
 			break;
 
 			case BANG_SEND_FINISHED_JOB_REQUEST:
-				write_finished_job();
+				sending = write_finished_job();
 			break;
 
 			case BANG_SEND_REQUEST_JOB_REQUEST:
-				write_request_job();
+				sending = write_request_job();
 			break;
 
 			case BANG_SEND_AVAILABLE_JOB_REQUEST:
-				write_available_job();
+				sending = write_available_job();
 			break;
 //-----------------------------------------------------------------------------'
 			case BANG_SEND_MODULE_REQUEST:
-				write_module(self,current->request);
+				sending = write_module(self,current->request);
 			break;
 
 			default:

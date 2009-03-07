@@ -233,10 +233,10 @@ typedef uint32_t BANG_header;
 enum BANG_headers {
 	/**
 	 * message:
-	 *	-BANG_HELLO (unsigned 4 bytes)
-	 *	-BANG_VERSION (8 bytes to a double)
-	 *	-length of name (unsigned 4 bytes)
-	 *	-peer name (char*)
+	 *	-BANG_HELLO 		(4 unsigned bytes)
+	 *	-BANG_VERSION 		(8 bytes to a double)
+	 *	-length of name 	(4 unsigned bytes)
+	 *	-peer name 		(char*)
 	 */
 	BANG_HELLO = 0,
 
@@ -245,9 +245,9 @@ enum BANG_headers {
 	 * sends a debug message that should be printed out on the remote
 	 * end.
 	 * message:
-	 *	-BANG_DEBUG_MESSAGE (unsigned 4 bytes)
-	 *	-length of message (unsigned 4 bytes)
-	 *	-message (char*)
+	 *	-BANG_DEBUG_MESSAGE 	(4 unsigned bytes)
+	 *	-length of message 	(4 unsigned bytes)
+	 *	-message 		(char*)
 	 */
 	BANG_DEBUG_MESSAGE,
 
@@ -257,9 +257,9 @@ enum BANG_headers {
 	 * asked if they want it it, or if they have requested it.
 	 *
 	 * message:
-	 *	-BANG_SEND_MODULE (unsigned 4 bytes)
-	 *	-length of module (unsigned 4 bytes)
-	 *	-module (void*)
+	 *	-BANG_SEND_MODULE 	(4 unsigned bytes)
+	 *	-length of module 	(4 unsigned bytes)
+	 *	-module 		(void*)
 	 * NOTE: The file, not the struct.
 	 */
 	BANG_SEND_MODULE,
@@ -268,11 +268,11 @@ enum BANG_headers {
 	 * -> (corresponding request type)
 	 * Requests a module from the remote end
 	 * message:
-	 *	-BANG_REQUEST_MODULE (unsigned 4 bytes)
-	 *	-length of name
-	 *	-module_name
-	 *	-'\0'
-	 *	-version (unsigned 3 bytes)
+	 *	-BANG_REQUEST_MODULE	(4 unsigned bytes)
+	 *	-length of name		(4 unsigned bytes)
+	 *	-module_name		(char*)
+	 *	-'\0'			(1 byte)
+	 *	-version		(3 unsigned bytes)
 	 */
 	BANG_REQUEST_MODULE,
 
@@ -281,11 +281,11 @@ enum BANG_headers {
 	 * Asks the remote end if they want a module, if yes
 	 * they'll respond with a request
 	 * message:
-	 *	-BANG_EXISTS_MODULE (unsigned 4 bytes)
-	 *	-length of name
-	 *	-module_name (char*)
-	 *	-'\0'
-	 *	-version	(unsigned 3 bytes)
+	 *	-BANG_EXISTS_MODULE 	(4 unsigned bytes)
+	 *	-length of name		(4 unsigned bytes)
+	 *	-module_name 		(char*)
+	 *	-'\0'			(1 byte)
+	 *	-version		(3 unsigned bytes)
 	 */
 	BANG_EXISTS_MODULE,
 
@@ -294,8 +294,12 @@ enum BANG_headers {
 	 * Send a job to a uuid.  The read thread passes the data
 	 * off to a router after constructing a job.
 	 * message:
-	 *	-BANG_SEND_JOB
-	 *	-uuid (16 bytes)
+	 *	-BANG_SEND_JOB		(4 unsigned bytes)
+	 *	-Authority		(16 bytes)
+	 *	-Peer			(16 bytes)
+	 *	-job_numer		(4 bytes)
+	 *	-job_length		(4 unsigned bytes)
+	 *	-job_data		(job_length bytes)
 	 */
 	BANG_SEND_JOB,
 
@@ -303,7 +307,7 @@ enum BANG_headers {
 	 * ->BANG_SEND_REQUEST_JOB_REQUEST (corresponding request type)
 	 * Requests a job from a uuid.
 	 * message:
-	 *	-BANG_REQUEST_JOB 	(unsigned 4 bytes)
+	 *	-BANG_REQUEST_JOB 	(4 unsigned bytes)
 	 *	-Authority		(16 bytes)
 	 *	-Peer			(16 bytes)
 	 */
@@ -318,14 +322,14 @@ enum BANG_headers {
 	 * tells the remote end that version is wrong, and that
 	 * they are hanging up
 	 * message:
-	 *	-BANG_MISMATCH_VERSION (unsigned 4 bytes)
-	 *	-our version (3 unsigned bytes)
+	 *	-BANG_MISMATCH_VERSION	(4 unsigned bytes)
+	 *	-our version 		(3 unsigned bytes)
 	 */
 	BANG_MISMATCH_VERSION,
 
 	/**
 	 * message:
-	 *	-BANG_BYE (unsigned 4 bytes)
+	 *	-BANG_BYE 		(4 unsigned bytes)
 	 *
 	 * TODO: This will most defintely have more things involved.
 	 */
@@ -376,7 +380,7 @@ enum BANG_request_types {
 	 * <-BANG_SEND_JOB (corresponding header type)
 	 * BANG_request.type == BANG_SEND_JOB_REQUEST
 	 * BANG_request.request:
-	 * | job_number | job_length | job data |
+	 * | auth | peer | job_number | job_length | job data |
 	 *
 	 * do:
 	 *	-send out everything appended to a header.

@@ -47,6 +47,19 @@ static unsigned int write_message(BANG_peer *self, void *message, unsigned int l
 	return written;
 }
 
+/*
+Returns:
+	0: Length of data sent != length of data requested for sending
+	1: Data was sent 
+*/
+static char send_header_and_request(BANG_peer *self, BANG_header header,
+							BANG_request *request) {
+	//If the amount sent is not the amount we wanted to send, return 0
+	return !((write_message(self,&header,LENGTH_OF_HEADER) != LENGTH_OF_HEADER) ||
+	    (write_message(self,request->request,request->length) != request->length));
+
+}
+
 //----------------------Actions performed on requests--------------------------.
 static char write_bye(BANG_peer *self) {
 	BANG_header header = BANG_BYE;
@@ -56,7 +69,12 @@ static char write_bye(BANG_peer *self) {
 	return 0;
 }
 
-//BANG_DEBUG_MESSAGE->
+/*
+BANG_DEBUG_MESSAGE->
+Returns:
+	0: Length of data sent != length of data requested for sending
+	1: Data was sent 
+*/
 static char write_debug(BANG_peer *self, BANG_request *request) {
 	BANG_header header = BANG_DEBUG_MESSAGE;
 
@@ -85,50 +103,45 @@ static char write_module_exists(BANG_peer *self, BANG_request *request) {
 	write_message(self,request->request,request->length);
 }
 
-
-
-
-
-//-----------------------------------------------------------------------------.
-//BANG_SEND_JOB->BANG_SEND_JOB_REQUEST
+/*
+BANG_SEND_JOB->BANG_SEND_JOB_REQUEST
+Returns:
+	0: Length of data sent != length of data requested for sending
+	1: Data was sent 
+*/
 static char write_send_job(BANG_peer *self, BANG_request *request) {
-	 * message:
-	 *	-BANG_SEND_JOB		(4 unsigned bytes)
-	 *	-Authority		(16 bytes)
-	 *	-Peer			(16 bytes)
-	 *	-job_numer		(4 bytes)
-	 *	-job_length		(4 unsigned bytes)
-	 *	-job_data		(job_length bytes)
-	BANG_header header = BANG_SEND_JOB;
-	write_message(self,&header,LENGTH_OF_HEADER);
-	write_message(self,request->request,request->length);
+	return send_header_and_request(self, BANG_SEND_JOB, request);
 }
 
-//BANG_FINISHED_JOB->BANG_SEND_FINISHED_JOB_REQUEST
-static char write_finished_job() {
-	BANG_header header = BANG_FINISHED_JOB;
-	write_message(self,&header,LENGTH_OF_HEADER);
+/*
+BANG_FINISHED_JOB->BANG_SEND_FINISHED_JOB_REQUEST
+Returns:
+	0: Length of data sent != length of data requested for sending
+	1: Data was sent 
+*/
+static char write_finished_job(BANG_peer *self, BANG_request *request) {
+	return send_header_and_request(self, BANG_FINISHED_JOB, request);
 }
 
-//BANG_REQUEST_JOB->BANG_SEND_REQUEST_JOB_REQUEST
-static char write_request_job() {
-	BANG_header header = BANG_REQUEST_JOB;
-	write_message(self,&header,LENGTH_OF_HEADER);
-
+/*
+BANG_REQUEST_JOB->BANG_SEND_REQUEST_JOB_REQUEST
+Returns:
+	0: Length of data sent != length of data requested for sending
+	1: Data was sent 
+*/
+static char write_request_job(BANG_peer *self, BANG_request *request) {
+	return send_header_and_request(self, BANG_REQUEST_JOB, request);
 }
 
-///TODO Add header "BANG_AVAILABLE_JOB" to BANG_SEND_AVAILABLE_JOB_REQUEST TODO
-//BANG_AVAILABLE_JOB->BANG_SEND_AVAILABLE_JOB_REQUEST
-static char write_available_job() {
-	BANG_header header = BANG_AVAILABLE_JOB; 
-	write_message(self,&header,LENGTH_OF_HEADER);
-
+/*
+BANG_AVAILABLE_JOB->BANG_SEND_AVAILABLE_JOB_REQUEST
+Returns:
+	0: Length of data sent != length of data requested for sending
+	1: Data was sent 
+*/
+static char write_available_job(BANG_peer *self, BANG_request *request) {
+	return send_header_and_request(self, BANG_AVAILABLE_JOB, request);
 }
-//-----------------------------------------------------------------------------'
-
-
-
-
 
 static char write_module(BANG_peer *self, BANG_request *request) {
 	FILE *fd = fopen((char*)request->request,"r");
@@ -179,35 +192,27 @@ void* BANG_write_peer_thread(void *self_info) {
 			case BANG_CLOSE_REQUEST:
 				sending = write_bye(self);
 			break;
-
 			case BANG_SUDDEN_CLOSE_REQUEST:
 				sending = 0;
 			break;
-
 			case BANG_DEBUG_REQUEST:
 				sending = write_debug(self,current);
 			break;
-
 			case BANG_MODULE_PEER_REQUEST:
 				sending = write_module_exists(self,current->request);
 			break;
-//-----------------------------------------------------------------------------.
 			case BANG_SEND_JOB_REQUEST:
 				sending = write_send_job();
 			break;
-
 			case BANG_SEND_FINISHED_JOB_REQUEST:
 				sending = write_finished_job();
 			break;
-
 			case BANG_SEND_REQUEST_JOB_REQUEST:
 				sending = write_request_job();
 			break;
-
 			case BANG_SEND_AVAILABLE_JOB_REQUEST:
 				sending = write_available_job();
 			break;
-//-----------------------------------------------------------------------------'
 			case BANG_SEND_MODULE_REQUEST:
 				sending = write_module(self,current->request);
 			break;

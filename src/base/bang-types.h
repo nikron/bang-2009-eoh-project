@@ -304,6 +304,11 @@ enum BANG_headers {
 	BANG_REQUEST_JOB,
 
 	/**
+	 * -> (corresponding request type)
+	 */
+	BANG_WRITE_FINISHED_JOB,
+
+	/**
 	 * tells the remote end that version is wrong, and that
 	 * they are hanging up
 	 * message:

@@ -364,31 +364,33 @@ void free_BANG_hashmap(BANG_hashmap *hashmap) {
 }
 
 typedef struct {
-	int key;
-	BANG_hashcode hash_func;
+	BANG_compare comp_func;
+	void *key;
 	void *item;
-} hashmap_key_pair;
+} find_item_t;
 
 static void find_item(const void *item, void *kp) {
-	hashmap_key_pair *hkp = kp;
+	find_item_t *fi = kp;
+	BANG_hashmap_pair *bhp = (void*) item;
 
-	if (hkp->hash_func(item) == hkp->key) {
-		hkp->item = (void*) item;
+	if (fi->comp_func(bhp->key,fi->key) == 0) {
+		fi->item = bhp->item;
 	}
 }
 
 void* BANG_hashmap_get(BANG_hashmap *hashmap, void *key) {
-	hashmap_key_pair kp;
+	find_item_t fi;
 
-	kp.key = hashmap->hash_func(key);
-	kp.hash_func = hashmap->hash_func;
-	kp.item = NULL;
+	int key_hash = hashmap->hash_func(key);
+	fi.comp_func = hashmap->compare_func;
+	fi.key = key;
+	fi.item = NULL;
 
-	int pos = kp.key % hashmap->data_size;
+	int pos = key_hash % hashmap->data_size;
 
-	BANG_linked_list_iterate(hashmap->data[pos],&find_item,&kp);
+	BANG_linked_list_iterate(hashmap->data[pos],&find_item,&fi);
 
-	return kp.item;
+	return fi.item;
 }
 
 void BANG_hashmap_set(BANG_hashmap *hashmap, void *key, void *item){

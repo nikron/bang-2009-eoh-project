@@ -56,6 +56,11 @@ typedef int (*BANG_hashcode) (const void *);
 typedef int (*BANG_compare) (const void*,const void*);
 
 typedef struct {
+	void *key;
+	void *item;
+} BANG_hashmap_pair;
+
+typedef struct {
 	BANG_linked_list **data;
 	int data_size;
 	BANG_hashcode hash_func;

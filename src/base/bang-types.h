@@ -164,6 +164,11 @@ enum BANG_signals {
 	 */
 	BANG_PEER_DISCONNECTED,
 	/**
+	 * A peer has responded to the broadcast.
+	 * args:peer's address
+	 */
+	BANG_PEER_WANTS_TO_CONNECT,
+	/**
 	 * Request all the peers a request.
 	 */
 	BANG_REQUEST_ALL,

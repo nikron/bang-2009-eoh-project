@@ -75,11 +75,11 @@ static peer_or_module *new_pom_peer_route(int peer_id, char *module_name, unsign
 }
 
 static BANG_request* create_request(enum BANG_request_types request, uuid_t authority, uuid_t peer) {
-	int request_length = 40;
+	int request_length = sizeof(uuid_t) * 2;
 	void *request_data = malloc(request_length);
 
-	memcpy(request_data,authority,16);
-	memcpy(request_data + 16,peer,16);
+	memcpy(request_data,authority,sizeof(uuid_t));
+	memcpy(request_data + sizeof(uuid_t),peer,sizeof(uuid_t));
 
 	return new_BANG_request(request,request_data,request_length);
 }
@@ -90,7 +90,7 @@ static BANG_request* create_request_with_message(enum BANG_request_types request
 
 static BANG_request* create_request_with_job(enum BANG_request_types request, uuid_t authority, uuid_t peer, BANG_job *job) {
 	int metadata_length = sizeof(uuid_t) * 2 + 4 + LENGTH_OF_LENGTHS;
-	int request_length = job->length + 40;
+	int request_length = job->length + metadata_length;
 	void *request_data = malloc(request_length);
 
 	memcpy(request_data, authority, sizeof(uuid_t));

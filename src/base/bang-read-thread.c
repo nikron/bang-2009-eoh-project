@@ -262,15 +262,103 @@ static char read_module_request(BANG_peer *self) {
 }
 
 static char read_request_job(BANG_peer *self) {
-	return 0;
+	uuid_t auth, peer;
+
+	read_uuid(self,auth);
+	if (uuid_is_null(auth)) {
+		return 0;
+	}
+
+	read_uuid(self,peer);
+	if (uuid_is_null(peer)) {
+		return 0;
+	}
+	
+	BANG_route_request_job(peer, auth);
+	return 1;
 }
 
 static char read_available_job(BANG_peer *self) {
-	return 0;
+	uuid_t auth, peer;
+
+	read_uuid(self,auth);
+	if (uuid_is_null(auth)) {
+		return 0;
+	}
+
+	read_uuid(self,peer);
+	if (uuid_is_null(peer)) {
+		return 0;
+	}
+	
+	BANG_job job;
+	
+	/* MAGIC NUMBER AGAIN */
+	int *job_number = (int*) read_message(self,4);
+	if (job_number == NULL) {
+		return 0;
+	}
+
+	job.job_number = *job_number;
+	free(job_number);
+
+	unsigned int *job_length  = (unsigned int*) read_message(self,LENGTH_OF_LENGTHS);
+	if (job_length == NULL) {
+		return 0;
+	}
+
+	job.length = *job_length;
+	free(job_length);
+
+	job.data = read_message(self,job.length);
+	if (job.data == NULL) {
+		return 0;
+	}
+	
+	BANG_route_finished_job(auth, peer, &job);
+	return 1;
 }
 
 static char read_finished_job(BANG_peer *self) {
-	return 0;
+	uuid_t auth, peer;
+
+	read_uuid(self,auth);
+	if (uuid_is_null(auth)) {
+		return 0;
+	}
+
+	read_uuid(self,peer);
+	if (uuid_is_null(peer)) {
+		return 0;
+	}
+	
+	BANG_job job;
+	
+	/* MAGIC NUMBER AGAIN */
+	int *job_number = (int*) read_message(self,4);
+	if (job_number == NULL) {
+		return 0;
+	}
+
+	job.job_number = *job_number;
+	free(job_number);
+
+	unsigned int *job_length  = (unsigned int*) read_message(self,LENGTH_OF_LENGTHS);
+	if (job_length == NULL) {
+		return 0;
+	}
+
+	job.length = *job_length;
+	free(job_length);
+
+	job.data = read_message(self,job.length);
+	if (job.data == NULL) {
+		return 0;
+	}
+	
+	BANG_route_finished_job(auth, peer, &job);
+	
+	return 1;
 }
 
 void* BANG_read_peer_thread(void *self_info) {

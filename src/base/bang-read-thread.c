@@ -170,8 +170,7 @@ static char read_job_message(BANG_peer *self) {
 
 	BANG_job job;
 
-	/* A MAGIC NUMBER */
-	int *job_number = (int*) read_message(self,4);
+	int *job_number = (int*) read_message(self,SIZE_JOB_NUMBER);
 	if (job_number == NULL) {
 		return 0;
 	}
@@ -293,8 +292,7 @@ static char read_available_job(BANG_peer *self) {
 	
 	BANG_job job;
 	
-	/* MAGIC NUMBER AGAIN */
-	int *job_number = (int*) read_message(self,4);
+	int *job_number = (int*) read_message(self,SIZE_JOB_NUMBER);
 	if (job_number == NULL) {
 		return 0;
 	}

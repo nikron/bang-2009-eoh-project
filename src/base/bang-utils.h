@@ -185,7 +185,8 @@ void BANG_linked_list_enumerate(BANG_linked_list *lst, void (*it_callback) (cons
  * \param The extra data to call the callback with.
  *
  * \brief Iterates over a linked calling a function back with the node data and provided
- * data, if any.
+ * data, if any.  If the it_callback returns 0, it will stop iterating, if it returns
+ * 1, it will continue.
  */
 int BANG_linked_list_conditional_iterate(BANG_linked_list *lst, int (*it_callback) (const void*,void*), void *data);
 

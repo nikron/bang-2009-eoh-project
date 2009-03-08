@@ -28,6 +28,14 @@ typedef struct {
 	BANG_module *mr;
 } peer_or_module;
 
+typedef struct {
+	int peer_id;
+	BANG_linked_list *routes;
+	BANG_rw_syncro *lck;
+} peer_to_uuids;
+
+static int remove_uuid_from_peer(const void *p, void *r);
+static void free_peer_to_uuids(peer_to_uuids *old);
 static int uuid_hashcode(const void *uuid);
 static int uuid_ptr_compare(const void *uuid1, const void *uuid2);
 static peer_or_module *new_pom_module_route(BANG_module *module);
@@ -36,7 +44,33 @@ static BANG_request* create_request(enum BANG_request_types request, uuid_t auth
 static BANG_request* create_request_with_message(enum BANG_request_types request, char *message);
 static BANG_request* create_request_with_job(enum BANG_request_types request, uuid_t authority, uuid_t peer, BANG_job *job);
 
+static BANG_rw_syncro *routes_lock = NULL;
 static BANG_hashmap *routes = NULL;
+static BANG_linked_list *peers = NULL;
+
+static int remove_uuid_from_peer(const void *p, void *r) {
+	peer_to_uuids *ptu = (void*)p;
+	uuid_t route = *((uuid_t*)r);
+	int ret = 1;
+	uuid_t *cur_route;
+	BANG_linked_list *new = new_BANG_linked_list();
+
+	BANG_write_lock(ptu->lck);
+
+	while ((cur_route = BANG_linked_list_pop(ptu->routes)) != NULL) {
+		if (uuid_compare(*cur_route,route) != 0) {
+			BANG_linked_list_push(new);
+			ret = 0;
+		}
+	}
+
+	free_BANG_linked_list(ptu->routes);
+	ptu->routes = new;
+
+	BANG_write_unlock(put->lck);
+
+	return ret;
+}
 
 static int uuid_hashcode(const void *uuid) {
 	assert(uuid != NULL);
@@ -210,9 +244,16 @@ int BANG_route_get_peer_id(uuid_t peer) {
 	assert(!uuid_is_null(peer));
 
 	peer_or_module *route = BANG_hashmap_get(routes,&peer);
-	route = NULL;
 
-	return -1;
+	if (route->remote == LOCAL) {
+		return -1;
+
+	} else {
+
+		BANG_request *request = create_request_with_message(BANG_DEBUG_REQUEST,message);
+
+		return route->pr->peer_id;
+	}
 }
 
 int** BANG_not_route_get_peer_id(uuid_t *peers) {
@@ -259,13 +300,17 @@ void BANG_deregister_route(uuid_t route) {
 	assert(routes != NULL);
 
 	BANG_hashmap_set(routes,&route,NULL);
+	BANG_linked_list_conditional_iterate(peers,&remove_uuid_from_peer,&route);
 }
 
 void BANG_route_init() {
 	routes = new_BANG_hashmap(&uuid_hashcode,&uuid_ptr_compare);
+	peers = new_BANG_linked_list();
 }
 
 void BANG_route_close() {
 	free_BANG_hashmap(routes);
+	free_BANG_linked_list(peers,&free_peer_to_uuids);
 	routes = NULL;
+	peers = NULL;
 }

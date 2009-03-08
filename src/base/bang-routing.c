@@ -41,6 +41,7 @@ typedef struct {
 
 static void create_peer_to_uuids(int signal, int num_ps, void **ps);
 static void remove_peer_to_uuids(int signal, int num_ps, void **ps);
+static int add_uuid_to_peer(const void *p, void *peer_uuid);
 static int remove_uuid_from_peer(const void *p, void *r);
 static void free_peer_to_uuids(void *old);
 static peer_to_uuids* new_peer_to_uuids(int peer_id);
@@ -56,15 +57,17 @@ static BANG_rw_syncro *routes_lock = NULL;
 static BANG_hashmap *routes = NULL;
 static BANG_linked_list *peers = NULL;
 
-static void create_peer_to_uuids(int signal, int num_ps, void **ps) {
+static void create_peer_to_uuids(int signal, int num_ps, void **peer_ids) {
 	int i;
-	int **peer_ids = ps;
+	int *peer_id;
 
 	if (signal == BANG_PEER_ADDED) {
 		for (i = 0; i < num_ps; ++i) {
+			peer_ids = peer_ids[i];
+
 			BANG_write_lock(routes_lock);
 
-			BANG_linked_list_push(peers, new_peer_to_uuids(*(peer_ids[i])));
+			BANG_linked_list_push(peers, new_peer_to_uuids(*peer_id));
 
 			BANG_write_unlock(routes_lock);
 		}
@@ -72,6 +75,32 @@ static void create_peer_to_uuids(int signal, int num_ps, void **ps) {
 }
 
 static void remove_peer_to_uuids(int signal, int num_ps, void **peer_ids) {
+	int i;
+	int *peer_id;
+
+	if (signal == BANG_PEER_REMOVED) {
+		for (i = 0; i < num_ps; ++i) {
+			peer_id = peer_ids[i];
+			/* DO SOMETHING! */
+		}
+	}
+}
+
+static int add_uuid_to_peer(const void *p, void *peer_uuid) {
+	peer_to_uuids *ptu = (void*)p;
+	peer_uuid_pair *pup = peer_uuid;
+
+	if (pup->peer_id == ptu->peer_id) {
+		BANG_write_lock(ptu->lck);
+
+		BANG_linked_list_push(ptu->routes,&pup->route);
+
+		BANG_write_unlock(ptu->lck);
+
+		return 0;
+	}
+
+	return 1;
 }
 
 static int remove_uuid_from_peer(const void *p, void *r) {
@@ -98,6 +127,17 @@ static int remove_uuid_from_peer(const void *p, void *r) {
 	BANG_write_unlock(ptu->lck);
 
 	return ret;
+}
+
+static void free_peer_to_uuids(void *old) {
+	peer_to_uuids *dead = old;
+
+	BANG_write_lock(dead->lck);
+	free_BANG_linked_list(dead->routes, NULL);
+	BANG_write_unlock(dead->lck);
+
+	free_BANG_rw_syncro(dead->lck);
+	free(dead);
 }
 
 static peer_to_uuids* new_peer_to_uuids(int peer_id) {
@@ -342,7 +382,7 @@ void BANG_register_peer_route(uuid_t uuid, int peer_id, char *module_name, unsig
 
 	BANG_hashmap_set(routes,&uuid,pom);
 
-	if (BANG_linked_list_conditional_iterate(peers,&add_route_to_peer,&pup)) {
+	if (BANG_linked_list_conditional_iterate(peers,&add_uuid_to_peer,&pup)) {
 		/* ERROR: maybe append a peer_to_uuids? */
 	}
 

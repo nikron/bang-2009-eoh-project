@@ -47,13 +47,15 @@ typedef struct _BANG_module_info{
 	BANG_rw_syncro *lck;
 } BANG_module_info;
 
+#define SIZE_JOB_NUMBER 4
+
 /**
  * \page BANG_job
  * There are 4 states a job can be in:
- * 	-an authority telling a peer that a job is available
- * 	-a peer requesting a job from an authority
- * 	-an authority sending a job to a peer
- * 	-a peer sending a finished job to an authority
+ *	-an authority telling a peer that a job is available
+ *	-a peer requesting a job from an authority
+ *	-an authority sending a job to a peer
+ *	-a peer sending a finished job to an authority
  *
  * A job to be sent to be a peer, so that it the "data" can be worked
  * on, and sent as a job back, with the "data" finished.

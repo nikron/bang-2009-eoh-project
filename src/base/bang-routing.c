@@ -30,12 +30,20 @@ typedef struct {
 
 typedef struct {
 	int peer_id;
+	uuid_t route;
+} peer_uuid_pair;
+
+typedef struct {
+	int peer_id;
 	BANG_linked_list *routes;
 	BANG_rw_syncro *lck;
 } peer_to_uuids;
 
+static void create_peer_to_uuids(int signal, int num_ps, void **ps);
+static void remove_peer_to_uuids(int signal, int num_ps, void **ps);
 static int remove_uuid_from_peer(const void *p, void *r);
-static void free_peer_to_uuids(peer_to_uuids *old);
+static void free_peer_to_uuids(void *old);
+static peer_to_uuids* new_peer_to_uuids(int peer_id);
 static int uuid_hashcode(const void *uuid);
 static int uuid_ptr_compare(const void *uuid1, const void *uuid2);
 static peer_or_module *new_pom_module_route(BANG_module *module);
@@ -48,9 +56,28 @@ static BANG_rw_syncro *routes_lock = NULL;
 static BANG_hashmap *routes = NULL;
 static BANG_linked_list *peers = NULL;
 
+static void create_peer_to_uuids(int signal, int num_ps, void **ps) {
+	int i;
+	int **peer_ids = ps;
+
+	if (signal == BANG_PEER_ADDED) {
+		for (i = 0; i < num_ps; ++i) {
+			BANG_write_lock(routes_lock);
+
+			BANG_linked_list_push(peers, new_peer_to_uuids(*(peer_ids[i])));
+
+			BANG_write_unlock(routes_lock);
+		}
+	}
+}
+
+static void remove_peer_to_uuids(int signal, int num_ps, void **peer_ids) {
+}
+
 static int remove_uuid_from_peer(const void *p, void *r) {
 	peer_to_uuids *ptu = (void*)p;
-	uuid_t route = *((uuid_t*)r);
+	uuid_t route;
+	uuid_copy(route,*((uuid_t*)r));
 	int ret = 1;
 	uuid_t *cur_route;
 	BANG_linked_list *new = new_BANG_linked_list();
@@ -59,17 +86,28 @@ static int remove_uuid_from_peer(const void *p, void *r) {
 
 	while ((cur_route = BANG_linked_list_pop(ptu->routes)) != NULL) {
 		if (uuid_compare(*cur_route,route) != 0) {
-			BANG_linked_list_push(new);
+			BANG_linked_list_push(new, cur_route);
 			ret = 0;
+
 		}
 	}
 
-	free_BANG_linked_list(ptu->routes);
+	free_BANG_linked_list(ptu->routes,NULL);
 	ptu->routes = new;
 
-	BANG_write_unlock(put->lck);
+	BANG_write_unlock(ptu->lck);
 
 	return ret;
+}
+
+static peer_to_uuids* new_peer_to_uuids(int peer_id) {
+	peer_to_uuids *new = malloc(sizeof(peer_to_uuids));
+
+	new->peer_id = peer_id;
+	new->routes = new_BANG_linked_list();
+	new->lck = new_BANG_rw_syncro();
+
+	return new;
 }
 
 static int uuid_hashcode(const void *uuid) {
@@ -250,8 +288,6 @@ int BANG_route_get_peer_id(uuid_t peer) {
 
 	} else {
 
-		BANG_request *request = create_request_with_message(BANG_DEBUG_REQUEST,message);
-
 		return route->pr->peer_id;
 	}
 }
@@ -283,7 +319,12 @@ void BANG_register_module_route(BANG_module *module) {
 	uuid_generate(new_uuid);
 
 	peer_or_module *pom = new_pom_module_route(module);
+
+	BANG_write_lock(routes_lock);
+
 	BANG_hashmap_set(routes,&new_uuid,pom);
+
+	BANG_write_unlock(routes_lock);
 }
 
 void BANG_register_peer_route(uuid_t uuid, int peer_id, char *module_name, unsigned char* module_version) {
@@ -292,25 +333,59 @@ void BANG_register_peer_route(uuid_t uuid, int peer_id, char *module_name, unsig
 	assert(peer_id != -1);
 
 	peer_or_module *pom = new_pom_peer_route(peer_id,module_name,module_version);
+
+	peer_uuid_pair pup;
+	pup.peer_id = peer_id = peer_id;
+	uuid_copy(pup.route,uuid);
+
+	BANG_write_lock(routes_lock);
+
 	BANG_hashmap_set(routes,&uuid,pom);
+
+	if (BANG_linked_list_conditional_iterate(peers,&add_route_to_peer,&pup)) {
+		/* ERROR: maybe append a peer_to_uuids? */
+	}
+
+	BANG_write_unlock(routes_lock);
 }
 
 void BANG_deregister_route(uuid_t route) {
 	assert(!uuid_is_null(route));
 	assert(routes != NULL);
 
+	BANG_write_lock(routes_lock);
+
 	BANG_hashmap_set(routes,&route,NULL);
 	BANG_linked_list_conditional_iterate(peers,&remove_uuid_from_peer,&route);
+
+	BANG_write_unlock(routes_lock);
 }
 
 void BANG_route_init() {
+	routes_lock = new_BANG_rw_syncro();
+
+	BANG_write_lock(routes_lock);
+
 	routes = new_BANG_hashmap(&uuid_hashcode,&uuid_ptr_compare);
 	peers = new_BANG_linked_list();
+
+	BANG_write_unlock(routes_lock);
+
+	BANG_install_sighandler(BANG_PEER_ADDED, &create_peer_to_uuids);
+	BANG_install_sighandler(BANG_PEER_REMOVED, &remove_peer_to_uuids);
 }
 
 void BANG_route_close() {
+	BANG_write_lock(routes_lock);
+
 	free_BANG_hashmap(routes);
 	free_BANG_linked_list(peers,&free_peer_to_uuids);
+
+	BANG_write_unlock(routes_lock);
+
+	free_BANG_rw_syncro(routes_lock);
+
 	routes = NULL;
 	peers = NULL;
+	routes_lock = NULL;
 }

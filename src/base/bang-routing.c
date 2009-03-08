@@ -89,14 +89,15 @@ static BANG_request* create_request_with_message(enum BANG_request_types request
 }
 
 static BANG_request* create_request_with_job(enum BANG_request_types request, uuid_t authority, uuid_t peer, BANG_job *job) {
+	int metadata_length = sizeof(uuid_t) * 2 + 4 + LENGTH_OF_LENGTHS;
 	int request_length = job->length + 40;
 	void *request_data = malloc(request_length);
 
-	memcpy(request_data,authority,16);
-	memcpy(request_data + 16,peer,16);
-	memcpy(request_data + 32,&job->job_number,4);
-	memcpy(request_data + 36,&job->length,4);
-	memcpy(request_data + 40,&job->data,job->length);
+	memcpy(request_data, authority, sizeof(uuid_t));
+	memcpy(request_data + sizeof(uuid_t), peer, sizeof(uuid_t));
+	memcpy(request_data + sizeof(uuid_t) * 2, &job->job_number, 4);
+	memcpy(request_data + sizeof(uuid_t) * 2 + 4, &job->length, LENGTH_OF_LENGTHS);
+	memcpy(request_data + metadata_length, &job->data, job->length);
 
 	return new_BANG_request(request,request_data,request_length);
 }

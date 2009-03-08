@@ -119,8 +119,8 @@ enum BANG_signals {
 	 */
 	BANG_RUNNING_MODULE,
 	/**
-	* Client sends a module to peer.
-	* arg: module_name | '\0' | module version (3 bytes) | peer_id (int)
+	 * Client sends a module to peer.
+	 * arg: module_name | '\0' | module version (3 bytes) | peer_id (int)
 	*/
 	BANG_MODULE_REQUEST,
 	/**
@@ -129,7 +129,19 @@ enum BANG_signals {
 	*/
 	BANG_MODULE_EXISTS,
 	/**
-	 * The bang server has stopped.
+	 * A job has been requested.
+	*/
+	BANG_JOB_REQUEST,
+	/**
+	 * A job has been finished.
+	*/
+	BANG_JOB_FINISHED,
+	/**
+	 * A new job is available.
+	*/
+	BANG_JOB_AVAILABLE,
+	/**
+	 * The bang server has started.
 	 * arg: the server socket.
 	 */
 	BANG_SERVER_STARTED,

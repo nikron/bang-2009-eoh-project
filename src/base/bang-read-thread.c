@@ -261,6 +261,18 @@ static char read_module_request(BANG_peer *self) {
 	return 1;
 }
 
+static char read_request_job(BANG_peer *self) {
+	return 0;
+}
+
+static char read_available_job(BANG_peer *self) {
+	return 0;
+}
+
+static char read_finished_job(BANG_peer *self) {
+	return 0;
+}
+
 void* BANG_read_peer_thread(void *self_info) {
 	BANG_peer *self = (BANG_peer*)self_info;
 
@@ -296,6 +308,19 @@ void* BANG_read_peer_thread(void *self_info) {
 
 				case BANG_SEND_JOB:
 					reading = read_job_message(self);
+					break;
+				
+				case BANG_REQUEST_JOB:
+					reading = read_request_job(self);
+					break;
+				
+				case BANG_FINISHED_JOB:
+					reading = read_finished_job(self);
+					break;
+				
+				case BANG_AVAILABLE_JOB:
+					reading = read_available_job(self);
+					break;
 
 				case BANG_MISMATCH_VERSION:
 				case BANG_BYE:

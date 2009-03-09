@@ -97,10 +97,14 @@ static char write_debug(BANG_peer *self, BANG_request *request) {
 
 }
 
+/*
+BANG_MODULE_PEER_REQUEST->BANG_EXISTS_MODULE
+Returns:
+	0: Length of data sent != length of data requested for sending
+	1: Data was sent 
+*/
 static char write_module_exists(BANG_peer *self, BANG_request *request) {
-	BANG_header header = BANG_EXISTS_MODULE;
-	write_message(self,&header,LENGTH_OF_HEADER);
-	write_message(self,request->request,request->length);
+	return send_header_and_request(self, BANG_EXISTS_MODULE, request);
 }
 
 /*

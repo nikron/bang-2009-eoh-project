@@ -55,7 +55,7 @@ static BANG_request* create_request_with_job(enum BANG_request_types request, uu
 
 static BANG_rw_syncro *routes_lock = NULL;
 static BANG_hashmap *routes = NULL;
-static BANG_linked_list *peers = NULL;
+static BANG_linked_list *peers_list = NULL;
 
 static void create_peer_to_uuids(int signal, int num_ps, void **peer_ids) {
 	int i;
@@ -67,7 +67,7 @@ static void create_peer_to_uuids(int signal, int num_ps, void **peer_ids) {
 
 			BANG_write_lock(routes_lock);
 
-			BANG_linked_list_push(peers, new_peer_to_uuids(*peer_id));
+			BANG_linked_list_push(peers_list, new_peer_to_uuids(*peer_id));
 
 			BANG_write_unlock(routes_lock);
 		}
@@ -91,7 +91,7 @@ static void remove_peer_to_uuids(int signal, int num_ps, void **peer_ids) {
 
 		BANG_write_lock(routes_lock);
 
-		while ((cur = BANG_linked_list_pop(peers)) != NULL) {
+		while ((cur = BANG_linked_list_pop(peers_list)) != NULL) {
 			for (i = 0; i < num_ps; ++i) {
 				peer_id = peer_ids[i];
 
@@ -103,8 +103,8 @@ static void remove_peer_to_uuids(int signal, int num_ps, void **peer_ids) {
 			}
 		}
 
-		free_BANG_linked_list(peers,NULL);
-		peers = temp;
+		free_BANG_linked_list(peers_list,NULL);
+		peers_list = temp;
 
 		BANG_write_unlock(routes_lock);
 	}
@@ -426,7 +426,7 @@ void BANG_register_peer_route(uuid_t uuid, int peer_id, char *module_name, unsig
 
 	BANG_hashmap_set(routes,&uuid,pom);
 
-	if (BANG_linked_list_conditional_iterate(peers,&add_uuid_to_peer,&pup)) {
+	if (BANG_linked_list_conditional_iterate(peers_list,&add_uuid_to_peer,&pup)) {
 		/* ERROR: maybe append a peer_to_uuids? */
 	}
 
@@ -439,7 +439,7 @@ void BANG_deregister_route(uuid_t route) {
 	BANG_write_lock(routes_lock);
 
 	BANG_hashmap_set(routes,&route,NULL);
-	BANG_linked_list_conditional_iterate(peers,&remove_uuid_from_peer,&route);
+	BANG_linked_list_conditional_iterate(peers_list,&remove_uuid_from_peer,&route);
 
 	BANG_write_unlock(routes_lock);
 }
@@ -450,7 +450,7 @@ void BANG_route_init() {
 	BANG_write_lock(routes_lock);
 
 	routes = new_BANG_hashmap(&uuid_hashcode,&uuid_ptr_compare);
-	peers = new_BANG_linked_list();
+	peers_list = new_BANG_linked_list();
 
 	BANG_write_unlock(routes_lock);
 
@@ -462,13 +462,13 @@ void BANG_route_close() {
 	BANG_write_lock(routes_lock);
 
 	free_BANG_hashmap(routes);
-	free_BANG_linked_list(peers,&free_peer_to_uuids);
+	free_BANG_linked_list(peers_list,&free_peer_to_uuids);
 
 	BANG_write_unlock(routes_lock);
 
 	free_BANG_rw_syncro(routes_lock);
 
 	routes = NULL;
-	peers = NULL;
+	peers_list = NULL;
 	routes_lock = NULL;
 }

@@ -22,10 +22,18 @@ static unsigned int write_message(BANG_peer *self, void *message, unsigned int l
  * it may be possible that modules don't fit in memory though this seems
  * _very_ unlikely.
  */
+static char write_module(BANG_peer *self, BANG_request *request);
 
-static void write_module(BANG_peer *self, BANG_request *request);
-
-static void write_module_exists(BANG_peer *self, BANG_request *request);
+/*
+ * \param self The peer sending the module.
+ *
+ * \brief Writes a module out to the remote end.
+ *
+ * \return
+ * 0: Length of data sent != length of data requested for sending
+ * 1: Data was sent
+*/
+static char write_module_exists(BANG_peer *self, BANG_request *request);
 
 //Does the actual writing
 static unsigned int write_message(BANG_peer *self, void *message, unsigned int length) {
@@ -97,12 +105,6 @@ static char write_debug(BANG_peer *self, BANG_request *request) {
 
 }
 
-/*
-BANG_MODULE_PEER_REQUEST->BANG_EXISTS_MODULE
-Returns:
-	0: Length of data sent != length of data requested for sending
-	1: Data was sent 
-*/
 static char write_module_exists(BANG_peer *self, BANG_request *request) {
 	return send_header_and_request(self, BANG_EXISTS_MODULE, request);
 }
@@ -150,33 +152,37 @@ static char write_available_job(BANG_peer *self, BANG_request *request) {
 static char write_module(BANG_peer *self, BANG_request *request) {
 	FILE *fd = fopen((char*)request->request,"r");
 	if (fd == NULL) {
-		return;
+		return 0;
 	}
 
-	char chunk[UPDATE_SIZE];
+	char chunk[UPDATE_SIZE], ret;
 	size_t reading;
 	unsigned int i;
 
 	i = BANG_SEND_MODULE;
-	/* TODO: Error checking */
-	write_message(self,&i,LENGTH_OF_HEADER);
+	ret = write_message(self,&i,LENGTH_OF_HEADER);
 
 	/* TODO: Error checking */
 	fseek(fd,0,SEEK_END);
 	i = (unsigned int) ftell(fd);
 	rewind(fd);
-	write_message(self,&i,LENGTH_OF_LENGTHS);
+
+	ret = write_message(self,&i,LENGTH_OF_LENGTHS);
+	if (ret == 0) return ret;
 
 	do {
 		/* TODO: Error checking */
 		reading = fread(chunk,UPDATE_SIZE,1,fd);
-		write_message(self,chunk,reading);
+		ret = write_message(self,chunk,reading);
+		if (ret == 0) return ret;
 
 	} while (reading >= UPDATE_SIZE);
 
 	fclose(fd);
+
+	return 1;
 }
-//----------------------Actions performed on requests--------------------------'
+/* ----------------------Actions performed on requests-------------------------- */
 
 
 //-------------------------Request processing----------------------------------.
@@ -189,9 +195,6 @@ void* BANG_write_peer_thread(void *self_info) {
 		sem_wait(&(self->requests->num_requests));
 		current = BANG_linked_list_dequeue(self->requests->requests);
 
-		/*
-		 * TODO: act on current request
-		 */
 		switch (current->type) {
 			case BANG_CLOSE_REQUEST:
 				sending = write_bye(self);
@@ -206,16 +209,16 @@ void* BANG_write_peer_thread(void *self_info) {
 				sending = write_module_exists(self,current->request);
 			break;
 			case BANG_SEND_JOB_REQUEST:
-				sending = write_send_job();
+				sending = write_send_job(self,current->request);
 			break;
 			case BANG_SEND_FINISHED_JOB_REQUEST:
-				sending = write_finished_job();
+				sending = write_finished_job(self,current->request);
 			break;
 			case BANG_SEND_REQUEST_JOB_REQUEST:
-				sending = write_request_job();
+				sending = write_request_job(self,current->request);
 			break;
 			case BANG_SEND_AVAILABLE_JOB_REQUEST:
-				sending = write_available_job();
+				sending = write_available_job(self,current->request);
 			break;
 			case BANG_SEND_MODULE_REQUEST:
 				sending = write_module(self,current->request);

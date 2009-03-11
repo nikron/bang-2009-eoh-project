@@ -379,6 +379,8 @@ void free_BANG_hashmap(BANG_hashmap *hashmap) {
 	for (; i < hashmap->data_size; ++i) {
 		free_BANG_linked_list(hashmap->data[i],NULL);
 	}
+
+	free(hashmap);
 }
 
 typedef struct {

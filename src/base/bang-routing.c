@@ -72,6 +72,11 @@ static void create_peer_to_uuids(int signal, int num_ps, void **peer_ids) {
 			BANG_write_unlock(routes_lock);
 		}
 	}
+
+	for (i = 0; i < num_ps; ++i) {
+		free(peer_ids[i]);
+	}
+	free(peer_ids);
 }
 
 static void remove_peer_to_uuids(int signal, int num_ps, void **peer_ids) {
@@ -79,11 +84,35 @@ static void remove_peer_to_uuids(int signal, int num_ps, void **peer_ids) {
 	int *peer_id;
 
 	if (signal == BANG_PEER_REMOVED) {
-		for (i = 0; i < num_ps; ++i) {
-			peer_id = peer_ids[i];
-			/* DO SOMETHING! */
+		BANG_linked_list *temp = new_BANG_linked_list();
+		peer_to_uuids *cur;
+		/* TODO: DO SOMETHING! */
+
+
+		BANG_write_lock(routes_lock);
+
+		while ((cur = BANG_linked_list_pop(peers)) != NULL) {
+			for (i = 0; i < num_ps; ++i) {
+				peer_id = peer_ids[i];
+
+				if (*peer_id == cur->peer_id) {
+					free_peer_to_uuids(cur);
+				} else {
+					BANG_linked_list_push(temp,cur);
+				}
+			}
 		}
+
+		free_BANG_linked_list(peers,NULL);
+		peers = temp;
+
+		BANG_write_unlock(routes_lock);
 	}
+
+	for (i = 0; i < num_ps; ++i) {
+		free(peer_ids[i]);
+	}
+	free(peer_ids);
 }
 
 static int add_uuid_to_peer(const void *p, void *peer_uuid) {

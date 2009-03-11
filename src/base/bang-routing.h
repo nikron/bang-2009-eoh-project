@@ -73,12 +73,12 @@ int BANG_route_get_peer_id(uuid_t peer);
 /**
  * \param uuids The routes to peers, null terminated.
  *
- * \return NULL terminated array of peer ids.
+ * \return An allocated linked list of allocted ints.
  *
  * \brief Returns peer_ids not on the list.
  * memory: You must take care of it.
  */
-int** BANG_not_route_get_peer_id(uuid_t *peers);
+BANG_linked_list* BANG_not_route_get_peer_id(uuid_t *peers);
 
 /**
  * \param peer A running module peer.

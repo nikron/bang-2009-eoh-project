@@ -17,6 +17,11 @@ enum remote_route {
 };
 
 typedef struct {
+	BANG_linked_list *not_peers_list;
+	uuid_t *routes;
+} not_peers_struct;
+
+typedef struct {
 	int peer_id;
 	char *module_name;
 	unsigned char *module_version;
@@ -52,6 +57,7 @@ static peer_or_module *new_pom_peer_route(int peer_id, char *module_name, unsign
 static BANG_request* create_request(enum BANG_request_types request, uuid_t authority, uuid_t peer);
 static BANG_request* create_request_with_message(enum BANG_request_types request, char *message);
 static BANG_request* create_request_with_job(enum BANG_request_types request, uuid_t authority, uuid_t peer, BANG_job *job);
+static void find_not_peers(const void *info_about_peers, void *store_not_peers);
 
 static BANG_rw_syncro *routes_lock = NULL;
 static BANG_hashmap *routes = NULL;
@@ -378,11 +384,50 @@ int BANG_route_get_peer_id(uuid_t peer) {
 	}
 }
 
+static int check_route_match(const void *route_of_peer, void *routes_to_find) {
+	uuid_t *route_to_check = (void*) route_of_peer;
+	uuid_t *routes_check_against = routes_to_find;
+	int i;
+
+	for (i = 0; !uuid_is_null(routes_check_against[i]); ++i) {
+		if (uuid_compare(*route_to_check,routes_check_against[i]) == 0)
+			return 0;
+	}
+
+	return 1;
+}
+
+static void find_not_peers(const void *info_about_peers, void *store_not_peers) {
+	peer_to_uuids *ptu = (void*) info_about_peers;
+	not_peers_struct *not_peers = store_not_peers;
+	int *found_peer_id;
+
+	BANG_read_lock(ptu->lck);
+
+	if (BANG_linked_list_conditional_iterate(ptu->routes,&check_route_match,not_peers->routes)) {
+		found_peer_id = malloc(sizeof(int));
+		*found_peer_id = ptu->peer_id;
+		BANG_linked_list_push(not_peers->not_peers_list,found_peer_id);
+	}
+
+	BANG_read_unlock(ptu->lck);
+}
+
 /* TODO: THIS IS IMPORTANT! */
-int** BANG_not_route_get_peer_id(uuid_t *peers) {
+BANG_linked_list* BANG_not_route_get_peer_id(uuid_t *peers) {
 	assert(peers != NULL);
 
-	return NULL;
+	not_peers_struct not_peers;
+	not_peers.not_peers_list = new_BANG_linked_list();
+	not_peers.routes = peers;
+
+	BANG_read_lock(routes_lock);
+
+	BANG_linked_list_iterate(peers_list,&find_not_peers,&not_peers);
+
+	BANG_read_lock(routes_lock);
+
+	return not_peers.not_peers_list;
 }
 
 /* TODO: THIS IS IMPORTANT! */

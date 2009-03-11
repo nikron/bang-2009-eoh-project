@@ -9,6 +9,7 @@
 #include"bang-module-api.h"
 #include"bang-com.h"
 #include"bang-routing.h"
+#include"bang-utils.h"
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
@@ -81,18 +82,18 @@ void BANG_get_me_peers(BANG_module_info *info) {
 	/* This does not use routing...! */
 	uuid_t *valid_routes = get_valid_routes(info);
 
-	int i = 0;
-	int **peers_to_bug = BANG_not_route_get_peer_id(valid_routes);
+	BANG_linked_list *peers_to_bug = BANG_not_route_get_peer_id(valid_routes);
+	int *cur;
 
 	BANG_request *req = new_BANG_request(BANG_MODULE_PEER_REQUEST,NULL,0);
 	/* TODO: Put the module info inside the data... */
-	for (; peers_to_bug[i]; ++i) {
-		BANG_request_peer_id(*(peers_to_bug[i]),req);
-		free(peers_to_bug[i]);
-		peers_to_bug[i] = NULL;
-	}
-	free(peers_to_bug);
 
+	while ((cur = BANG_linked_list_pop(peers_to_bug)) != NULL) {
+		BANG_request_peer_id(*cur,req);
+		free(cur);
+	}
+
+	free_BANG_linked_list(peers_to_bug,NULL);
 	free(valid_routes);
 }
 

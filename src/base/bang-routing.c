@@ -244,12 +244,15 @@ static BANG_request* create_request_with_job(enum BANG_request_types request, uu
 }
 
 void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job) {
-	assert(routes != NULL);
+	/* assert(routes != NULL); */
 	assert(job != NULL);
 	assert(!uuid_is_null(authority));
 	assert(!uuid_is_null(peer));
 
+	BANG_read_lock(routes_lock);
 	peer_or_module *route = BANG_hashmap_get(routes,&peer);
+	BANG_read_unlock(routes_lock);
+
 	if (route == NULL) return;
 
 	if (route->remote == LOCAL) {
@@ -263,7 +266,7 @@ void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 }
 
 void BANG_route_job_to_uuids(uuid_t authority, uuid_t *peers, BANG_job *job) {
-	assert(routes != NULL);
+	/* assert(routes != NULL); */
 	assert(job != NULL);
 
 	int i;
@@ -274,12 +277,15 @@ void BANG_route_job_to_uuids(uuid_t authority, uuid_t *peers, BANG_job *job) {
 }
 
 void BANG_route_finished_job(uuid_t authority, uuid_t peer, BANG_job *job) {
-	assert(routes != NULL);
+	/* assert(routes != NULL); */
 	assert(job != NULL);
 	assert(!uuid_is_null(authority));
 	assert(!uuid_is_null(peer));
 
+	BANG_read_lock(routes_lock);
 	peer_or_module *route = BANG_hashmap_get(routes,&authority);
+	BANG_read_unlock(routes_lock);
+
 	if (route == NULL) return;
 
 	if (route->remote == LOCAL) {
@@ -293,11 +299,14 @@ void BANG_route_finished_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 }
 
 void BANG_route_request_job(uuid_t peer, uuid_t authority) {
-	assert(routes != NULL);
+	/* assert(routes != NULL); */
 	assert(!uuid_is_null(authority));
 	assert(!uuid_is_null(peer));
 
+	BANG_read_lock(routes_lock);
 	peer_or_module *route = BANG_hashmap_get(routes,&authority);
+	BANG_read_unlock(routes_lock);
+
 	if (route == NULL) return;
 
 	if (route->remote == LOCAL) {
@@ -311,11 +320,14 @@ void BANG_route_request_job(uuid_t peer, uuid_t authority) {
 }
 
 void BANG_route_assertion_of_authority(uuid_t authority, uuid_t peer) {
-	assert(routes != NULL);
+	/* assert(routes != NULL); */
 	assert(!uuid_is_null(authority));
 	assert(!uuid_is_null(peer));
 
+	BANG_read_lock(routes_lock);
 	peer_or_module *route = BANG_hashmap_get(routes,&peer);
+	BANG_read_unlock(routes_lock);
+
 	if (route == NULL) return;
 
 	if (route->remote == LOCAL) {
@@ -329,11 +341,14 @@ void BANG_route_assertion_of_authority(uuid_t authority, uuid_t peer) {
 }
 
 void BANG_route_send_message(uuid_t peer, char *message) {
-	assert(routes != NULL);
+	/* assert(routes != NULL); */
 	assert(message != NULL);
 	assert(!uuid_is_null(peer));
 
+	BANG_read_lock(routes_lock);
 	peer_or_module *route = BANG_hashmap_get(routes,&peer);
+	BANG_read_unlock(routes_lock);
+
 	if (route == NULL) return;
 
 	if (route->remote == LOCAL) {
@@ -347,10 +362,12 @@ void BANG_route_send_message(uuid_t peer, char *message) {
 }
 
 int BANG_route_get_peer_id(uuid_t peer) {
-	assert(routes != NULL);
+	/* assert(routes != NULL); */
 	assert(!uuid_is_null(peer));
 
+	BANG_read_lock(routes_lock);
 	peer_or_module *route = BANG_hashmap_get(routes,&peer);
+	BANG_read_unlock(routes_lock);
 
 	if (route->remote == LOCAL) {
 		return -1;
@@ -361,27 +378,26 @@ int BANG_route_get_peer_id(uuid_t peer) {
 	}
 }
 
+/* TODO: THIS IS IMPORTANT! */
 int** BANG_not_route_get_peer_id(uuid_t *peers) {
-	assert(routes != NULL);
 	assert(peers != NULL);
 
 	return NULL;
 }
 
+/* TODO: THIS IS IMPORTANT! */
 void BANG_route_new_peer(uuid_t peer, uuid_t new_peer) {
-	assert(routes != NULL);
 	assert(!uuid_is_null(peer));
 	assert(!uuid_is_null(new_peer));
 }
 
+/* TODO: THIS IS IMPORTANT! */
 void BANG_route_remove_peer(uuid_t peer, uuid_t old_peer) {
-	assert(routes != NULL);
 	assert(!uuid_is_null(peer));
 	assert(!uuid_is_null(old_peer));
 }
 
 void BANG_register_module_route(BANG_module *module) {
-	assert(routes != NULL);
 	assert(module != NULL);
 
 	uuid_t new_uuid;
@@ -397,7 +413,6 @@ void BANG_register_module_route(BANG_module *module) {
 }
 
 void BANG_register_peer_route(uuid_t uuid, int peer_id, char *module_name, unsigned char* module_version) {
-	assert(routes != NULL);
 	assert(!uuid_is_null(uuid));
 	assert(peer_id != -1);
 
@@ -420,7 +435,6 @@ void BANG_register_peer_route(uuid_t uuid, int peer_id, char *module_name, unsig
 
 void BANG_deregister_route(uuid_t route) {
 	assert(!uuid_is_null(route));
-	assert(routes != NULL);
 
 	BANG_write_lock(routes_lock);
 

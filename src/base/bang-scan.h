@@ -6,5 +6,4 @@
 void BANG_scan_init();
 
 void BANG_scan_close();
-
 #endif

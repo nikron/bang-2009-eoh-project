@@ -1,5 +1,3 @@
-//Uses code from Beej's guide
-//TODO- Catch errors from functions
 #include "bang-scan.h"
 #include"bang-scan.h"
 #include"bang-signals.h"
@@ -17,17 +15,19 @@
 #include<arpa/inet.h>
 #include<netdb.h>
 
-//Change this to be inputtable
+/*TODO: Catch errors from functions 
+ Change this to be inputtable */
 #define BRDCSTPORT "4950"
 #define SCAN_MSG_LEN 5
 
-pthread_t scanThread;
+static void *get_in_addr(struct sockaddr *sa);
+static int send_bang_reply(const char *reply_ip);
 
-//-----------------Local----------------------------------------------
-
-// get sockaddr, IPv4 or IPv6:
-void *get_in_addr(struct sockaddr *sa)
-{
+/* 
+ * Uses code from Beej's guide
+ * get sockaddr, IPv4 or IPv6:
+ */
+static void *get_in_addr(struct sockaddr *sa) {
 	if (sa->sa_family == AF_INET) {
 		return &(((struct sockaddr_in*)sa)->sin_addr);
 	}
@@ -50,7 +50,7 @@ static int send_bang_reply(const char *reply_ip) {
 		return 1;
 	}
 
-	// loop through all the results and make a socket
+	/* loop through all the results and make a socket */
 	for(p = servinfo; p != NULL; p = p->ai_next) {
 		if ((sockfd = socket(p->ai_family, p->ai_socktype,
 						p->ai_protocol)) == -1) {

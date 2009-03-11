@@ -206,12 +206,12 @@ static char read_module_exists(BANG_peer *self) {
 	if ((mod_args = (char*) read_message(self, (*mod_name_length+4))) == NULL)
 		return 0;
 	
-	// create new buffer to hold peer_id plus module name and version
+	/* create new buffer to hold peer_id plus module name and version */
 	char *mod_buffer = (char*)malloc(*mod_name_length+4+sizeof(int));
 	
 	*mod_buffer = *mod_args;
 	
-	// Set last sizeof(int) bits to peer_id - may not be a good way to do this.
+	/*  Set last sizeof(int) bits to peer_id - may not be a good way to do this. */
 	mod_buffer[*mod_name_length+4] = self->peer_id;
 	
 	BANG_sigargs mod_exists_args;

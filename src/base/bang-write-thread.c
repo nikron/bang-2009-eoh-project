@@ -12,6 +12,19 @@
 static unsigned int write_message(BANG_peer *self, void *message, unsigned int length);
 
 /**
+ * \param self The write peer sending.
+ * \param header The header to send.
+ * \param request The data to send after the header
+ *
+ * \brief Simply writes out a header and any data in the request,
+ * because several requests are formatted this way.
+ * \return
+ *	0: Length of data sent != length of data requested for sending
+ *	1: Data was sent 
+ */
+static char send_header_and_request(BANG_peer *self, BANG_header header, BANG_request *request);
+
+/**
  * \param self The thread sending the module.
  * \param request The module path to send.
  *
@@ -24,7 +37,7 @@ static unsigned int write_message(BANG_peer *self, void *message, unsigned int l
  */
 static char write_module(BANG_peer *self, BANG_request *request);
 
-/*
+/**
  * \param self The peer sending the module.
  *
  * \brief Writes a module out to the remote end.
@@ -32,10 +45,54 @@ static char write_module(BANG_peer *self, BANG_request *request);
  * \return
  * 0: Length of data sent != length of data requested for sending
  * 1: Data was sent
-*/
+ */
 static char write_module_exists(BANG_peer *self, BANG_request *request);
 
-//Does the actual writing
+/**
+ * \param self The peer thread writing out the data.
+ * \param request Holds the debug message to send.
+ *
+ * \brief Tells the remote end about a debug message
+ *
+ * \return
+ *
+ * 0: Length of data sent != length of data requested for sending
+ * 1: Data was sent 
+*/
+static char write_debug(BANG_peer *self, BANG_request *request);
+
+/**
+ * \param self The peer writing to the remote.
+ * \param request The request that the information about the module.
+ *
+ * \brief Asks if the remote has a module.
+ *
+ * \return
+ * 0: Length of data sent != length of data requested for sending
+ * 1: Data was sent 
+ */
+static char write_module_exists(BANG_peer *self, BANG_request *request);
+
+/**
+ * \brief BANG_SEND_JOB->BANG_SEND_JOB_REQUEST
+ */
+static char write_send_job(BANG_peer *self, BANG_request *request);
+
+/**
+ * \brief BANG_FINISHED_JOB->BANG_SEND_FINISHED_JOB_REQUEST
+ */
+static char write_finished_job(BANG_peer *self, BANG_request *request);
+
+/**
+ * \brief BANG_REQUEST_JOB->BANG_SEND_REQUEST_JOB_REQUEST
+ */
+static char write_request_job(BANG_peer *self, BANG_request *request);
+
+/**
+ * \brief BANG_AVAILABLE_JOB->BANG_SEND_AVAILABLE_JOB_REQUEST
+ */
+static char write_available_job(BANG_peer *self, BANG_request *request);
+
 static unsigned int write_message(BANG_peer *self, void *message, unsigned int length) {
 	unsigned int written = 0;
 	int write_return = 0;
@@ -55,20 +112,15 @@ static unsigned int write_message(BANG_peer *self, void *message, unsigned int l
 	return written;
 }
 
-/*
-Returns:
-	0: Length of data sent != length of data requested for sending
-	1: Data was sent 
-*/
-static char send_header_and_request(BANG_peer *self, BANG_header header,
-							BANG_request *request) {
-	//If the amount sent is not the amount we wanted to send, return 0
+static char send_header_and_request(BANG_peer *self, BANG_header header, BANG_request *request) {
+	/* If the amount sent is not the amount we wanted to send, return 0 */
 	return !((write_message(self,&header,LENGTH_OF_HEADER) != LENGTH_OF_HEADER) ||
 	    (write_message(self,request->request,request->length) != request->length));
 
 }
 
-//----------------------Actions performed on requests--------------------------.
+/* ----------------------Actions performed on requests-------------------------- */
+
 static char write_bye(BANG_peer *self) {
 	BANG_header header = BANG_BYE;
 
@@ -77,12 +129,6 @@ static char write_bye(BANG_peer *self) {
 	return 0;
 }
 
-/*
-BANG_DEBUG_MESSAGE->
-Returns:
-	0: Length of data sent != length of data requested for sending
-	1: Data was sent 
-*/
 static char write_debug(BANG_peer *self, BANG_request *request) {
 	BANG_header header = BANG_DEBUG_MESSAGE;
 
@@ -109,42 +155,18 @@ static char write_module_exists(BANG_peer *self, BANG_request *request) {
 	return send_header_and_request(self, BANG_EXISTS_MODULE, request);
 }
 
-/*
-BANG_SEND_JOB->BANG_SEND_JOB_REQUEST
-Returns:
-	0: Length of data sent != length of data requested for sending
-	1: Data was sent 
-*/
 static char write_send_job(BANG_peer *self, BANG_request *request) {
 	return send_header_and_request(self, BANG_SEND_JOB, request);
 }
 
-/*
-BANG_FINISHED_JOB->BANG_SEND_FINISHED_JOB_REQUEST
-Returns:
-	0: Length of data sent != length of data requested for sending
-	1: Data was sent 
-*/
 static char write_finished_job(BANG_peer *self, BANG_request *request) {
 	return send_header_and_request(self, BANG_FINISHED_JOB, request);
 }
 
-/*
-BANG_REQUEST_JOB->BANG_SEND_REQUEST_JOB_REQUEST
-Returns:
-	0: Length of data sent != length of data requested for sending
-	1: Data was sent 
-*/
 static char write_request_job(BANG_peer *self, BANG_request *request) {
 	return send_header_and_request(self, BANG_REQUEST_JOB, request);
 }
 
-/*
-BANG_AVAILABLE_JOB->BANG_SEND_AVAILABLE_JOB_REQUEST
-Returns:
-	0: Length of data sent != length of data requested for sending
-	1: Data was sent 
-*/
 static char write_available_job(BANG_peer *self, BANG_request *request) {
 	return send_header_and_request(self, BANG_AVAILABLE_JOB, request);
 }
@@ -182,10 +204,8 @@ static char write_module(BANG_peer *self, BANG_request *request) {
 
 	return 1;
 }
-/* ----------------------Actions performed on requests-------------------------- */
 
-
-//-------------------------Request processing----------------------------------.
+/* -------------------------Request processing---------------------------------- */
 void* BANG_write_peer_thread(void *self_info) {
 	BANG_peer *self = (BANG_peer*)self_info;
 	BANG_request *current;
@@ -240,4 +260,3 @@ void* BANG_write_peer_thread(void *self_info) {
 #endif
 	return NULL;
 }
-//-------------------------Request processing----------------------------------'

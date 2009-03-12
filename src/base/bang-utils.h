@@ -52,7 +52,7 @@ typedef struct {
 	BANG_linked_list *free_space;
 } BANG_set;
 
-typedef int (*BANG_hashcode) (const void *);
+typedef unsigned int (*BANG_hashcode) (const void *);
 typedef int (*BANG_compare) (const void*,const void*);
 
 typedef struct {
@@ -190,8 +190,18 @@ void BANG_linked_list_enumerate(BANG_linked_list *lst, void (*it_callback) (cons
  */
 int BANG_linked_list_conditional_iterate(BANG_linked_list *lst, int (*it_callback) (const void*,void*), void *data);
 
+/**
+ * \brief Allocates and returns a BANG set.
+ *
+ * \return A newly intialized BANG set.
+ */
 BANG_set* new_BANG_set();
 
+/**
+ * \param set The set to get rid of.
+ *
+ * \brief Dealloctes a BANG set.
+ */
 void free_BANG_set(BANG_set *set);
 
 int BANG_set_add(BANG_set *s, void *data);

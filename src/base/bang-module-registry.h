@@ -51,4 +51,8 @@ int BANG_start_module(char *module_name, unsigned char *module_version);
  * \brief If the given module is running, tells it about the new peer.
  */
 void BANG_module_inform_new_peer(char *module_name, unsigned char *module_version, uuid_t new_peer);
+
+void BANG_module_registry_init();
+void BANG_module_registry_close();
+
 #endif

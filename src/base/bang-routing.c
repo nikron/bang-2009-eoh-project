@@ -50,7 +50,7 @@ static int add_uuid_to_peer(const void *p, void *peer_uuid);
 static int remove_uuid_from_peer(const void *p, void *r);
 static void free_peer_to_uuids(void *old);
 static peer_to_uuids* new_peer_to_uuids(int peer_id);
-static int uuid_hashcode(const void *uuid);
+static unsigned int uuid_hashcode(const void *uuid);
 static int uuid_ptr_compare(const void *uuid1, const void *uuid2);
 static peer_or_module *new_pom_module_route(BANG_module *module);
 static peer_or_module *new_pom_peer_route(int peer_id, char *module_name, unsigned char *module_version);
@@ -185,10 +185,11 @@ static peer_to_uuids* new_peer_to_uuids(int peer_id) {
 	return new;
 }
 
-static int uuid_hashcode(const void *uuid) {
+static unsigned int uuid_hashcode(const void *uuid) {
 	assert(uuid != NULL);
 
-	int hc = (*((uuid_t*)uuid)[0] << 2) & (*((uuid_t*)uuid)[15]);
+	unsigned int hc = (*((uuid_t*)uuid)[0] << 8) | (*((uuid_t*)uuid)[15]);
+	hc |= (*((uuid_t*)uuid)[3] << 16) | (*((uuid_t*)uuid)[7]) << 24;
 
 	return hc;
 }

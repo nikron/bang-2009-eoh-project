@@ -69,10 +69,9 @@ static unsigned int hash_module_wrapper_key_t(const void *data) {
 	unsigned int hashcode;
 
 	hashcode = strlen(module_key->name);
-	hashcode |= module_key->name[hashcode/4] << 24;
-	hashcode |= module_key->name[hashcode/2] << 12;
-	hashcode |= module_key->version[0] << 4;
-	hashcode |= module_key->version[1] << 8;
+	hashcode |= module_key->name[hashcode/4] << 8;
+	hashcode |= module_key->version[0] << 16;
+	hashcode |= module_key->version[1] << 24;
 
 	return hashcode;
 }

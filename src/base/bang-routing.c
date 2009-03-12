@@ -434,12 +434,50 @@ BANG_linked_list* BANG_not_route_get_peer_id(uuid_t *peers) {
 void BANG_route_new_peer(uuid_t peer, uuid_t new_peer) {
 	assert(!uuid_is_null(peer));
 	assert(!uuid_is_null(new_peer));
+
+	BANG_read_lock(routes_lock);
+	peer_or_module *route = BANG_hashmap_get(routes,&peer);
+	BANG_read_unlock(routes_lock);
+
+	if (route == NULL) return;
+
+	if (route->remote == LOCAL) {
+		BANG_module_new_peer(route->mr, peer, new_peer);
+
+	} else {
+#ifdef BDEBUG_1
+		fprintf(stderr,"Someone is trying to add a to a remote peer?");
+#endif
+		/*
+		BANG_request *request = create_request_with_message(BANG_DEBUG_REQUEST,message);
+		BANG_request_peer_id(route->pr->peer_id,request);
+		*/
+	}
 }
 
 /* TODO: THIS IS IMPORTANT! */
 void BANG_route_remove_peer(uuid_t peer, uuid_t old_peer) {
 	assert(!uuid_is_null(peer));
 	assert(!uuid_is_null(old_peer));
+
+	BANG_read_lock(routes_lock);
+	peer_or_module *route = BANG_hashmap_get(routes,&peer);
+	BANG_read_unlock(routes_lock);
+
+	if (route == NULL) return;
+
+	if (route->remote == LOCAL) {
+		BANG_module_remove_peer(route->mr, peer, old_peer);
+
+	} else {
+#ifdef BDEBUG_1
+		fprintf(stderr,"Someone is trying to remove a remote peer?");
+#endif
+		/*
+		BANG_request *request = create_request_with_message(BANG_DEBUG_REQUEST,message);
+		BANG_request_peer_id(route->pr->peer_id,request);
+		*/
+	}
 }
 
 void BANG_register_module_route(BANG_module *module) {

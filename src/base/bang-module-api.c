@@ -102,9 +102,10 @@ int BANG_number_of_active_peers(BANG_module_info *info) {
 	 * The way we store ids may change in the future, so this is a simple
 	 * wrapper function
 	 */
-	int i = 0,j = 0;
+	int i = 0, j = 0;
 
 	BANG_read_lock(info->lck);
+
 	for (; i < info->peers_info->peer_number; ++i) {
 		if (info->peers_info->validity[i])
 			++j;
@@ -169,7 +170,7 @@ void BANG_finished_request(BANG_module_info *info, BANG_job *job) {
 	fprintf(stderr,"Finished a job from authority %d!\n",job->authority);
 #endif
 
-	uuid_t auth,peer;
+	uuid_t auth, peer;
 	get_uuid_from_id(auth,job->authority,info);
 	get_uuid_from_id(peer,job->peer,info);
 
@@ -180,7 +181,7 @@ void BANG_finished_request(BANG_module_info *info, BANG_job *job) {
 
 void BANG_send_job(BANG_module_info *info, BANG_job *job) {
 	uuid_t route;
-	get_uuid_from_id(route,job->peer,info);
+	get_uuid_from_id(route, job->peer, info);
 
 	if (!uuid_is_null(route)) {
 		BANG_route_job(info->peers_info->uuids[info->my_id],route,job);

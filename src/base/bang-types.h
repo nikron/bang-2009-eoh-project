@@ -323,12 +323,17 @@ enum BANG_headers {
 
 	/**
 	 * -> (corresponding request type)
+	 * message:
+	 * 	-BANG_FINISHED_JOB
 	 */
 	BANG_FINISHED_JOB,
 
 	/**
 	 * ->BANG_SEND_AVAILABLE_JOB_REQUEST (corresponding request type)
-	 *
+	 * message:
+	 * 	-BANG_AVAIlABLE_JOB
+	 * 	-authority		(16 bytes)
+	 * 	-peer			(16 bytes)
 	 */
 	BANG_AVAILABLE_JOB,
 

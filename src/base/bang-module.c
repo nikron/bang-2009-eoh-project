@@ -318,6 +318,7 @@ static char check_if_uuid_valid(BANG_module_info *info, uuid_t uuid, int id) {
 	BANG_read_lock(info->lck);
 	char valid = uuid_compare(info->peers_info->uuids[id],uuid) == 0;
 	BANG_read_unlock(info->lck);
+
 	return valid;
 }
 
@@ -393,21 +394,21 @@ void BANG_module_callback_job_finished(const BANG_module *module, BANG_job *job,
 }
 
 
-void BANG_module_new_peer(const BANG_module *module,uuid_t peer,uuid_t new_peer) {
+void BANG_module_new_peer(const BANG_module *module, uuid_t peer, uuid_t new_peer) {
 	assert(module != NULL);
 
 	if (check_if_uuid_valid(module->info,peer,module->info->my_id)) {
-		int id = BANG_module_info_peer_add(module->info,new_peer);
+		int id = BANG_module_info_peer_add(module->info, new_peer);
 		module->callbacks->peer_added(module->info,id);
 	}
 }
 
 
-void BANG_module_remove_peer(const BANG_module *module,uuid_t peer,uuid_t old_peer) {
+void BANG_module_remove_peer(const BANG_module *module, uuid_t peer, uuid_t old_peer) {
 	assert(module != NULL);
 
 	if (check_if_uuid_valid(module->info,peer,module->info->my_id)) {
-		int id = BANG_module_info_peer_remove(module->info,old_peer);
+		int id = BANG_module_info_peer_remove(module->info, old_peer);
 		module->callbacks->peer_removed(module->info,id);
 	}
 }

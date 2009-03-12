@@ -274,6 +274,7 @@ static char read_request_job(BANG_peer *self) {
 	}
 	
 	BANG_route_request_job(peer, auth);
+
 	return 1;
 }
 
@@ -290,30 +291,8 @@ static char read_available_job(BANG_peer *self) {
 		return 0;
 	}
 	
-	BANG_job job;
-	
-	int *job_number = (int*) read_message(self,SIZE_JOB_NUMBER);
-	if (job_number == NULL) {
-		return 0;
-	}
+	BANG_route_assertion_of_authority(auth, peer);
 
-	job.job_number = *job_number;
-	free(job_number);
-
-	unsigned int *job_length  = (unsigned int*) read_message(self,LENGTH_OF_LENGTHS);
-	if (job_length == NULL) {
-		return 0;
-	}
-
-	job.length = *job_length;
-	free(job_length);
-
-	job.data = read_message(self,job.length);
-	if (job.data == NULL) {
-		return 0;
-	}
-	
-	BANG_route_finished_job(auth, peer, &job);
 	return 1;
 }
 

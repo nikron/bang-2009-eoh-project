@@ -43,14 +43,16 @@ AOBJS=preferences$(OBJEXT) \
       statusbar$(OBJEXT)\
       server-menu$(OBJEXT) \
       bang-machine-utils$(OBJEXT) \
-      menus$(OBJEXT)
+      menus$(OBJEXT)\
+      file-menu$(OBJEXT)
 
 ASRC=src/app/preferences$(SRCEXT) \
       src/app/main$(SRCEXT) \
       src/app/statusbar$(SRCEXT) \
       src/app/server-menu$(SRCEXT) \
       src/app/bang-machine-utils$(SRCEXT)\
-      src/app/menus$(SRCEXT)
+      src/app/menus$(SRCEXT)\
+      src/app/file-menu$(SRCEXT)
 
 LIBRARIES=libbang.so $(MODULES)
 MODULES=test-module.so matrix-mult-module.so

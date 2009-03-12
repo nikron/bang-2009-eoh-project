@@ -103,6 +103,8 @@ int main(int argc, char **argv) {
 	/* Set up the window */
 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_title(GTK_WINDOW(window), "!bang Machine");
+	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+	gtk_window_set_default_size(GTK_WINDOW(window), 700, 500);
 	g_signal_connect(G_OBJECT(window), "delete_event", G_CALLBACK(delete_event), NULL);
 	g_signal_connect(G_OBJECT(window), "destroy", G_CALLBACK(destroy), NULL);
 
@@ -113,8 +115,7 @@ int main(int argc, char **argv) {
 
 	peers_page_label = gtk_label_new("Peers");
 	peers_page_body = gtk_label_new("Your peers here!");
-	gtk_notebook_append_page(GTK_NOTEBOOK(notebook),peers_page_label,peers_page_body);
-
+	gtk_notebook_append_page(GTK_NOTEBOOK(notebook),peers_page_body,peers_page_label);
 
 	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(notebook),TRUE);
 	gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook),TRUE);
@@ -125,6 +126,7 @@ int main(int argc, char **argv) {
 	 * set up the layout of the top level window
 	 */
 	BMACHINE_create_menus(vbox,window);
+	gtk_box_pack_start(GTK_BOX(vbox),notebook,TRUE,TRUE,0);
 	gtk_box_pack_end(GTK_BOX(vbox),statusbar,FALSE,FALSE,0);
 
 	/*

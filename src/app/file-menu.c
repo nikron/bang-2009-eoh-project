@@ -13,7 +13,7 @@ void BMACHINE_open_module() {
 	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT)
 	{
 		char *filename;
-     
+		
 		filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
 		// do some stuff with filename
 		g_free (filename);

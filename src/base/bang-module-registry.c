@@ -99,8 +99,6 @@ void BANG_new_module(char *path, char **module_name, unsigned char **module_vers
 	module_wrapper_t *module_wrapper = new_module_wrapper(new_mod);
 	module_wrapper_key_t module_key = create_key(new_mod->info->module_name, new_mod->info->module_version);
 
-	/* TODO: THIS! */
-
 	BANG_hashmap_set(modules,&module_key,module_wrapper);
 }
 

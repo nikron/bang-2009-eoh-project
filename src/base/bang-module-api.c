@@ -7,6 +7,7 @@
  */
 
 #include"bang-module-api.h"
+#include"bang-module.h"
 #include"bang-com.h"
 #include"bang-routing.h"
 #include"bang-utils.h"
@@ -15,14 +16,6 @@
 #include<string.h>
 #include<uuid/uuid.h>
 
-/**
- * \param id The id to extract.
- * \param info The place the uuid will be from.
- * \param uuid The place the uuid is placed.
- *
- * \brief Gets a uuid from the info, or puts NULL there
- */
-static void get_uuid_from_id(uuid_t uuid, int id, BANG_module_info *info);
 
 /**
  * \param info The info about a module.
@@ -32,19 +25,6 @@ static void get_uuid_from_id(uuid_t uuid, int id, BANG_module_info *info);
  * \brief Gets a list of valid uuid's from the information.
  */
 static uuid_t* get_valid_routes(BANG_module_info *info);
-
-static void get_uuid_from_id(uuid_t uuid, int id, BANG_module_info *info) {
-	BANG_read_lock(info->lck);
-
-	if (id < 0 || id > info->peers_info->peer_number ||
-		info->peers_info->validity[id] == 0) {
-		uuid_clear(uuid);
-	} else {
-		uuid_copy(uuid,info->peers_info->uuids[id]);
-	}
-
-	BANG_read_unlock(info->lck);
-}
 
 static uuid_t* get_valid_routes(BANG_module_info *info) {
 	BANG_read_lock(info->lck);
@@ -128,7 +108,7 @@ void BANG_assert_authority(BANG_module_info *info, int id) {
 	fprintf(stderr,"%d is asserting authority!\n",id);
 #endif
 	uuid_t authority;
-	get_uuid_from_id(authority,id,info);
+	BANG_get_uuid_from_local_id(authority,id,info);
 
 	if (!uuid_is_null(authority)) {
 		int i = 0;
@@ -144,8 +124,8 @@ void BANG_assert_authority_to_peer(BANG_module_info *info, int authority, int pe
 	fprintf(stderr,"%d is asserting authority to %d!\n",authority,peer);
 #endif
 	uuid_t auth,route;
-	get_uuid_from_id(auth,authority,info);
-	get_uuid_from_id(route,peer,info);
+	BANG_get_uuid_from_local_id(auth,authority,info);
+	BANG_get_uuid_from_local_id(route,peer,info);
 
 	if (!uuid_is_null(auth) && !uuid_is_null(route)) {
 		BANG_route_assertion_of_authority(auth,route);
@@ -157,8 +137,8 @@ void BANG_request_job(BANG_module_info *info, int id) {
 	fprintf(stderr,"Requesting a job from authority %d!\n",id);
 #endif
 	uuid_t auth, me;
-	get_uuid_from_id(auth,id,info);
-	get_uuid_from_id(me,info->my_id,info);
+	BANG_get_uuid_from_local_id(auth,id,info);
+	BANG_get_uuid_from_local_id(me,info->my_id,info);
 
 	if (!uuid_is_null(auth)) {
 		BANG_route_request_job(auth,me);
@@ -172,8 +152,8 @@ void BANG_finished_request(BANG_module_info *info, BANG_job *job) {
 #endif
 
 	uuid_t auth, peer;
-	get_uuid_from_id(auth,job->authority,info);
-	get_uuid_from_id(peer,job->peer,info);
+	BANG_get_uuid_from_local_id(auth,job->authority,info);
+	BANG_get_uuid_from_local_id(peer,job->peer,info);
 
 	if (!uuid_is_null(auth)) {
 		BANG_route_finished_job(auth,peer,job);
@@ -182,7 +162,7 @@ void BANG_finished_request(BANG_module_info *info, BANG_job *job) {
 
 void BANG_send_job(BANG_module_info *info, BANG_job *job) {
 	uuid_t route;
-	get_uuid_from_id(route, job->peer, info);
+	BANG_get_uuid_from_local_id(route, job->peer, info);
 
 	if (!uuid_is_null(route)) {
 		BANG_route_job(info->peers_info->uuids[info->my_id],route,job);

@@ -412,3 +412,16 @@ void BANG_module_remove_peer(const BANG_module *module, uuid_t peer, uuid_t old_
 		module->callbacks->peer_removed(module->info,id);
 	}
 }
+
+void BANG_get_uuid_from_local_id(uuid_t uuid, int id, BANG_module_info *info) {
+	BANG_read_lock(info->lck);
+
+	if (id < 0 || id > info->peers_info->peer_number ||
+		info->peers_info->validity[id] == 0) {
+		uuid_clear(uuid);
+	} else {
+		uuid_copy(uuid,info->peers_info->uuids[id]);
+	}
+
+	BANG_read_unlock(info->lck);
+}

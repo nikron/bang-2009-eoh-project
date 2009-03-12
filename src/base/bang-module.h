@@ -105,4 +105,13 @@ void BANG_module_remove_peer(const BANG_module *module, uuid_t peer,uuid_t old_p
  * \brief Creates a BANG_module_info for use by a module.
  */
 BANG_module_info* new_BANG_module_info(char* module_name, unsigned char* module_version);
+
+/**
+ * \param id The id to extract.
+ * \param info The place the uuid will be from.
+ * \param uuid The place the uuid is placed.
+ *
+ * \brief Gets a uuid from the info, or puts NULL there
+ */
+void BANG_get_uuid_from_local_id(uuid_t uuid, int id, BANG_module_info *info);
 #endif

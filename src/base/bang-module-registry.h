@@ -41,7 +41,7 @@ BANG_module* BANG_get_module(char *module_name, unsigned char *module_version);
  *
  * \return Returns 0 on success, something else on error.
  */
-int BANG_start_module(char *module_name, unsigned char *module_version);
+int BANG_run_module_in_registry(char *module_name, unsigned char *module_version);
 
 /**
  * \param module_name The name of the module that is running.

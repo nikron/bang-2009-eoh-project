@@ -1,13 +1,14 @@
 #include"server-menu.h"
+#include"file-menu.h"
 #include<gtk/gtk.h>
 #include<stdio.h>
 
 static const GtkActionEntry entries[] =
 {
 	{ "FileMenuAction", NULL, "_File", "", "Access external files relevant to this program.", NULL },
-	{ "OpenModuleAction", GTK_STOCK_OPEN, "_Open Module", "<control>o", "Open a module.", NULL },
+	{ "OpenModuleAction", GTK_STOCK_OPEN, "_Open Module", "<control>o", "Open a module.", G_CALLBACK(BMACHINE_open_module) },
 	{ "CloseModuleAction", GTK_STOCK_CLOSE, "C_lose Module", "<control>l", "Close a module.", NULL },
-	{ "ExitAction", GTK_STOCK_QUIT, "E_xit", "<control>x", "Exit the program.", NULL },
+	{ "ExitAction", GTK_STOCK_QUIT, "E_xit", "<control>x", "Exit the program.", G_CALLBACK(BMACHINE_exit) },
 
 	{ "EditMenuAction", NULL, "_Edit", "", "Edit functionality.", NULL },
 	{ "EditPreferencesAction", GTK_STOCK_PREFERENCES, "_Edit Prefrences", "<control>e", "Edit your prefrences.", NULL },

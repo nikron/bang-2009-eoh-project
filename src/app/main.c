@@ -45,6 +45,7 @@
 #include"preferences.h"
 #include"statusbar.h"
 #include"server-menu.h"
+#include"file-menu.h"
 #include"tabs.h"
 #include<locale.h>
 #include<stdio.h>
@@ -59,6 +60,7 @@ static GtkWidget *window;
 static GtkWidget *vbox;
 static GtkWidget *notebook;
 static GtkWidget *peers_page_label;
+static GtkWidget *peers_page_body;
 
 /**
  * GTK callback when the window is about to be deleted, does not to be locked as that comes
@@ -110,7 +112,8 @@ int main(int argc, char **argv) {
 	notebook = gtk_notebook_new();
 
 	peers_page_label = gtk_label_new("Peers");
-	/* gtk_notebook_append_page(GTK_NOTEBOOK(notebook),peers_page_label,peers_page_label); */
+	peers_page_body = gtk_label_new("Your peers here!");
+	gtk_notebook_append_page(GTK_NOTEBOOK(notebook),peers_page_label,peers_page_body);
 
 
 	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(notebook),TRUE);

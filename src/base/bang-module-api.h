@@ -35,6 +35,16 @@ typedef struct {
  */
 typedef struct _BANG_module_info{
 	/**
+	 * The name of the module.
+	 */
+	char *module_name;
+	int module_name_length;
+	/**
+	 * 3 is a magic number ~
+	 */
+	unsigned char *module_version;
+	void *module_bang_name;
+	/**
 	 * Infomation about the peers of this module.
 	 */
 	peers_information *peers_info;

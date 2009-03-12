@@ -65,7 +65,7 @@ static uuid_t* get_valid_routes(BANG_module_info *info) {
 }
 
 void BANG_debug_on_all_peers(BANG_module_info *info, char *message) {
-	/* The first slot will be us, so skip that. */
+	/* The first slot will always be us, so skip that. */
 	fprintf(stderr,"%s",message);
 
 	int i = 1;
@@ -98,7 +98,8 @@ void BANG_get_me_peers(BANG_module_info *info) {
 }
 
 int BANG_number_of_active_peers(BANG_module_info *info) {
-	/* The way we store ids may change in the future, so this is a simple
+	/* 
+	 * The way we store ids may change in the future, so this is a simple
 	 * wrapper function
 	 */
 	int i = 0,j = 0;

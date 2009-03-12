@@ -95,4 +95,14 @@ void BANG_module_new_peer(const BANG_module *module, uuid_t peer, uuid_t new_pee
  * \brief Informs the module that is losing a peer.
  */
 void BANG_module_remove_peer(const BANG_module *module, uuid_t peer,uuid_t old_peer);
+
+/**
+ * \param module_name The name of the module.
+ * \param module_version The version of the module.
+ *
+ * \return A newly allocated BANG_module_info.
+ *
+ * \brief Creates a BANG_module_info for use by a module.
+ */
+BANG_module_info* new_BANG_module_info(char* module_name, unsigned char* module_version);
 #endif

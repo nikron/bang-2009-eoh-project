@@ -103,16 +103,25 @@ static BANG_api* get_BANG_api() {
 }
 
 /**
- * \param module Modules to derive info from.
+ * \param module_name The name of the module.
+ * \param module_version The version of the module.
+ *
  * \return A newly allocated BANG_module_info.
  *
  * \brief Creates a BANG_module_info for use by a module.
  */
-BANG_module_info* new_BANG_module_info() {
+BANG_module_info* new_BANG_module_info(char* module_name, unsigned char* module_version) {
 	BANG_module_info *info = calloc(1,sizeof(BANG_module_info));
+
 	info->peers_info = calloc(1,sizeof(peers_information));
 	/* We aren't even a peer yet since we haven't been run/registered */
 	info->peers_info->peer_number = 0;
+	info->module_name = module_name;
+	info->module_name_length = strlen(module_name);
+	info->module_version = module_version;
+	info->module_bang_name = malloc(info->module_name_length + 4);
+	strcpy(info->module_bang_name, module_name);
+	memcpy(info->module_bang_name + info->module_name_length + 1,module_version,3);
 
 	info->my_id = 0;
 
@@ -128,6 +137,10 @@ BANG_module* BANG_load_module(char *path) {
 	 */
 
 	void *handle = dlopen(path,RTLD_NOW);
+
+	char *module_name;
+	unsigned char *module_version;
+
 	BANG_sigargs args;
 	args.args = dlerror();
 
@@ -145,7 +158,7 @@ BANG_module* BANG_load_module(char *path) {
 
 	BANG_module *module = (BANG_module*) calloc(1,sizeof(BANG_module));
 
-	module->module_name = dlsym(handle,"BANG_module_name");
+	module_name = dlsym(handle,"BANG_module_name");
 
 	/* Make sure the dlsym worked. */
 	if ((args.args = dlerror()) != NULL) {
@@ -159,7 +172,7 @@ BANG_module* BANG_load_module(char *path) {
 		return NULL;
 	}
 
-	module->module_version = dlsym(handle,"BANG_module_version");
+	module_version = dlsym(handle,"BANG_module_version");
 
 	/* Make sure the dlsym worked. */
 	if ((args.args = dlerror()) != NULL) {
@@ -210,7 +223,7 @@ BANG_module* BANG_load_module(char *path) {
 	module->path = path;
 
 	module->callbacks = module->module_init(get_BANG_api());
-	module->info = new_BANG_module_info();
+	module->info = new_BANG_module_info(module_name, module_version);
 
 	return module;
 }

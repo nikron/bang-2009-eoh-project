@@ -20,6 +20,8 @@
 #define BRDCSTPORT "4950"
 #define SCAN_MSG_LEN 5
 
+pthread_t scan_thread;
+
 static void *get_in_addr(struct sockaddr *sa);
 static int send_bang_reply(const char *reply_ip);
 
@@ -219,18 +221,15 @@ static void *scan_control(void *dontUse) {
 
 	return NULL;
 }
-//--------------------------------------------------------------------
-
-//------------------Global--------------------------------------------
 
 //Create working thread
 void BANG_scan_init() {
-	pthread_create(&scanThread, NULL, scan_control, NULL);
+	pthread_create(&scan_thread, NULL, scan_control, NULL);
 }
 
 //Kill working thread
 void BANG_scan_close() {
 	//DIE DIE DIE
-	pthread_kill(scanThread, SIGKILL); //If possible, change this to pthread_cancel()
-	pthread_join(scanThread, NULL);
+	pthread_kill(scan_thread, SIGKILL); //If possible, change this to pthread_cancel()
+	pthread_join(scan_thread, NULL);
 }

@@ -36,13 +36,9 @@ static const unsigned char BANG_LIBRARY_VERSION[3] = {
  */
 typedef struct {
 	/**
-	 * The name of the module.
+	 * Information about the module.
+	 * such as name, and its peers.
 	 */
-	char *module_name;
-	/**
-	 * 3 is a magic number ~
-	 */
-	unsigned char *module_version;
 	BANG_module_info *info;
 	/**
 	 * Callbacks to interact with the module.

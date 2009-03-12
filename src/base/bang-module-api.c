@@ -98,7 +98,7 @@ void BANG_get_me_peers(BANG_module_info *info) {
 }
 
 int BANG_number_of_active_peers(BANG_module_info *info) {
-	/* 
+	/*
 	 * The way we store ids may change in the future, so this is a simple
 	 * wrapper function
 	 */

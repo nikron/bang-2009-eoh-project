@@ -3,9 +3,9 @@
 #include<gtk/gtk.h>
 #include<stdlib.h>
 
-void BMACHINE_open_module(GtkWidget *widget) {
+void BMACHINE_open_module() {
 	
-	GtkWidget *dialog = gtk_file_chooser_dialog_new ("Open a Multiplicity module",GTK_WINDOW(widget),GTK_FILE_CHOOSER_ACTION_OPEN,
+	GtkWidget *dialog = gtk_file_chooser_dialog_new ("Open a Multiplicity module",NULL,GTK_FILE_CHOOSER_ACTION_OPEN,
 		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 		GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
 		NULL);

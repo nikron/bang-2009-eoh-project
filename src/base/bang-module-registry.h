@@ -9,6 +9,11 @@
 #ifndef __BANG_MODULE_REGISTRY_H
 #define __BANG_MODULE_REGISTRY_H
 
+typedef struct {
+	BANG_module *module;
+	char started;
+} registry_slot;
+
 /**
  * \param path The file system path to the module.
  * \param module_name The function puts the name of the module here.

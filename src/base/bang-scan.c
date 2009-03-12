@@ -92,7 +92,7 @@ static int listen_new_peers() {
 	int numbytes;
 	struct sockaddr_storage new_peer_addr;
 	char buf[SCAN_MSG_LEN];
-	size_t addr_len;
+	socklen_t addr_len;
 	char s[INET6_ADDRSTRLEN];
 
 	memset(&hints, 0, sizeof hints);
@@ -131,7 +131,7 @@ static int listen_new_peers() {
 #ifdef BDEBUG_1
 	printf("Listening for new peers...\n");
 #endif
-	addr_len = sizeof new_peer_addr;
+	addr_len = sizeof(new_peer_addr);
 	if ((numbytes = recvfrom(sockfd, buf, SCAN_MSG_LEN, 0,
 					(struct sockaddr *)&new_peer_addr, &addr_len)) == -1) {
 		perror("recvfrom");

@@ -45,6 +45,7 @@
 #include"preferences.h"
 #include"statusbar.h"
 #include"server-menu.h"
+#include"tabs.h"
 #include<locale.h>
 #include<stdio.h>
 #include<stdlib.h>

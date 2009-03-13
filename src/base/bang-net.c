@@ -174,7 +174,8 @@ void* BANG_connect_thread(const void *addr) {
 			fprintf(stderr,"NET:\tA connect thread has succeeded.\n");
 #endif
 			BANG_send_signal(BANG_PEER_CONNECTED,&args,1);
-			break;
+
+			return NULL;
 		}
 	}
 

@@ -75,7 +75,6 @@ void BANG_get_me_peers(BANG_module_info *info) {
 		data = malloc(data_length);
 
 		strcpy(data,info->module_name);
-		data[info->module_name_length] = 0;
 		memcpy(data + info->module_name_length + 1, info->module_version, 3);
 		memcpy(data + info->module_name_length + 4,  info->peers_info->uuids[info->my_id], sizeof(uuid_t));
 

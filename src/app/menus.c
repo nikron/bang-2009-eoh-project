@@ -21,7 +21,7 @@ static const GtkActionEntry entries[] =
 
 static const guint n_entries = G_N_ELEMENTS(entries);
 
-GtkUIManager* BMACHINE_create_menus(GtkWidget *vbox, GtkWidget *window) {
+GtkUIManager* BMACHINE_create_menus(GtkWidget *vbox, GtkWidget *window, GtkWidget *notebook) {
 
 	GtkActionGroup *act_grp = gtk_action_group_new("MenuBarAactions");
 	gtk_action_group_add_actions(act_grp,entries,n_entries,NULL);
@@ -42,6 +42,8 @@ GtkUIManager* BMACHINE_create_menus(GtkWidget *vbox, GtkWidget *window) {
 	gtk_box_pack_start(GTK_BOX(vbox),menu_bar,FALSE,FALSE,0);
 
 	gtk_window_add_accel_group(GTK_WINDOW(window),gtk_ui_manager_get_accel_group(m_manager));
+
+	BMACHINE_create_file_menu(notebook);
 
 	return m_manager;
 }

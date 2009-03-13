@@ -12,4 +12,5 @@
 #include"bang-signals.h"
 #include"bang-net.h"
 #include"bang-module.h"
+#include"bang-module-registry.h"
 #endif

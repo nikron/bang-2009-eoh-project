@@ -54,5 +54,4 @@ void BANG_module_inform_new_peer(char *module_name, unsigned char *module_versio
 
 void BANG_module_registry_init();
 void BANG_module_registry_close();
-
 #endif

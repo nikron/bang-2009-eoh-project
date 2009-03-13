@@ -46,7 +46,6 @@
 #include"statusbar.h"
 #include"server-menu.h"
 #include"file-menu.h"
-#include"tabs.h"
 #include<locale.h>
 #include<stdio.h>
 #include<stdlib.h>
@@ -54,7 +53,6 @@
 #include<gtk/gtk.h>
 #include<assert.h>
 
-typedef void (*GUI_module_init)(GtkWidget**,GtkWidget**);
 
 static GtkWidget *window;
 static GtkWidget *vbox;
@@ -125,7 +123,7 @@ int main(int argc, char **argv) {
 	/*
 	 * set up the layout of the top level window
 	 */
-	BMACHINE_create_menus(vbox,window);
+	BMACHINE_create_menus(vbox,window,notebook);
 	gtk_box_pack_start(GTK_BOX(vbox),notebook,TRUE,TRUE,0);
 	gtk_box_pack_end(GTK_BOX(vbox),statusbar,FALSE,FALSE,0);
 

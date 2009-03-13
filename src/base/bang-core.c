@@ -9,6 +9,7 @@
 #include"bang-core.h"
 #include"bang-net.h"
 #include"bang-com.h"
+#include"bang-module-registry.h"
 #include"bang-routing.h"
 #include"bang-signals.h"
 #include<stdlib.h>
@@ -46,12 +47,14 @@ void BANG_init(int *argc, char **argv) {
 	BANG_com_init();
 	BANG_net_init(set_port,0);
 	BANG_route_init();
+	BANG_module_registry_init();
 }
 
 void BANG_close() {
 #ifdef BDEBUG_1
 	fprintf(stderr,"BANG library closing.\n");
 #endif
+	BANG_module_registry_close();
 	BANG_route_close();
 	BANG_com_close();
 	BANG_net_close();

@@ -453,14 +453,15 @@ static int find_item_set(const void *item, void *kp) {
 void* BANG_hashmap_get(BANG_hashmap *hashmap, void *key) {
 	find_item_t fi;
 
-	int key_hash = hashmap->hash_func(key);
+	unsigned int key_hash = hashmap->hash_func(key);
+
 	fi.comp_func = hashmap->compare_func;
 	fi.pair = new_BANG_hashmap_pair(key,NULL);
 
 	unsigned int pos = key_hash % hashmap->data_size;
 
 #ifdef BDEBUG_1
-	fprintf(stderr,"Hashmap get found pos %d which is pointer %p.\n", pos, hashmap->data[pos]);
+	fprintf(stderr,"UTILS:\tHashmap get found pos %d.\n", pos);
 #endif
 
 	BANG_linked_list_conditional_iterate(hashmap->data[pos],&find_item,&fi);
@@ -471,7 +472,7 @@ void* BANG_hashmap_get(BANG_hashmap *hashmap, void *key) {
 void BANG_hashmap_set(BANG_hashmap *hashmap, void *key, void *item){
 	unsigned int pos = hashmap->hash_func(key) % hashmap->data_size;
 #ifdef BDEBUG_1
-	fprintf(stderr,"Found pos %d for item %p.\n", pos, item);
+	fprintf(stderr,"UTILS:\tFound pos %d for item %p.\n", pos, item);
 #endif
 
 	find_item_t fi;
@@ -480,7 +481,7 @@ void BANG_hashmap_set(BANG_hashmap *hashmap, void *key, void *item){
 
 	if (BANG_linked_list_conditional_iterate(hashmap->data[pos],&find_item_set,&fi)) {
 #ifdef BDEBUG_1
-	fprintf(stderr,"Hashmap setting an item at %d.\n", pos);
+	fprintf(stderr,"UTILS:\tHashmap setting an item at %d.\n", pos);
 #endif
 		BANG_linked_list_push(hashmap->data[pos], fi.pair);
 	}

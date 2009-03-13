@@ -188,15 +188,19 @@ static peer_to_uuids* new_peer_to_uuids(int peer_id) {
 
 static unsigned int uuid_hashcode(const void *uuid) {
 	assert(uuid != NULL);
+	uuid_t route;
+	uuid_copy(route,uuid);
 
-	unsigned int hc = (*((uuid_t*)uuid)[0] << 8) | (*((uuid_t*)uuid)[15]);
-	hc |= (*((uuid_t*)uuid)[3] << 16) | (*((uuid_t*)uuid)[7]) << 24;
+	unsigned int hc = (route[0] << 8) | (route[15]);
+	hc |= (route[3] << 16) | (route[7]) << 24;
 
 #ifdef BDEBUG_1
-			char unparsed[37];
-			uuid_unparse(*((uuid_t*)uuid),unparsed);
+			char unparsed[37],unparsed2[37];
+			uuid_unparse(route,unparsed);
+			uuid_unparse(*((uuid_t*)uuid),unparsed2);
 
-			fprintf(stderr, "ROUTING:\thashing %s to %d\n", unparsed, hc);
+			fprintf(stderr, "ROUTING:\tHashing %s to %d from %p.\n", unparsed, hc, route);
+			fprintf(stderr, "ROUTING:\tHashing %s to %d from %p.\n", unparsed2, hc, uuid);
 #endif
 
 	return hc;
@@ -272,7 +276,7 @@ void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 	assert(!uuid_is_null(peer));
 
 	BANG_read_lock(routes_lock);
-	peer_or_module *route = BANG_hashmap_get(routes,&peer);
+	peer_or_module *route = BANG_hashmap_get(routes,peer);
 	BANG_read_unlock(routes_lock);
 
 	if (route == NULL) return;
@@ -305,7 +309,7 @@ void BANG_route_finished_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 	assert(!uuid_is_null(peer));
 
 	BANG_read_lock(routes_lock);
-	peer_or_module *route = BANG_hashmap_get(routes,&authority);
+	peer_or_module *route = BANG_hashmap_get(routes,authority);
 	BANG_read_unlock(routes_lock);
 
 	if (route == NULL) return;
@@ -326,7 +330,7 @@ void BANG_route_request_job(uuid_t peer, uuid_t authority) {
 	assert(!uuid_is_null(peer));
 
 	BANG_read_lock(routes_lock);
-	peer_or_module *route = BANG_hashmap_get(routes,&authority);
+	peer_or_module *route = BANG_hashmap_get(routes,authority);
 	BANG_read_unlock(routes_lock);
 
 	if (route == NULL) return;
@@ -347,13 +351,14 @@ void BANG_route_assertion_of_authority(uuid_t authority, uuid_t peer) {
 	uuid_unparse(authority,unparsed);
 	uuid_unparse(peer,parsed2);
 
-	fprintf(stderr,"ROUTING:\tAsserting authority to %s from %s.\n", parsed2, unparsed);
+	fprintf(stderr,"ROUTING:\tAsserting authority to %s from %s, %p and %p.\n", parsed2, unparsed, &authority, &peer);
+
 #endif
 	assert(!uuid_is_null(authority));
 	assert(!uuid_is_null(peer));
 
 	BANG_read_lock(routes_lock);
-	peer_or_module *route = BANG_hashmap_get(routes,&peer);
+	peer_or_module *route = BANG_hashmap_get(routes,peer);
 	BANG_read_unlock(routes_lock);
 
 #ifdef BDEBUG_1
@@ -378,7 +383,7 @@ void BANG_route_send_message(uuid_t peer, char *message) {
 	assert(!uuid_is_null(peer));
 
 	BANG_read_lock(routes_lock);
-	peer_or_module *route = BANG_hashmap_get(routes,&peer);
+	peer_or_module *route = BANG_hashmap_get(routes,peer);
 	BANG_read_unlock(routes_lock);
 
 	if (route == NULL) return;
@@ -398,7 +403,7 @@ int BANG_route_get_peer_id(uuid_t peer) {
 	assert(!uuid_is_null(peer));
 
 	BANG_read_lock(routes_lock);
-	peer_or_module *route = BANG_hashmap_get(routes,&peer);
+	peer_or_module *route = BANG_hashmap_get(routes,peer);
 	BANG_read_unlock(routes_lock);
 
 	if (route->remote == LOCAL) {
@@ -462,7 +467,7 @@ void BANG_route_new_peer(uuid_t peer, uuid_t new_peer) {
 	assert(!uuid_is_null(new_peer));
 
 	BANG_read_lock(routes_lock);
-	peer_or_module *route = BANG_hashmap_get(routes,&peer);
+	peer_or_module *route = BANG_hashmap_get(routes,peer);
 	BANG_read_unlock(routes_lock);
 
 	if (route == NULL) return;
@@ -487,7 +492,7 @@ void BANG_route_remove_peer(uuid_t peer, uuid_t old_peer) {
 	assert(!uuid_is_null(old_peer));
 
 	BANG_read_lock(routes_lock);
-	peer_or_module *route = BANG_hashmap_get(routes,&peer);
+	peer_or_module *route = BANG_hashmap_get(routes,peer);
 	BANG_read_unlock(routes_lock);
 
 	if (route == NULL) return;

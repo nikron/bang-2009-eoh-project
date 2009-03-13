@@ -9,6 +9,8 @@
 #ifndef __BANG_MODULE_REGISTRY_H
 #define __BANG_MODULE_REGISTRY_H
 
+#include"bang-module.h"
+
 typedef struct {
 	BANG_module *module;
 	char started;

@@ -42,6 +42,7 @@
  */
 #include"../base/bang.h"
 #include"menus.h"
+#include"tabs.h"
 #include"preferences.h"
 #include"statusbar.h"
 #include"server-menu.h"
@@ -56,7 +57,6 @@
 
 static GtkWidget *window;
 static GtkWidget *vbox;
-static GtkWidget *notebook;
 static GtkWidget *peers_page_label;
 static GtkWidget *peers_page_body;
 

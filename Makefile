@@ -46,6 +46,7 @@ AOBJS=preferences$(OBJEXT) \
       server-menu$(OBJEXT) \
       bang-machine-utils$(OBJEXT) \
       menus$(OBJEXT)\
+      tabs$(OBJEXT)\
       file-menu$(OBJEXT)
 
 ASRC=src/app/preferences$(SRCEXT) \
@@ -54,6 +55,7 @@ ASRC=src/app/preferences$(SRCEXT) \
       src/app/server-menu$(SRCEXT) \
       src/app/bang-machine-utils$(SRCEXT)\
       src/app/menus$(SRCEXT)\
+      src/app/tabs$(SRCEXT)\
       src/app/file-menu$(SRCEXT)
 
 LIBRARIES=libbang.so $(MODULES)

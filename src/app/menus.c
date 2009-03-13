@@ -14,8 +14,8 @@ static const GtkActionEntry entries[] =
 	{ "EditPreferencesAction", GTK_STOCK_PREFERENCES, "_Edit Prefrences", "<control>e", "Edit your prefrences.", NULL },
 
 	{ "NetworkMenuAction", NULL, "_Network", "", "Control the bang networking.", NULL },
-	{ "StartStopServerAction", GTK_STOCK_CONNECT, "_Start Server", "<control>s", "Start or stop the the server.", G_CALLBACK(BMAHCHINE_change_server_status) },
-	{ "ConnectPeerAction", GTK_STOCK_CONNECT, "Connect to _Peer", "<control>p", "Connect to a peer.", NULL },
+	{ "StartStopServerAction", GTK_STOCK_CONNECT, "_Start Server", "<control>s", "Start or stop the the server.", G_CALLBACK(BMACHINE_change_server_status) },
+	{ "ConnectPeerAction", GTK_STOCK_CONNECT, "Connect to _Peer", "<control>p", "Connect to a peer.", G_CALLBACK(BMACHINE_connect_peer) },
 	{ "ScanAction", GTK_STOCK_NETWORK, "S_can", "<control>c", "Scan for peers.", NULL }
 };
 

@@ -71,10 +71,16 @@ static void create_peer_to_uuids(int signal, int num_ps, void **peer_ids) {
 		for (i = 0; i < num_ps; ++i) {
 			peer_id = peer_ids[i];
 
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tWaiting on routes lock.\n");
+#endif
 			BANG_write_lock(routes_lock);
 
 			BANG_linked_list_push(peers_list, new_peer_to_uuids(*peer_id));
 
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tLeaving on routes lock.\n");
+#endif
 			BANG_write_unlock(routes_lock);
 		}
 	}
@@ -94,7 +100,9 @@ static void remove_peer_to_uuids(int signal, int num_ps, void **peer_ids) {
 		peer_to_uuids *cur;
 		/* TODO: DO SOMETHING! */
 
-
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tWaiting on routes lock.\n");
+#endif
 		BANG_write_lock(routes_lock);
 
 		while ((cur = BANG_linked_list_pop(peers_list)) != NULL) {
@@ -112,6 +120,9 @@ static void remove_peer_to_uuids(int signal, int num_ps, void **peer_ids) {
 		free_BANG_linked_list(peers_list,NULL);
 		peers_list = temp;
 
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tLeaving on routes lock.\n");
+#endif
 		BANG_write_unlock(routes_lock);
 	}
 
@@ -275,8 +286,14 @@ void BANG_route_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 	assert(!uuid_is_null(authority));
 	assert(!uuid_is_null(peer));
 
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tWaiting on routes lock.\n");
+#endif
 	BANG_read_lock(routes_lock);
 	peer_or_module *route = BANG_hashmap_get(routes,peer);
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tLeaving on routes lock.\n");
+#endif
 	BANG_read_unlock(routes_lock);
 
 	if (route == NULL) return;
@@ -308,8 +325,14 @@ void BANG_route_finished_job(uuid_t authority, uuid_t peer, BANG_job *job) {
 	assert(!uuid_is_null(authority));
 	assert(!uuid_is_null(peer));
 
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tWaiting on routes lock.\n");
+#endif
 	BANG_read_lock(routes_lock);
 	peer_or_module *route = BANG_hashmap_get(routes,authority);
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tLeaving on routes lock.\n");
+#endif
 	BANG_read_unlock(routes_lock);
 
 	if (route == NULL) return;
@@ -329,8 +352,14 @@ void BANG_route_request_job(uuid_t peer, uuid_t authority) {
 	assert(!uuid_is_null(authority));
 	assert(!uuid_is_null(peer));
 
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tWaiting on routes lock.\n");
+#endif
 	BANG_read_lock(routes_lock);
 	peer_or_module *route = BANG_hashmap_get(routes,authority);
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tLeaving on routes lock.\n");
+#endif
 	BANG_read_unlock(routes_lock);
 
 	if (route == NULL) return;
@@ -357,8 +386,14 @@ void BANG_route_assertion_of_authority(uuid_t authority, uuid_t peer) {
 	assert(!uuid_is_null(authority));
 	assert(!uuid_is_null(peer));
 
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tWaiting on routes lock.\n");
+#endif
 	BANG_read_lock(routes_lock);
 	peer_or_module *route = BANG_hashmap_get(routes,peer);
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tLeaving on routes lock.\n");
+#endif
 	BANG_read_unlock(routes_lock);
 
 #ifdef BDEBUG_1
@@ -382,8 +417,14 @@ void BANG_route_send_message(uuid_t peer, char *message) {
 	assert(message != NULL);
 	assert(!uuid_is_null(peer));
 
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tWaiting on routes lock.\n");
+#endif
 	BANG_read_lock(routes_lock);
 	peer_or_module *route = BANG_hashmap_get(routes,peer);
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tLeaving on routes lock.\n");
+#endif
 	BANG_read_unlock(routes_lock);
 
 	if (route == NULL) return;
@@ -402,8 +443,14 @@ int BANG_route_get_peer_id(uuid_t peer) {
 	/* assert(routes != NULL); */
 	assert(!uuid_is_null(peer));
 
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tWaiting on routes lock.\n");
+#endif
 	BANG_read_lock(routes_lock);
 	peer_or_module *route = BANG_hashmap_get(routes,peer);
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tLeaving on routes lock.\n");
+#endif
 	BANG_read_unlock(routes_lock);
 
 	if (route->remote == LOCAL) {
@@ -452,11 +499,17 @@ BANG_linked_list* BANG_not_route_get_peer_id(uuid_t *peers) {
 	not_peers.not_peers_list = new_BANG_linked_list();
 	not_peers.routes = peers;
 
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tWaiting on routes lock.\n");
+#endif
 	BANG_read_lock(routes_lock);
 
 	BANG_linked_list_iterate(peers_list,&find_not_peers,&not_peers);
 
-	BANG_read_lock(routes_lock);
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tLeaving on routes lock.\n");
+#endif
+	BANG_read_unlock(routes_lock);
 
 	return not_peers.not_peers_list;
 }
@@ -466,8 +519,14 @@ void BANG_route_new_peer(uuid_t peer, uuid_t new_peer) {
 	assert(!uuid_is_null(peer));
 	assert(!uuid_is_null(new_peer));
 
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tWaiting on routes lock.\n");
+#endif
 	BANG_read_lock(routes_lock);
 	peer_or_module *route = BANG_hashmap_get(routes,peer);
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tLeaving on routes lock.\n");
+#endif
 	BANG_read_unlock(routes_lock);
 
 	if (route == NULL) return;
@@ -491,8 +550,14 @@ void BANG_route_remove_peer(uuid_t peer, uuid_t old_peer) {
 	assert(!uuid_is_null(peer));
 	assert(!uuid_is_null(old_peer));
 
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tWaiting on routes lock.\n");
+#endif
 	BANG_read_lock(routes_lock);
 	peer_or_module *route = BANG_hashmap_get(routes,peer);
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tLeaving on routes lock.\n");
+#endif
 	BANG_read_unlock(routes_lock);
 
 	if (route == NULL) return;
@@ -528,10 +593,16 @@ void BANG_register_module_route(BANG_module *module) {
 
 	peer_or_module *pom = new_pom_module_route(module);
 
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tWaiting on routes lock.\n");
+#endif
 	BANG_write_lock(routes_lock);
 
 	BANG_hashmap_set(routes,&module->info->peers_info->uuids[0],pom);
 
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tLeaving on routes lock.\n");
+#endif
 	BANG_write_unlock(routes_lock);
 }
 
@@ -545,6 +616,9 @@ void BANG_register_peer_route(uuid_t uuid, int peer_id, char *module_name, unsig
 	pup.peer_id = peer_id = peer_id;
 	uuid_copy(pup.route,uuid);
 
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tWaiting on routes lock.\n");
+#endif
 	BANG_write_lock(routes_lock);
 
 	BANG_hashmap_set(routes,&uuid,pom);
@@ -553,23 +627,32 @@ void BANG_register_peer_route(uuid_t uuid, int peer_id, char *module_name, unsig
 		/* ERROR: maybe append a peer_to_uuids? */
 	}
 
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tLeaving on routes lock.\n");
+#endif
 	BANG_write_unlock(routes_lock);
 }
 
 void BANG_deregister_route(uuid_t route) {
 	assert(!uuid_is_null(route));
 
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tWaiting on routes lock.\n");
+#endif
 	BANG_write_lock(routes_lock);
 
 	BANG_hashmap_set(routes,&route,NULL);
 	BANG_linked_list_conditional_iterate(peers_list,&remove_uuid_from_peer,&route);
 
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tLeaving on routes lock.\n");
+#endif
 	BANG_write_unlock(routes_lock);
 }
 
 void BANG_route_init() {
 #ifdef BDEBUG_1
-	fprintf(stderr,"BANG routing starting.\n");
+	fprintf(stderr,"ROUTING:\tBANG routing starting.\n");
 #endif
 
 	routes_lock = new_BANG_rw_syncro();
@@ -579,6 +662,9 @@ void BANG_route_init() {
 	routes = new_BANG_hashmap(&uuid_hashcode,&uuid_ptr_compare);
 	peers_list = new_BANG_linked_list();
 
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tLeaving on routes lock.\n");
+#endif
 	BANG_write_unlock(routes_lock);
 
 	BANG_install_sighandler(BANG_PEER_ADDED, &create_peer_to_uuids);
@@ -587,14 +673,13 @@ void BANG_route_init() {
 
 void BANG_route_close() {
 #ifdef BDEBUG_1
-	fprintf(stderr,"BANG routing ending.\n");
+	fprintf(stderr,"ROUTING:\tBANG routing ending.\n");
 #endif
 
-	BANG_write_lock(routes_lock);
 
+	BANG_write_lock(routes_lock);
 	free_BANG_hashmap(routes);
 	free_BANG_linked_list(peers_list,&free_peer_to_uuids);
-
 	BANG_write_unlock(routes_lock);
 
 	free_BANG_rw_syncro(routes_lock);

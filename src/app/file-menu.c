@@ -10,16 +10,18 @@ static void deal_with_module(gchar *filename) {
 	char *module_name;
 	unsigned char *module_version;
 	BANG_module* module;
-	GtkWidget *notebook;
 	GtkWidget *page;
+	GtkWidget *page_label;
 
 	BANG_new_module(filename, &module_name, &module_version);
 	module = BANG_get_module(module_name, module_version);
 
 	GUI_module_init gui_module_init = BANG_get_symbol(module,"GUI_init");
 	if (gui_module_init)
-		gui_module_init(&notebook,&page);
+		gui_module_init(&page,&page_label);
 
+	if (gui_module_init)
+		gtk_notebook_append_page(GTK_NOTEBOOK(notebook),page,page_label);
 
 	BANG_run_module_in_registry(module_name, module_version);
 }

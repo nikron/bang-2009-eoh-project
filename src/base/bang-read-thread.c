@@ -90,14 +90,22 @@ static void* read_message(BANG_peer *self, unsigned int length) {
 
 	return message;
 }
+
 static void read_uuid(BANG_peer *self,uuid_t uuid) {
 	uuid_t *uuid_ptr = (uuid_t*) read_message(self,sizeof(uuid_t));
 	if (uuid_ptr) {
 		uuid_copy(uuid,*uuid_ptr);
+#ifdef BDEBUG_1
+		char unparsed[37];
+		uuid_unparse(uuid,unparsed);
+		fprintf(stderr,"READ-THREAD:\tRead uuid %s.\n",unparsed);
+#endif
 		free(uuid_ptr);
 	} else {
 		uuid_clear(uuid);
 	}
+
+
 }
 
 static char read_hello(BANG_peer *self) {

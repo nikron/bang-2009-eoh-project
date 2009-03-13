@@ -40,7 +40,7 @@ void* BANG_server_thread(void *not_used);
  *
  * \brief This thread connects to another bang-machine and creates a slave thread.
  */
-void* BANG_connect_thread(void *addr);
+void* BANG_connect_thread(const void *addr);
 
 /**
  *

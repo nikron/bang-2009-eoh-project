@@ -26,7 +26,7 @@ static void server_status(int signal, int num_args, void **args) {
 		case BANG_BIND_SUC:
 			break;
 		case BANG_GADDRINFO_FAIL:
-			BMACHINE_error_dialog("The server could not fetch the address information.");
+			BMACHINE_error_dialog("Could not fetch the address information.");
 			break;
 		case BANG_SERVER_STARTED:
 			break;
@@ -43,7 +43,38 @@ static void server_status(int signal, int num_args, void **args) {
 	free(args);
 }
 
-void BMAHCHINE_change_server_status() {
+static void connect_to_peer(GtkDialog *dialog, gint response_id) {
+	if (response_id == 1) {
+		GtkWidget *content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+		GList *node = gtk_container_get_children(GTK_CONTAINER(content_area));
+		GtkWidget *entry = node->data;
+
+		const gchar *host = gtk_entry_get_text(GTK_ENTRY(entry));
+		BANG_connect_thread(host);
+
+	}
+
+	gtk_widget_destroy(GTK_WIDGET(dialog));
+}
+
+void BMACHINE_connect_peer() {
+	GtkWidget *input_dialog = gtk_dialog_new();
+	GtkWidget *content_area = gtk_dialog_get_content_area(GTK_DIALOG(input_dialog));
+	GtkWidget *entry = gtk_entry_new_with_max_length(300);
+	GtkWidget *ok = gtk_button_new_from_stock(GTK_STOCK_OK);
+	GtkWidget *cancel = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
+
+	gtk_box_pack_start(GTK_BOX(content_area), entry, FALSE, FALSE, 0);
+	gtk_dialog_add_action_widget(GTK_DIALOG(input_dialog), ok, 1);
+	gtk_dialog_add_action_widget(GTK_DIALOG(input_dialog), cancel, 2);
+
+	gtk_widget_show_all(input_dialog);
+	g_signal_connect(G_OBJECT(input_dialog),"response",G_CALLBACK(connect_to_peer),NULL);
+
+	gtk_dialog_run(GTK_DIALOG(input_dialog));
+}
+
+void BMACHINE_change_server_status() {
 	if (ssserver) {
 		if(BANG_is_server_running()) {
 			BANG_server_stop();

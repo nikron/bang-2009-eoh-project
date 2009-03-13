@@ -83,7 +83,7 @@ $(LOBJS): $(LSRC)
 modules: $(MODULES)
 
 test-module.so: src/modules/test-module.c
-	$(CC) -shared -Wl,-soname,$@ $(COPTS) $^ -o $@
+	$(CC) -shared -Wl,-soname,$@ $(COPTS) $(GTKOPTS) $^ -o $@
 
 matrix-mult-module.so: src/modules/matrix-mult-module.c
 	$(CC) -shared -Wl,-soname,$@ $(COPTS) $(GTKOPTS) $^ -o $@

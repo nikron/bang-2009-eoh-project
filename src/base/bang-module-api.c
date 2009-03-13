@@ -125,7 +125,7 @@ int BANG_get_my_id(BANG_module_info *info) {
 
 void BANG_assert_authority(BANG_module_info *info, int id) {
 #ifdef BDEBUG_1
-	fprintf(stderr,"%d is asserting authority!\n",id);
+	fprintf(stderr,"MODULE-API:\t%d is asserting authority!\n",id);
 #endif
 	uuid_t authority;
 	BANG_get_uuid_from_local_id(authority,id,info);
@@ -141,7 +141,7 @@ void BANG_assert_authority(BANG_module_info *info, int id) {
 
 void BANG_assert_authority_to_peer(BANG_module_info *info, int authority, int peer) {
 #ifdef BDEBUG_1
-	fprintf(stderr,"%d is asserting authority to %d!\n",authority,peer);
+	fprintf(stderr,"MODULE-API:\t%d is asserting authority to %d!\n",authority,peer);
 #endif
 	uuid_t auth,route;
 	BANG_get_uuid_from_local_id(auth,authority,info);
@@ -154,7 +154,7 @@ void BANG_assert_authority_to_peer(BANG_module_info *info, int authority, int pe
 
 void BANG_request_job(BANG_module_info *info, int id) {
 #ifdef BDEBUG_1
-	fprintf(stderr,"Requesting a job from authority %d!\n",id);
+	fprintf(stderr,"MODULE-API:\tRequesting a job from authority %d!\n",id);
 #endif
 	uuid_t auth, me;
 	BANG_get_uuid_from_local_id(auth,id,info);
@@ -168,7 +168,7 @@ void BANG_request_job(BANG_module_info *info, int id) {
 
 void BANG_finished_request(BANG_module_info *info, BANG_job *job) {
 #ifdef BDEBUG_1
-	fprintf(stderr,"Finished a job from authority %d!\n",job->authority);
+	fprintf(stderr,"MODULE-API:\tFinished a job from authority %d!\n",job->authority);
 #endif
 
 	uuid_t auth, peer;

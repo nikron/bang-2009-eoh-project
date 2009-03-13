@@ -122,7 +122,7 @@ void* BANG_server_thread(void *not_used) {
 	return NULL;
 }
 
-void* BANG_connect_thread(void *addr) {
+void* BANG_connect_thread(const void *addr) {
 	struct addrinfo hints;
 	struct addrinfo *result, *rp;
 	BANG_sigargs args;
@@ -142,13 +142,12 @@ void* BANG_connect_thread(void *addr) {
 
 	/* check to see if we got available addresses */
 	if (getaddrinfo(NULL,(char*)addr,&hints,&result) != 0) {
-		args.args = addr;
+		args.args = (void*) addr;
 		args.length = strlen(addr) * sizeof(char);
 		/*
 		 * TODO: Send something more meaningful
 		 */
 		BANG_send_signal(BANG_GADDRINFO_FAIL,&args,1);
-		free(args.args);
 		return NULL;
 	}
 
@@ -159,14 +158,12 @@ void* BANG_connect_thread(void *addr) {
 		*((int*)args.args) = socket(rp->ai_family,rp->ai_socktype,rp->ai_protocol);
 
 		if (*((int*)args.args) == -1) {
-			free(args.args);
-			args.args = addr;
+			args.args = (void*) addr;
 			args.length = strlen(addr) * sizeof(char);
 			/*
 			 * TODO:Make this signal send out something more useful
 			 */
 			BANG_send_signal(BANG_CONNECT_FAIL,&args,1);
-			free(args.args);
 
 		} else if (connect(*((int*)args.args),rp->ai_addr,rp->ai_addrlen) == 0) {
 
@@ -174,7 +171,6 @@ void* BANG_connect_thread(void *addr) {
 			 * Sends out a signal of the peer with its socket.
 			 */
 			BANG_send_signal(BANG_PEER_CONNECTED,&args,1);
-			free(args.args);
 			break;
 		}
 	}

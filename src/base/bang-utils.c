@@ -43,6 +43,12 @@ void free_BANG_rw_syncro(BANG_rw_syncro *lck) {
 int BANG_version_cmp(const unsigned char *v1, const unsigned char *v2) {
 	int cmp = 0;
 
+#ifdef BDEBUG_1
+	fprintf(stderr,"Version %p\n", v1);
+	fprintf(stderr,"Version one:\t%d %d %d\n", v1[0], v1[1], v1[2]);
+	fprintf(stderr,"Version two:\t%d %d %d\n", v2[0], v2[1], v2[2]);
+#endif
+
 	cmp += v1[0] - v2[0];
 	cmp += v1[1] - v2[1];
 	cmp += v1[2] - v2[2];

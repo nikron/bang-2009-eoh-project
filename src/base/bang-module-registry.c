@@ -87,6 +87,7 @@ static int compare_module_wrapper_key_t(const void *d1, const void *d2) {
 
 #ifdef BDEBUG_1
 	fprintf(stderr,"Found that %s and %s matched at %d.\n",mk1->name, mk2->name, ret);
+	fprintf(stderr,"Version is at %p.\n",mk1->version);
 #endif
 
 	return ret;
@@ -114,6 +115,8 @@ void BANG_new_module(char *path, char **module_name, unsigned char **module_vers
 
 #ifdef BDEBUG_1
 		fprintf(stderr,"Trying to put the %s module into a hashmap.\n",module_wrapper->module->info->module_name);
+		fprintf(stderr,"With version:\t%p\n", module->info->module_version);
+		fprintf(stderr,"With version:\t%d %d %d\n", module->info->module_version[0], module->info->module_version[1], module->info->module_version[2]);
 #endif
 		BANG_hashmap_set(modules,&module_key,module_wrapper);
 	}

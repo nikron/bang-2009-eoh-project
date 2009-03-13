@@ -59,7 +59,7 @@ ASRC=src/app/preferences$(SRCEXT) \
       src/app/file-menu$(SRCEXT)
 
 LIBRARIES=libbang.so $(MODULES)
-MODULES=test-module.so matrix-mult-module.so
+MODULES=fractal-module.so #test-module.so matrix-mult-module.so
 
 .PHONY: doc modules commit
 
@@ -86,6 +86,9 @@ test-module.so: src/modules/test-module.c
 	$(CC) -shared -Wl,-soname,$@ $(COPTS) $(GTKOPTS) $^ -o $@
 
 matrix-mult-module.so: src/modules/matrix-mult-module.c
+	$(CC) -shared -Wl,-soname,$@ $(COPTS) $(GTKOPTS) $^ -o $@
+
+fractal-module.so: src/modules/fractal-module.c
 	$(CC) -shared -Wl,-soname,$@ $(COPTS) $(GTKOPTS) $^ -o $@
 
 doc:

@@ -16,10 +16,6 @@ static void deal_with_module(gchar *filename) {
 	BANG_new_module(filename, &module_name, &module_version);
 	module = BANG_get_module(module_name, module_version);
 
-#ifdef BDEBUG_1
-	fprintf(stderr,"Running a module init.\n");
-#endif
-
 	GUI_module_init gui_module_init = BANG_get_symbol(module,"GUI_init");
 	if (gui_module_init)
 		gui_module_init(&notebook,&page);

@@ -139,6 +139,10 @@ BANG_module* BANG_get_module(char *module_name, unsigned char *module_version) {
 int BANG_run_module_in_registry(char *module_name, unsigned char *module_version) {
 	int ret = -1;
 
+#ifdef BDEBUG_1
+		fprintf(stderr,"Running module %s %d.%d.%d.\n", module_name,module_version[0],module_version[1],module_version[2]);
+#endif
+
 	module_wrapper_key_t module_key = create_key(module_name, module_version);
 	module_wrapper_t *module_wrapper = BANG_hashmap_get(modules,&module_key);
 

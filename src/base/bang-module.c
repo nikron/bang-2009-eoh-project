@@ -116,12 +116,16 @@ BANG_module_info* new_BANG_module_info(char* module_name, unsigned char* module_
 	info->peers_info = calloc(1,sizeof(peers_information));
 	/* We aren't even a peer yet since we haven't been run/registered */
 	info->peers_info->peer_number = 0;
-	info->module_name = module_name;
 	info->module_name_length = strlen(module_name);
-	info->module_version = module_version;
+	info->module_name = malloc(info->module_name_length + 1);
+	strcpy(info->module_name, module_name);
+	info->module_version = malloc(3);
+	memcpy(info->module_version, module_version, 3);
 	info->module_bang_name = malloc(info->module_name_length + 4);
 	strcpy(info->module_bang_name, module_name);
 	memcpy(info->module_bang_name + info->module_name_length + 1,module_version,3);
+
+	info->lck = new_BANG_rw_syncro();
 
 	info->my_id = 0;
 

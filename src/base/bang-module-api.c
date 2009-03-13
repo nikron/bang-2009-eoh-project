@@ -30,13 +30,15 @@ static uuid_t* get_valid_routes(BANG_module_info *info) {
 	BANG_read_lock(info->lck);
 
 	int i, size = 1;
-	uuid_t *valid_routes = calloc(size,sizeof(uuid_t));
+	uuid_t *valid_routes = calloc(size + 1,sizeof(uuid_t));
+
 	for (i = 0; i < info->peers_info->peer_number; ++i) {
 		if (info->peers_info->validity[i]) {
-			valid_routes = realloc(valid_routes,size++ * sizeof(uuid_t));
+			valid_routes = realloc(valid_routes,(size++ + 1) * sizeof(uuid_t));
 			uuid_copy(valid_routes[i],info->peers_info->uuids[i]);
 		}
 	}
+
 	uuid_clear(valid_routes[size]);
 
 	BANG_read_unlock(info->lck);

@@ -64,12 +64,22 @@ void BANG_get_me_peers(BANG_module_info *info) {
 
 	BANG_linked_list *peers_to_bug = BANG_not_route_get_peer_id(valid_routes);
 	int *cur;
+	void *data;
+	int data_length = info->module_name_length + 4 + sizeof(uuid_t);
 	BANG_request *req;
+
 
 	/* TODO: Put the module info inside the data... */
 
 	while ((cur = BANG_linked_list_pop(peers_to_bug)) != NULL) {
-		req = new_BANG_request(BANG_MODULE_PEER_REQUEST,NULL,0);
+		data = malloc(data_length);
+
+		strcpy(data,info->module_name);
+		data[info->module_name_length] = 0;
+		memcpy(data + info->module_name_length + 1, info->module_version, 3);
+		memcpy(data + info->module_name_length + 4,  info->peers_info->uuids[info->my_id], sizeof(uuid_t));
+
+		req = new_BANG_request(BANG_MODULE_PEER_REQUEST,data,0);
 		BANG_request_peer_id(*cur,req);
 		free(cur);
 	}

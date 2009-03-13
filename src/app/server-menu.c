@@ -8,7 +8,7 @@
  */
 static GtkWidget *ssserver = NULL;
 
-static void server_status(int signal, int num_args, void **args) {
+static void net_status(int signal, int num_args, void **args) {
 
 	gdk_threads_enter();
 	if (ssserver == NULL) {
@@ -30,6 +30,8 @@ static void server_status(int signal, int num_args, void **args) {
 			break;
 		case BANG_SERVER_STARTED:
 			break;
+		case BANG_CONNECT_FAIL:
+			BMACHINE_error_dialog("Could not make a socket for connection.");
 	}
 
 	gdk_threads_leave();
@@ -89,10 +91,11 @@ void BMACHINE_change_server_status() {
 void BMACHINE_setup_server_menu(GtkWidget *widget) {
 	ssserver = widget;
 
-	BANG_install_sighandler(BANG_LISTEN_FAIL,&server_status);
-	BANG_install_sighandler(BANG_BIND_FAIL,&server_status);
-	BANG_install_sighandler(BANG_BIND_SUC,&server_status);
-	BANG_install_sighandler(BANG_GADDRINFO_FAIL,&server_status);
-	BANG_install_sighandler(BANG_BIND_SUC,&server_status);
-	BANG_install_sighandler(BANG_SERVER_STARTED,&server_status);
+	BANG_install_sighandler(BANG_LISTEN_FAIL,&net_status);
+	BANG_install_sighandler(BANG_BIND_FAIL,&net_status);
+	BANG_install_sighandler(BANG_BIND_SUC,&net_status);
+	BANG_install_sighandler(BANG_GADDRINFO_FAIL,&net_status);
+	BANG_install_sighandler(BANG_BIND_SUC,&net_status);
+	BANG_install_sighandler(BANG_SERVER_STARTED,&net_status);
+	BANG_install_sighandler(BANG_CONNECT_FAIL,&net_status);
 }

@@ -141,7 +141,7 @@ void* BANG_connect_thread(const void *addr) {
 	hints.ai_next = NULL;
 
 	/* check to see if we got available addresses */
-	if (getaddrinfo(NULL,(char*)addr,&hints,&result) != 0) {
+	if (getaddrinfo((char*)addr,port,&hints,&result) != 0) {
 		args.args = (void*) addr;
 		args.length = strlen(addr) * sizeof(char);
 		/*
@@ -154,15 +154,15 @@ void* BANG_connect_thread(const void *addr) {
 
 	args.args = calloc(1,sizeof(int));
 	args.length = sizeof(int);
+#ifdef BDEBUG_1
+	fprintf(stderr,"NET:\tConnect gaddrinfo has succeeded.\n");
+#endif
 	for (rp = result; rp != NULL; rp = rp->ai_next) {
 		*((int*)args.args) = socket(rp->ai_family,rp->ai_socktype,rp->ai_protocol);
 
 		if (*((int*)args.args) == -1) {
 			args.args = (void*) addr;
 			args.length = strlen(addr) * sizeof(char);
-			/*
-			 * TODO:Make this signal send out something more useful
-			 */
 			BANG_send_signal(BANG_CONNECT_FAIL,&args,1);
 
 		} else if (connect(*((int*)args.args),rp->ai_addr,rp->ai_addrlen) == 0) {
@@ -170,12 +170,20 @@ void* BANG_connect_thread(const void *addr) {
 			/*
 			 * Sends out a signal of the peer with its socket.
 			 */
+#ifdef BDEBUG_1
+			fprintf(stderr,"NET:\tA connect thread has succeeded.\n");
+#endif
 			BANG_send_signal(BANG_PEER_CONNECTED,&args,1);
 			break;
 		}
 	}
 
+	args.args = (void*) addr;
+	args.length = strlen(addr) * sizeof(char);
+	BANG_send_signal(BANG_CONNECT_FAIL,&args,1);
+
 	freeaddrinfo(result);
+
 	return NULL;
 }
 

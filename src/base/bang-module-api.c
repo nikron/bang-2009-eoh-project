@@ -40,6 +40,9 @@ static uuid_t* get_valid_routes(BANG_module_info *info) {
 	}
 
 	uuid_clear(valid_routes[size]);
+#ifdef BDEBUG_1
+	fprintf(stderr,"Number of valid routes for %s is %d.\n",info->module_name, size);
+#endif
 
 	BANG_read_unlock(info->lck);
 

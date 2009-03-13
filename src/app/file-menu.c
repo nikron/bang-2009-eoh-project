@@ -1,22 +1,31 @@
 #include"bang-machine-utils.h"
+#include"file-menu.h"
 #include"../base/bang.h"
 #include<gtk/gtk.h>
 #include<stdlib.h>
 
 static GtkWidget *notebook = NULL;
 
-typedef void (*GUI_module_init)(GtkWidget**,GtkWidget**);
-
 static void deal_with_module(gchar *filename) {
 	char *module_name;
 	unsigned char *module_version;
 	BANG_module* module;
+	GtkWidget *notebook;
+	GtkWidget *page;
 
 	BANG_new_module(filename, &module_name, &module_version);
 	module = BANG_get_module(module_name, module_version);
 
+#ifdef BDEBUG_1
+	fprintf(stderr,"Running a module init.\n");
+#endif
 
-	void* BANG_get_symbol(BANG_module *module, char *symbol);
+	GUI_module_init gui_module_init = BANG_get_symbol(module,"GUI_init");
+	if (gui_module_init)
+		gui_module_init(&notebook,&page);
+
+
+	BANG_run_module_in_registry(module_name, module_version);
 }
 
 void BMACHINE_open_module() {

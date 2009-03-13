@@ -15,15 +15,17 @@ char BANG_module_name[5] = "test";
 unsigned char BANG_module_version[] = {0,0,1};
 BANG_api *api;
 
-BANG_callbacks BANG_module_init(BANG_api *get_api) {
+BANG_callbacks* BANG_module_init(BANG_api *get_api) {
 	api = get_api;
 	fprintf(stderr,"TEST:\t Module with name %s is initializing with version %d.%d.%d.\n",
 			BANG_module_name,
 			BANG_module_version[0],
 			BANG_module_version[1],
 			BANG_module_version[2]);
-	BANG_callbacks callbacks;
-	memset(&callbacks,0,sizeof(BANG_callbacks));
+	BANG_callbacks *callbacks = malloc(sizeof(BANG_callbacks));
+
+	memset(callbacks,0,sizeof(BANG_callbacks));
+
 	return callbacks;
 }
 

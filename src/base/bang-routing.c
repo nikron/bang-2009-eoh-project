@@ -69,7 +69,7 @@ static void create_peer_to_uuids(int signal, int num_ps, void **peer_ids) {
 
 	if (signal == BANG_PEER_ADDED) {
 		for (i = 0; i < num_ps; ++i) {
-			peer_ids = peer_ids[i];
+			peer_id = peer_ids[i];
 
 			BANG_write_lock(routes_lock);
 
@@ -529,6 +529,10 @@ void BANG_deregister_route(uuid_t route) {
 }
 
 void BANG_route_init() {
+#ifdef BDEBUG_1
+	fprintf(stderr,"BANG routing starting.\n");
+#endif
+
 	routes_lock = new_BANG_rw_syncro();
 
 	BANG_write_lock(routes_lock);
@@ -543,6 +547,10 @@ void BANG_route_init() {
 }
 
 void BANG_route_close() {
+#ifdef BDEBUG_1
+	fprintf(stderr,"BANG routing ending.\n");
+#endif
+
 	BANG_write_lock(routes_lock);
 
 	free_BANG_hashmap(routes);

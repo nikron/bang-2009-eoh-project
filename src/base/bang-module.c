@@ -222,8 +222,19 @@ BANG_module* BANG_load_module(char *path) {
 	module->handle = handle;
 	module->path = path;
 
+#ifdef BDEBUG_1
+	fprintf(stderr,"%s's init function has been called.\n",module_name);
+#endif
 	module->callbacks = module->module_init(get_BANG_api());
+#ifdef BDEBUG_1
+	fprintf(stderr,"%s's init function is over.\n",module_name);
+#endif
+
 	module->info = new_BANG_module_info(module_name, module_version);
+
+#ifdef BDEBUG_1
+	fprintf(stderr,"Created a new module, now returning it.\n");
+#endif
 
 	return module;
 }
@@ -242,6 +253,10 @@ void BANG_unload_module(BANG_module *module) {
 
 
 void BANG_run_module(BANG_module *module) {
+#ifdef BDEBUG_1
+	fprintf(stderr,"Running module %s.\n", module->info->module_name);
+#endif
+
 	assert(module != NULL);
 
 	if (module != NULL) {
@@ -258,6 +273,7 @@ void BANG_run_module(BANG_module *module) {
 void* BANG_get_symbol(BANG_module *module, char *symbol) {
 	assert(module != NULL);
 	assert(symbol != NULL);
+	char *error;
 
 	if (module != NULL) {
 		/* Get rid of any lingering errors. */
@@ -265,10 +281,14 @@ void* BANG_get_symbol(BANG_module *module, char *symbol) {
 
 		void* sym_to_get =  dlsym(module->handle,symbol);
 
-		if (dlerror() == NULL)
+		if ((error = dlerror()) == NULL)
 			return sym_to_get;
-		else
+		else {
+#ifdef BDEBUG_1
+	fprintf(stderr,"Symbol %s returned with error %s.\n",symbol,error);
+#endif
 			return NULL;
+		}
 	} else
 		return NULL;
 }

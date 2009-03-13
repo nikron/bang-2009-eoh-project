@@ -22,6 +22,10 @@
 BANG_linked_list *(signal_handlers[BANG_NUM_SIGS]);
 
 void BANG_sig_init() {
+#ifdef BDEBUG_1
+	fprintf(stderr,"BANG sig starting.\n");
+#endif
+
 	int i;
 
 	for (i = 0; i < BANG_NUM_SIGS; ++i) {

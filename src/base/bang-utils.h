@@ -220,6 +220,8 @@ void* BANG_hashmap_get(BANG_hashmap *hashmap, void *key);
 
 void BANG_hashmap_set(BANG_hashmap *hashmap, void *key, void *item);
 
+BANG_hashmap_pair* new_BANG_hashmap_pair(void *item, void *key);
+
 /**
  * \param v1 A bang version.
  * \param v2 Another bang version.

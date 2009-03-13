@@ -123,6 +123,10 @@ void BANG_request_all(BANG_request *request) {
 }
 
 void BANG_com_init() {
+#ifdef BDEBUG_1
+	fprintf(stderr,"BANG com starting.\n");
+#endif
+
 	BANG_install_sighandler(BANG_PEER_CONNECTED,&catch_add_peer);
 	BANG_install_sighandler(BANG_PEER_DISCONNECTED,&catch_remove_peer);
 	BANG_install_sighandler(BANG_REQUEST_ALL,&catch_request_all);

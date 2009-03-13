@@ -2,6 +2,7 @@
 #include"bang-module-api.h"
 #include"bang-utils.h"
 #include"string.h"
+#include<stdio.h>
 #include<stdlib.h>
 #include<pthread.h>
 #include<uuid/uuid.h>
@@ -81,33 +82,55 @@ static int compare_module_wrapper_key_t(const void *d1, const void *d2) {
 	const module_wrapper_key_t *mk1 = d1;
 	const module_wrapper_key_t *mk2 = d2;
 
-	return BANG_version_cmp(mk1->version, mk2->version) +
+	int ret =  BANG_version_cmp(mk1->version, mk2->version) +
 		strcmp(mk1->name, mk2->name);
+
+#ifdef BDEBUG_1
+	fprintf(stderr,"Found that %s and %s matched at %d.\n",mk1->name, mk2->name, ret);
+#endif
+
+	return ret;
 }
 
 void BANG_new_module(char *path, char **module_name, unsigned char **module_version) {
-	BANG_module* new_mod = BANG_load_module(path);
+#ifdef BDEBUG_2
+	fprintf(stderr,"Putting a new module in the registry.\n");
+#endif
 
-	if (module_name) {
-		*module_name = new_mod->info->module_name;
+	BANG_module *module = BANG_load_module(path);
+
+	if (module) {
+		if (module_name) {
+			*module_name = module->info->module_name;
+		}
+
+		if (module_version) {
+			*module_version = module->info->module_version;
+		}
+
+
+		module_wrapper_t *module_wrapper = new_module_wrapper(module);
+		module_wrapper_key_t module_key = create_key(module->info->module_name, module->info->module_version);
+
+#ifdef BDEBUG_1
+		fprintf(stderr,"Trying to put the %s module into a hashmap.\n",module_wrapper->module->info->module_name);
+#endif
+		BANG_hashmap_set(modules,&module_key,module_wrapper);
 	}
-
-	if (module_version) {
-		*module_version = new_mod->info->module_version;
-	}
-
-	module_wrapper_t *module_wrapper = new_module_wrapper(new_mod);
-	module_wrapper_key_t module_key = create_key(new_mod->info->module_name, new_mod->info->module_version);
-
-	BANG_hashmap_set(modules,&module_key,module_wrapper);
 }
 
 BANG_module* BANG_get_module(char *module_name, unsigned char *module_version) {
+#ifdef BDEBUG_1
+	fprintf(stderr,"Trying to get the %s module.\n", module_name);
+#endif
 	module_wrapper_key_t module_key = create_key(module_name, module_version);
 
 	module_wrapper_t *module_wrapper = BANG_hashmap_get(modules,&module_key);
 
-	return module_wrapper->module;
+	if (module_wrapper)
+		return module_wrapper->module;
+	else
+		return NULL;
 }
 
 int BANG_run_module_in_registry(char *module_name, unsigned char *module_version) {
@@ -143,9 +166,17 @@ void BANG_module_inform_new_peer(char *module_name, unsigned char *module_versio
 }
 
 void BANG_module_registry_init() {
+#ifdef BDEBUG_1
+	fprintf(stderr,"BANG module registry starting.\n");
+#endif
+
 	modules = new_BANG_hashmap(&hash_module_wrapper_key_t,&compare_module_wrapper_key_t);
 }
 
 void BANG_module_registry_close() {
+#ifdef BDEBUG_1
+	fprintf(stderr,"BANG module registry closing.\n");
+#endif
+
 	free_BANG_hashmap(modules);
 }

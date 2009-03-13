@@ -1,5 +1,6 @@
 #include"bang-utils.h"
 #include"bang-types.h"
+#include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
 
@@ -242,10 +243,17 @@ void BANG_linked_list_enumerate(BANG_linked_list *lst, void (*it_callback) (cons
 int BANG_linked_list_conditional_iterate(BANG_linked_list *lst, int (*it_callback) (const void*,void*), void *data) {
 	if (lst == NULL || it_callback == NULL) return 0;
 
+#ifdef BDEBUG_1
+	fprintf(stderr, "Starting a conditional iterate.\n");
+#endif
+
 	BANG_node *node;
 	BANG_read_lock(lst->lck);
 
 	for (node = lst->head; node != NULL; node = node->next) {
+#ifdef BDEBUG_1
+	fprintf(stderr, "Calling a callback on a node of the list.\n");
+#endif
 		if(it_callback(node->data,data) == 0) {
 			BANG_read_unlock(lst->lck);
 			return 0;
@@ -253,6 +261,10 @@ int BANG_linked_list_conditional_iterate(BANG_linked_list *lst, int (*it_callbac
 	}
 
 	BANG_read_unlock(lst->lck);
+
+#ifdef BDEBUG_1
+	fprintf(stderr, "Did not stop a conditional iterate.\n");
+#endif
 
 	return 1;
 }
@@ -365,8 +377,18 @@ void BANG_set_iterate(BANG_set *s, void (it_callback) (void*, void*), void *data
 BANG_hashmap*  new_BANG_hashmap(BANG_hashcode hash_func, BANG_compare comp_func) {
 	BANG_hashmap *new = malloc(sizeof(BANG_hashmap));
 
-	new->data = calloc(HASHMAP_DEFAULT_SIZE,sizeof(BANG_linked_list));
+#ifdef BDEBUG_1
+	fprintf(stderr,"Creating a new hashmap.\n");
+#endif
+	int i;
+
+	new->data = calloc(HASHMAP_DEFAULT_SIZE,sizeof(BANG_linked_list*));
 	new->data_size = HASHMAP_DEFAULT_SIZE;
+
+	for (i = 0; i < new->data_size; ++i) {
+		new->data[i] = new_BANG_linked_list();
+	}
+
 	new->hash_func = hash_func;
 	new->compare_func = comp_func;
 
@@ -385,16 +407,19 @@ void free_BANG_hashmap(BANG_hashmap *hashmap) {
 
 typedef struct {
 	BANG_compare comp_func;
-	void *key;
-	void *item;
+	BANG_hashmap_pair *pair;
 } find_item_t;
 
 static int find_item(const void *item, void *kp) {
 	find_item_t *fi = kp;
 	BANG_hashmap_pair *bhp = (void*) item;
 
-	if (fi->comp_func(bhp->key,fi->key) == 0) {
-		fi->item = bhp->item;
+#ifdef BDEBUG_1
+	fprintf(stderr,"Looping over items in a hashmap trying to find an item.\n");
+#endif
+
+	if (fi->comp_func(bhp->key,fi->pair->key) == 0) {
+		fi->pair->item = bhp->item;
 
 		return 0;
 	}
@@ -406,8 +431,12 @@ static int find_item_set(const void *item, void *kp) {
 	find_item_t *fi = kp;
 	BANG_hashmap_pair *bhp = (void*) item;
 
-	if (fi->comp_func(bhp->key,fi->key) == 0) {
-		bhp->item = fi->item;
+#ifdef BDEBUG_1
+	fprintf(stderr,"Looping over items in a hashmap trying to set an item.\n");
+#endif
+
+	if (fi->comp_func(bhp->key, fi->pair->key) == 0) {
+		bhp->item = fi->pair->item;
 
 		return 0;
 	}
@@ -420,27 +449,44 @@ void* BANG_hashmap_get(BANG_hashmap *hashmap, void *key) {
 
 	int key_hash = hashmap->hash_func(key);
 	fi.comp_func = hashmap->compare_func;
-	fi.key = key;
-	fi.item = NULL;
+	fi.pair = new_BANG_hashmap_pair(key,NULL);
 
 	int pos = key_hash % hashmap->data_size;
 
+#ifdef BDEBUG_1
+	fprintf(stderr,"Hashmap get found pos %d which is pointer %p.\n", pos, hashmap->data[pos]);
+#endif
+
 	BANG_linked_list_conditional_iterate(hashmap->data[pos],&find_item,&fi);
 
-	return fi.item;
+	return fi.pair->item;
 }
 
 void BANG_hashmap_set(BANG_hashmap *hashmap, void *key, void *item){
 	int pos = hashmap->hash_func(key) % hashmap->data_size;
+#ifdef BDEBUG_1
+	fprintf(stderr,"Found pos %d for item %p.\n", pos, item);
+#endif
 
 	find_item_t fi;
 	fi.comp_func = hashmap->compare_func;
-	fi.key = key;
-	fi.item = item;
+	fi.pair = new_BANG_hashmap_pair(key,item);
 
 	if (BANG_linked_list_conditional_iterate(hashmap->data[pos],&find_item_set,&fi)) {
-		BANG_linked_list_append(hashmap->data[pos],item);
+#ifdef BDEBUG_1
+	fprintf(stderr,"Hashmap setting an item.\n");
+#endif
+		BANG_linked_list_push(hashmap->data[pos],fi.pair);
 	}
+}
+
+BANG_hashmap_pair* new_BANG_hashmap_pair(void *key, void *item) {
+	BANG_hashmap_pair *new = malloc(sizeof(BANG_hashmap_pair));
+
+	new->key = key;
+	new->item = item;
+
+	return new;
 }
 
 BANG_request* new_BANG_request(int type, void *data, int length) {

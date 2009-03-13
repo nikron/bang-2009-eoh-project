@@ -238,6 +238,10 @@ char BANG_is_server_running(){
 }
 
 void BANG_net_init(char *server_port ,char start_server) {
+#ifdef BDEBUG_1
+	fprintf(stderr,"BANG net starting.\n");
+#endif
+
 	if (server_port != NULL) {
 		port = server_port;
 	}

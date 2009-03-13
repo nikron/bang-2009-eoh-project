@@ -2,6 +2,8 @@
 #define __FILE_MENU_H
 #include<gtk/gtk.h>
 
+typedef void (*GUI_module_init)(GtkWidget**,GtkWidget**);
+
 void BMACHINE_open_module();
 
 void BMACHINE_exit();

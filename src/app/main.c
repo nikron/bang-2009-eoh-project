@@ -57,7 +57,6 @@
 
 static GtkWidget *window;
 static GtkWidget *vbox;
-static GtkWidget *peers_page_label;
 static GtkWidget *peers_page_body;
 
 /**
@@ -111,14 +110,20 @@ int main(int argc, char **argv) {
 	/* Set up the netebook */
 	notebook = gtk_notebook_new();
 
-	peers_page_label = gtk_label_new("Peers");
-	peers_page_body = gtk_label_new("Your peers here!");
-	gtk_notebook_append_page(GTK_NOTEBOOK(notebook),peers_page_body,peers_page_label);
+	peerlist = gtk_vbox_new(FALSE,0);
+	peers_page_body = gtk_vbox_new(FALSE,0);
+	
+	gtk_box_pack_start(GTK_BOX(peers_page_body),gtk_label_new("Peer List\n"),FALSE,FALSE,0);
+	gtk_box_pack_start(GTK_BOX(peers_page_body),peerlist,FALSE,FALSE,0);
+	
+	gtk_notebook_append_page(GTK_NOTEBOOK(notebook),peers_page_body,gtk_label_new("Peers"));
 
 	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(notebook),TRUE);
 	gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook),TRUE);
 
 	GtkWidget *statusbar = BMACHINE_setup_status_bar();
+	
+	BMACHINE_tabs_init();
 
 	/*
 	 * set up the layout of the top level window

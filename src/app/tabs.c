@@ -52,7 +52,7 @@ void update_peer_list(int signal, int num_args, void **args) {
 			break;
 	}
 	
-	
+	gtk_widget_show_all(peerlist);
 	
 	gdk_threads_leave();
 	

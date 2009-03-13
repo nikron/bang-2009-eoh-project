@@ -148,6 +148,7 @@ static int remove_uuid_from_peer(const void *p, void *r) {
 
 	BANG_write_lock(ptu->lck);
 
+
 	while ((cur_route = BANG_linked_list_pop(ptu->routes)) != NULL) {
 		if (uuid_compare(*cur_route,route) != 0) {
 			BANG_linked_list_push(new, cur_route);
@@ -191,10 +192,24 @@ static unsigned int uuid_hashcode(const void *uuid) {
 	unsigned int hc = (*((uuid_t*)uuid)[0] << 8) | (*((uuid_t*)uuid)[15]);
 	hc |= (*((uuid_t*)uuid)[3] << 16) | (*((uuid_t*)uuid)[7]) << 24;
 
+#ifdef BDEBUG_1
+			char unparsed[37];
+			uuid_unparse(*((uuid_t*)uuid),unparsed);
+
+			fprintf(stderr, "ROUTING:\thashing %s to %d\n", unparsed, hc);
+#endif
+
 	return hc;
 }
 
 static int uuid_ptr_compare(const void *uuid1, const void *uuid2) {
+#ifdef BDEBUG_1
+			char parsed[37], parsed2[37];
+			uuid_unparse(*((uuid_t*)uuid1),parsed);
+			uuid_unparse(*((uuid_t*)uuid2),parsed2);
+
+			fprintf(stderr, "ROUTING:\tgiven %s comparing to %s\n", parsed2, parsed);
+#endif
 	return uuid_compare(*((uuid_t*)uuid1),*((uuid_t*)uuid2));
 }
 
@@ -327,13 +342,23 @@ void BANG_route_request_job(uuid_t peer, uuid_t authority) {
 }
 
 void BANG_route_assertion_of_authority(uuid_t authority, uuid_t peer) {
-	/* assert(routes != NULL); */
+#ifdef BDEBUG_1
+	char unparsed[37], parsed2[37];
+	uuid_unparse(authority,unparsed);
+	uuid_unparse(peer,parsed2);
+
+	fprintf(stderr,"ROUTING:\tAsserting authority to %s from %s.\n", parsed2, unparsed);
+#endif
 	assert(!uuid_is_null(authority));
 	assert(!uuid_is_null(peer));
 
 	BANG_read_lock(routes_lock);
 	peer_or_module *route = BANG_hashmap_get(routes,&peer);
 	BANG_read_unlock(routes_lock);
+
+#ifdef BDEBUG_1
+	fprintf(stderr,"ROUTING:\tFound route at %p for assertation of auth %s.\n",route, unparsed);
+#endif
 
 	if (route == NULL) return;
 
@@ -450,9 +475,9 @@ void BANG_route_new_peer(uuid_t peer, uuid_t new_peer) {
 		fprintf(stderr,"Someone is trying to add a to a remote peer?");
 #endif
 		/*
-		BANG_request *request = create_request_with_message(BANG_DEBUG_REQUEST,message);
-		BANG_request_peer_id(route->pr->peer_id,request);
-		*/
+		   BANG_request *request = create_request_with_message(BANG_DEBUG_REQUEST,message);
+		   BANG_request_peer_id(route->pr->peer_id,request);
+		   */
 	}
 }
 
@@ -472,26 +497,35 @@ void BANG_route_remove_peer(uuid_t peer, uuid_t old_peer) {
 
 	} else {
 #ifdef BDEBUG_1
-		fprintf(stderr,"Someone is trying to remove a remote peer?");
+		fprintf(stderr,"ROUTING:\tSomeone is trying to remove a remote peer?");
 #endif
 		/*
-		BANG_request *request = create_request_with_message(BANG_DEBUG_REQUEST,message);
-		BANG_request_peer_id(route->pr->peer_id,request);
-		*/
+		   BANG_request *request = create_request_with_message(BANG_DEBUG_REQUEST,message);
+		   BANG_request_peer_id(route->pr->peer_id,request);
+		   */
 	}
 }
 
 void BANG_register_module_route(BANG_module *module) {
 	assert(module != NULL);
 
-	uuid_t new_uuid;
-	uuid_generate(new_uuid);
+	module->info->peers_info->peer_number = 1;
+	module->info->peers_info->uuids = calloc(1,sizeof(uuid_t));
+	module->info->peers_info->validity = malloc(1);
+	module->info->peers_info->validity[0] = 1;
+	uuid_generate(module->info->peers_info->uuids[module->info->my_id]);
+
+#ifdef BDEBUG_1
+	char route[37];
+	uuid_unparse(module->info->peers_info->uuids[module->info->my_id],route);
+	fprintf(stderr,"ROUTING:\tRegistering a module route %s.\n", route);
+#endif
 
 	peer_or_module *pom = new_pom_module_route(module);
 
 	BANG_write_lock(routes_lock);
 
-	BANG_hashmap_set(routes,&new_uuid,pom);
+	BANG_hashmap_set(routes,&module->info->peers_info->uuids[0],pom);
 
 	BANG_write_unlock(routes_lock);
 }

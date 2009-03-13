@@ -116,6 +116,7 @@ BANG_module_info* new_BANG_module_info(char* module_name, unsigned char* module_
 	info->peers_info = calloc(1,sizeof(peers_information));
 	/* We aren't even a peer yet since we haven't been run/registered */
 	info->peers_info->peer_number = 0;
+
 	info->module_name_length = strlen(module_name);
 	info->module_name = malloc(info->module_name_length + 1);
 	strcpy(info->module_name, module_name);
@@ -300,6 +301,7 @@ void* BANG_get_symbol(BANG_module *module, char *symbol) {
 static int BANG_module_info_peer_add(BANG_module_info *info, uuid_t new_peer) {
 	int i;
 	BANG_write_lock(info->lck);
+
 	for (i = 0; i < info->peers_info->peer_number; ++i) {
 		if (info->peers_info->validity[i] == 0) {
 			uuid_copy(info->peers_info->uuids[i],new_peer);
@@ -310,6 +312,11 @@ static int BANG_module_info_peer_add(BANG_module_info *info, uuid_t new_peer) {
 
 		}
 	}
+
+	info->peers_info->validity = realloc(info->peers_info->validity, info->peers_info->peer_number++);
+	info->peers_info->uuids = realloc(info->peers_info->uuids, info->peers_info->peer_number * sizeof(uuid_t));
+	uuid_copy(info->peers_info->uuids[info->peers_info->peer_number - 1], new_peer);
+
 	BANG_write_unlock(info->lck);
 	
 	return -1;

@@ -386,7 +386,7 @@ BANG_hashmap*  new_BANG_hashmap(BANG_hashcode hash_func, BANG_compare comp_func)
 #ifdef BDEBUG_1
 	fprintf(stderr,"Creating a new hashmap.\n");
 #endif
-	int i;
+	unsigned int i;
 
 	new->data = calloc(HASHMAP_DEFAULT_SIZE,sizeof(BANG_linked_list*));
 	new->data_size = HASHMAP_DEFAULT_SIZE;
@@ -402,7 +402,7 @@ BANG_hashmap*  new_BANG_hashmap(BANG_hashcode hash_func, BANG_compare comp_func)
 }
 
 void free_BANG_hashmap(BANG_hashmap *hashmap) {
-	int i = 0;
+	unsigned int i = 0;
 
 	for (; i < hashmap->data_size; ++i) {
 		free_BANG_linked_list(hashmap->data[i],NULL);
@@ -457,7 +457,7 @@ void* BANG_hashmap_get(BANG_hashmap *hashmap, void *key) {
 	fi.comp_func = hashmap->compare_func;
 	fi.pair = new_BANG_hashmap_pair(key,NULL);
 
-	int pos = key_hash % hashmap->data_size;
+	unsigned int pos = key_hash % hashmap->data_size;
 
 #ifdef BDEBUG_1
 	fprintf(stderr,"Hashmap get found pos %d which is pointer %p.\n", pos, hashmap->data[pos]);
@@ -469,7 +469,7 @@ void* BANG_hashmap_get(BANG_hashmap *hashmap, void *key) {
 }
 
 void BANG_hashmap_set(BANG_hashmap *hashmap, void *key, void *item){
-	int pos = hashmap->hash_func(key) % hashmap->data_size;
+	unsigned int pos = hashmap->hash_func(key) % hashmap->data_size;
 #ifdef BDEBUG_1
 	fprintf(stderr,"Found pos %d for item %p.\n", pos, item);
 #endif
@@ -480,9 +480,9 @@ void BANG_hashmap_set(BANG_hashmap *hashmap, void *key, void *item){
 
 	if (BANG_linked_list_conditional_iterate(hashmap->data[pos],&find_item_set,&fi)) {
 #ifdef BDEBUG_1
-	fprintf(stderr,"Hashmap setting an item.\n");
+	fprintf(stderr,"Hashmap setting an item at %d.\n", pos);
 #endif
-		BANG_linked_list_push(hashmap->data[pos],fi.pair);
+		BANG_linked_list_push(hashmap->data[pos], fi.pair);
 	}
 }
 

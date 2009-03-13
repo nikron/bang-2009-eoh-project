@@ -62,7 +62,7 @@ typedef struct {
 
 typedef struct {
 	BANG_linked_list **data;
-	int data_size;
+	unsigned int data_size;
 	BANG_hashcode hash_func;
 	BANG_compare compare_func;
 } BANG_hashmap;

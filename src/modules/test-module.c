@@ -89,4 +89,5 @@ void BANG_module_run(BANG_module_info *info) {
 			BANG_module_version[1],
 			BANG_module_version[2]);
 	api->BANG_debug_on_all_peers(info,"TESTING ON ALL PEERS!\n");
+	api->BANG_assert_authority(info, api->BANG_get_my_id(info));
 }

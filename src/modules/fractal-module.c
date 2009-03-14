@@ -20,6 +20,14 @@ char BANG_module_name[8] = "fractal";
 unsigned char BANG_module_version[] = {0,0,1};
 BANG_api *api;
 
+/* Backing pixmap for drawing area */
+static GdkPixmap *pixmap = NULL;
+static GtkWidget *window;
+static GtkWidget *label;
+GtkWidget *drawing_area;
+GtkWidget *vbox;
+GtkWidget *button;
+
 typedef struct _peerContainer{
 	int frame;
 	int needsState;
@@ -53,6 +61,9 @@ static int jobsLeft = -1;
 static int peerArrSize = 0;
 static int *jobArr = NULL;
 static peerContainer **peerArr = NULL;
+int currentFrame = 0;
+pixelStruct **frameData;
+static int initFlag = 1;
 
 /**
  * Callback for when a finished job is sent to you.
@@ -195,7 +206,40 @@ static void peer_removed_callback(BANG_module_info* info, int peer) {
 
 }
 
+/* Create a new backing pixmap of the appropriate size */
+static gboolean
+configure_event (GtkWidget *widget, GdkEventConfigure *event)
+{
+  if (pixmap)
+     g_object_unref (pixmap);
 
+  pixmap = gdk_pixmap_new (widget->window,
+                           widget->allocation.width,
+                           widget->allocation.height,
+                           -1);
+  gdk_draw_rectangle (pixmap,
+                      widget->style->white_gc,
+                      TRUE,
+                      0, 0,
+                      widget->allocation.width,
+                      widget->allocation.height);
+
+  return TRUE;
+}
+
+/* Redraw the screen from the backing pixmap */
+static gboolean
+expose_event (GtkWidget *widget, GdkEventExpose *event)
+{
+  gdk_draw_drawable (widget->window,
+                     widget->style->fg_gc[GTK_WIDGET_STATE (widget)],
+                     pixmap,
+                     event->area.x, event->area.y,
+                     event->area.x, event->area.y,
+                     event->area.width, event->area.height);
+
+  return FALSE;
+}
 
 static int mapIterToColor(int iter, int maxIter) {
 #define COL_MAX 256
@@ -216,27 +260,79 @@ static int mapIterToColor(int iter, int maxIter) {
 	return retCol;
 }
 
+static void drawPixel(GtkWidget *widget, int x, int y, int color) {
+
+	static int count = 0;
+	static GdkColormap *colormap = NULL;
+	if (colormap == NULL)
+		colormap = gdk_colormap_get_system();
+	static GdkGC *gc = NULL;
+	if (gc == NULL)
+		gc = gdk_gc_new(pixmap);
+
+	GdkColor pixelColor;
+	pixelColor.red = (color & 0xFF0000) >> 8;
+	pixelColor.green = (color & 0xFF00);
+	pixelColor.blue = (color & 0xFF) << 8;
+
+	gdk_colormap_alloc_color(colormap, &pixelColor, FALSE, TRUE);
+
+	gdk_gc_set_foreground(gc, &pixelColor);
+	gdk_draw_point(pixmap, gc, x, y);
+	gtk_widget_queue_draw_area (widget, x, y, 1, 1);
+
+}
+
+static gboolean button_press_event (GtkWidget *widget, GdkEventButton *event) {
+	//If this is the first click, initialize everything
+	if (initFlag == 1) {
+		initAuthData();
+		initFlag = 0;
+	}
+
+	changePosState((int)event->x, (int)event->y);
+	
+
+	//Start displaying the frames
+	
+
+}
+
+
 static pixelStruct* process_frames(int numFrames, int *frame, int *numPixels) {
-	pixelStruct *data = calloc((numFrames+1) * winX * winY, sizeof(pixelStruct));
+
+	pixelStruct *data = calloc((numFrames+1) * fractalStateData.winX *
+				fractalStateData.winY, sizeof(pixelStruct));
 	*numPixels = 0;
 
-	int i;
-	for (i=0; i < numFrames; ++i) {
-		double dev = 1.3 / frame[i];
-		double leftBorder = fractalStateData.x - dev;
-		double rightBorder = fractalStateData.x + dev;
-		double bottomBorder = fractalStateData.y - dev;
-		double topBorder = fractalStateData.y + dev;
-		double Re_factor = (rightBorder-leftBorder)/(winX-1);
-		double Im_factor = (topBorder-bottomBorder)/(winY-1);
-		unsigned MaxIterations = frame[i]*50 + 100;
-		unsigned x;
-		unsigned y;
-		unsigned n;
+	double dev = 1.3;
+	double midX = fractalStateData.x;
+	double midY = fractalStateData.y;
+	double leftBorder;
+	double rightBorder;
+	double bottomBorder;
+	double topBorder;
+	double Re_factor;
+	double Im_factor;
+	unsigned MaxIterations = 250;
+	unsigned x;
+	unsigned y;
+	unsigned n;
 
-		for(y=0; y < winY; ++y) {
+	int i;
+	for (i=0; i<numFrames; ++i) {
+		dev = 1.3 / frame[i];
+		MaxIterations = frame[i]*50;
+		leftBorder = midX - dev;
+		rightBorder = midX + dev;
+		bottomBorder = midY - dev;
+		topBorder = midY + dev;
+		Re_factor = (rightBorder-leftBorder)/(winX-1);
+		Im_factor = (topBorder-bottomBorder)/(winY-1);
+
+		for(y=0; y<winY; ++y) {
 			double c_im = topBorder - y*Im_factor;
-			for(x=0; x < winX; ++x) {
+			for(x=0; x<winX; ++x) {
 				double c_re = leftBorder + x*Re_factor;
 				double Z_re = c_re, Z_im = c_im;
 				int isInside = 1;
@@ -248,14 +344,12 @@ static pixelStruct* process_frames(int numFrames, int *frame, int *numPixels) {
 					}
 					Z_im = 2*Z_re*Z_im + c_im;
 					Z_re = Z_re2 - Z_im2 + c_re;
-
 				}
-
 				data[*numPixels].x = x;
 				data[*numPixels].y = y;
 				data[*numPixels].frame = frame[i];
-				data[*numPixels++].color = mapIterToColor(n, MaxIterations);
-
+				data[*numPixels].color = mapIterToColor(n, MaxIterations);
+				*numPixels += sizeof(pixelStruct);
 			}
 		}
 	}
@@ -263,7 +357,55 @@ static pixelStruct* process_frames(int numFrames, int *frame, int *numPixels) {
 	return data;
 }
 
+void pushStateToPeers() {
+
+	if (peerArr == NULL)
+		return;
+
+	int i;
+	for (i=0; i<peerArrSize; ++i)
+		peerArr[i].needsState = 1;
+
+}
+
+void changePosState(int x, int y) {
+
+	fractalStateData.x = x;
+	fractalStateData.y = y;
+
+	pushStateToPeers();
+
+}
+
+void changeWindowState(int width, int height) {
+
+	fractalStateData.winX = width;
+	fractalStateData.winY = height;
+
+	pushStateToPeers();
+
+}
+
 static void GUI_init(GtkWidget** panel, GtkWidget** panel_label) {
+
+	*panel = gtk_vbox_new(FALSE,0);
+	*panel_label = gtk_label_new("Fractal");
+	window = *panel;
+	label = *panel_label;
+	gint width, height;
+	gtk_widget_get_size_request(window, &width, &height);
+	changeWindowState((int)width, (int)height);
+
+	gtk_init (&argc, &argv);
+
+	/* Create the drawing area */
+	drawing_area = gtk_drawing_area_new ();
+	gtk_widget_set_size_request (GTK_WIDGET (drawing_area), width, height);
+	gtk_box_pack_start (GTK_BOX (window), drawing_area, TRUE, TRUE, 0);
+
+	gtk_widget_show (drawing_area);
+	gtk_widget_show (window);
+
 }
 
 static BANG_callbacks* BANG_module_init(BANG_api *get_api) {
@@ -281,4 +423,18 @@ static BANG_callbacks* BANG_module_init(BANG_api *get_api) {
 }
 
 static void BANG_module_run(BANG_module_info *info) {
+	if (window != NULL && label != NULL) {
+		gtk_widget_show_all(window);
+		gtk_widget_show(label);
+	}
+
+	/* Signals used to handle backing pixmap */	
+	g_signal_connect (G_OBJECT (drawing_area), "expose_event",
+			G_CALLBACK (expose_event), NULL);
+	g_signal_connect (G_OBJECT(drawing_area),"configure_event",
+			G_CALLBACK (configure_event), NULL);
+	g_signal_connect (G_OBJECT (drawing_area), "button_press_event",
+			G_CALLBACK (button_press_event), NULL);
+	/* Event signals */
+	gtk_widget_set_events (drawing_area, GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK);
 }

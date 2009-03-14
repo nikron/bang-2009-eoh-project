@@ -201,7 +201,7 @@ typedef struct {
 	int (*BANG_get_my_id) (BANG_module_info *info);
 	void (*BANG_assert_authority) (BANG_module_info *info, int id);
 	void (*BANG_assert_authority_to_peer) (BANG_module_info *info, int authority, int peer);
-	void  (*BANG_request_job) (BANG_module_info *info, int id);
+	void (*BANG_request_job) (BANG_module_info *info, int id);
 	void (*BANG_finished_request) (BANG_module_info *info, BANG_job *job);
 	void (*BANG_send_job) (BANG_module_info *info, BANG_job *job);
 } BANG_api;

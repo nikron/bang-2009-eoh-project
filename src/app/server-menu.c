@@ -47,7 +47,9 @@ static void net_status(int signal, int num_args, void **args) {
 
 static void connect_to_peer(GtkDialog *dialog, gint response_id) {
 	if (response_id == 1) {
-		GtkWidget *content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+		GtkWidget *content_area = (GtkWidget *)gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+
+
 		GList *node = gtk_container_get_children(GTK_CONTAINER(content_area));
 		GtkWidget *entry = node->data;
 
@@ -61,7 +63,7 @@ static void connect_to_peer(GtkDialog *dialog, gint response_id) {
 
 void BMACHINE_connect_peer() {
 	GtkWidget *input_dialog = gtk_dialog_new();
-	GtkWidget *content_area = gtk_dialog_get_content_area(GTK_DIALOG(input_dialog));
+	GtkWidget *content_area = (GtkWidget *)gtk_dialog_get_content_area(GTK_DIALOG(input_dialog));
 	GtkWidget *entry = gtk_entry_new_with_max_length(300);
 	GtkWidget *ok = gtk_button_new_from_stock(GTK_STOCK_OK);
 	GtkWidget *cancel = gtk_button_new_from_stock(GTK_STOCK_CANCEL);

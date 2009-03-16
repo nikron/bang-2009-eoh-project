@@ -59,8 +59,7 @@ ASRC=src/app/preferences$(SRCEXT) \
       src/app/file-menu$(SRCEXT)
 
 LIBRARIES=libbang.so $(MODULES)
-MODULES=fractal-module.so #test-module.so matrix-mult-module.so
-
+MODULES=test-module.so matrix-mult-module.so #fractal-module.so
 .PHONY: doc modules commit
 
 all: $(EXENAME) $(LIBRARIES) menus.xml
